@@ -44,18 +44,6 @@ coverage/
 .cache/
 .pnpm-debug.log*
 
-# Lint and Formatting
-.eslintcache
-.prettiercache
-
-# ESLint
-.eslintignore
-.eslintrc.json
-
-# Prettier
-.prettierignore
-.prettierrc
-
 # Storybook
 storybook-static/
 
