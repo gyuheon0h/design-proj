@@ -1,8 +1,8 @@
-import { Storage } from "@google-cloud/storage";
+import { Storage } from '@google-cloud/storage';
 
 // Initialize GCS client
 const storage = new Storage();
-const bucketName = "your-gcs-bucket-name"; // PUT THIS IN ENV FILE
+const bucketName = 'your-gcs-bucket-name'; // PUT THIS IN ENV FILE
 
 export const bucket = storage.bucket(bucketName);
 
@@ -46,8 +46,8 @@ export const uploadFile = async (
   });
 
   return new Promise<void>((resolve, reject) => {
-    stream.on("error", reject);
-    stream.on("finish", resolve);
+    stream.on('error', reject);
+    stream.on('finish', resolve);
     stream.end(buffer);
   });
 };
