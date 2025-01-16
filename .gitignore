@@ -46,8 +46,15 @@ coverage/
 
 # Lint and Formatting
 .eslintcache
-.prettierignore
 .prettiercache
+
+# ESLint
+.eslintignore
+.eslintrc.json
+
+# Prettier
+.prettierignore
+.prettierrc
 
 # Storybook
 storybook-static/
