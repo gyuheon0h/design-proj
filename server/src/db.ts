@@ -1,1 +1,1 @@
-// Firebase access
+// postgres access
