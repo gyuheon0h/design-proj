@@ -1,17 +1,20 @@
 import { Storage } from '@google-cloud/storage';
+import dotenv from 'dotenv';
 
-// Initialize GCS client
+// Load environment variables from .env file
+dotenv.config();
 
-const bucketName = 'comp413-binaries'; // PUT THIS IN ENV FILE
-const projectId = 'comp413-cloud-storage';
+// Retrieve values from the environment
+const bucketName = process.env.GCP_BUCKET_NAME;
+const projectId = process.env.GCP_PROJECT_ID;
+const keyFilePath = process.env.GCP_KEY_FILE_PATH;
 
 const storage = new Storage({
   projectId: projectId,
-  keyFilename: 'path/to/keyfile',
+  keyFilename: keyFilePath,
 });
 
-export const bucket = storage.bucket(bucketName);
-
+export const bucket = storage.bucket(bucketName!);
 /**
  * Check if a file exists in GCS.
  * @param filePath - The path of the file in the bucket.
@@ -56,4 +59,18 @@ export const uploadFile = async (
     stream.on('finish', resolve);
     stream.end(buffer);
   });
+};
+
+/**
+ * List all files in the GCS bucket.
+ * @returns A list of file names in the bucket.
+ */
+export const listAllFiles = async (): Promise<string[]> => {
+  try {
+    const [files] = await bucket.getFiles();
+    return files.map((file) => file.name); // Extract the file names
+  } catch (error) {
+    console.error('Error listing files:', error);
+    throw error;
+  }
 };

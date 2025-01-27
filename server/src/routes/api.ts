@@ -25,8 +25,6 @@ const authenticate = async (req: Request, res: Response, next: Function) => {
 };
 
 /** A. LOGIN */
-
-/** A. LOGIN */
 router.post('/login', async (req: Request, res: Response) => {});
 
 /** B. BASIC FILE STUFF */
