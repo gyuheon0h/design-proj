@@ -1,8 +1,14 @@
 import { Storage } from '@google-cloud/storage';
 
 // Initialize GCS client
-const storage = new Storage();
-const bucketName = 'your-gcs-bucket-name'; // PUT THIS IN ENV FILE
+
+const bucketName = 'comp413-binaries'; // PUT THIS IN ENV FILE
+const projectId = 'comp413-cloud-storage';
+
+const storage = new Storage({
+  projectId: projectId,
+  keyFilename: 'path/to/keyfile',
+});
 
 export const bucket = storage.bucket(bucketName);
 
