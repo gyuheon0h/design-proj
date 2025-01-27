@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const pool = new Pool({
-  user: process.env.POSTGRES_ID,
+  user: process.env.POSTGRES_USER,
   host: process.env.POSTGRES_HOST,
   database: process.env.POSTGRES_DATABASE,
   password: process.env.POSTGRES_PASSWORD,
@@ -20,8 +20,14 @@ pool.on('error', (err) => {
   console.error('Error connecting to the PostgreSQL database:', err);
 });
 
-export const query = (text: string, params?: any[]) => {
-  return pool.query(text, params);
+export const query = async (text: string, params?: any[]): Promise<any[]> => {
+  try {
+    const result = await pool.query(text, params);
+    return result.rows; // Return only the rows
+  } catch (error) {
+    console.error('Error executing query:', error);
+    throw error;
+  }
 };
 
 export default pool;
