@@ -1,4 +1,5 @@
 import express, { Application, Request, Response } from 'express';
+import userModel from './db_models/userModel';
 import cors from 'cors';
 
 const app: Application = express();
@@ -10,12 +11,13 @@ app.use(express.json());
 // Root Route
 app.get('/', async (req: Request, res: Response) => {
   try {
+    // SANITY TESTING INIT DEV
     const files = await StorageService.listAllFiles(); // Assuming this returns file names
-    const rows = await query('SELECT * FROM users'); // Fetch rows from the database
+    const users = await userModel.getAll();
     res.send({
       message: 'Welcome to the Express server!',
       files,
-      users: rows,
+      users: users,
     });
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -26,7 +28,7 @@ app.get('/', async (req: Request, res: Response) => {
 // Routes
 import apiRoutes from './routes/api';
 import StorageService from './storage';
-import { query } from './db';
+import { query } from './db_models/db';
 app.use('/api', apiRoutes);
 
 export default app;
