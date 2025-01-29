@@ -1,13 +1,19 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Auth = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+
     console.log('Logging in with:', { username, password });
-    // Add authentication logic here
+
+    // TODO: add actual authentication
+
+    navigate('/home');
   };
 
   return (
