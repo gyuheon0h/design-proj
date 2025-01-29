@@ -9,8 +9,8 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Auth />} />
-      <Route path="/products" element={<Home />} />
-      <Route path="/about" element={<Shared />} />
+      <Route path="/home" element={<Home />} />
+      <Route path="/shared" element={<Shared />} />
     </Routes>
     // <div className="App">
     //   <header className="App-header">
