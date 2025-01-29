@@ -24,11 +24,13 @@ yarn-error.log*
 node_modules/
 
 # Environment Files
+server/.env
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+key_file.json
 
 # IDE-specific Files
 .idea/
