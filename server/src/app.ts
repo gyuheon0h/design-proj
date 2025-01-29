@@ -14,10 +14,14 @@ app.get('/', async (req: Request, res: Response) => {
     // SANITY TESTING INIT DEV
     const files = await StorageService.listAllFiles(); // Assuming this returns file names
     const users = await userModel.getAll();
+    const newUser = await userModel.create({
+      username: 'test_user_1',
+    });
     res.send({
       message: 'Welcome to the Express server!',
       files,
       users: users,
+      newUser: newUser,
     });
   } catch (error) {
     console.error('Error fetching data:', error);

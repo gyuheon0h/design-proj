@@ -22,6 +22,16 @@ class BaseModel<T> {
     return (result.rows[0] as T) || null;
   }
 
+  // Get all record where column matches
+  async getAllByColumn<K extends keyof T>(
+    column: K,
+    value: T[K],
+  ): Promise<T[]> {
+    const query = `SELECT * FROM "${this.table}" WHERE ${String(column)} = $1`;
+    const result = await pool.query(query, [value]);
+    return result.rows as T[];
+  }
+
   // Create a new record
   async create(data: Partial<T>): Promise<T> {
     const keys = Object.keys(data).join(', ');
