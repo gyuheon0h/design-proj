@@ -6,6 +6,7 @@ interface User {
   passwordHash: string;
   createdAt: Date;
   deletedAt?: Date | null;
+  email: string;
 }
 
 class UserModel extends BaseModel<User> {
