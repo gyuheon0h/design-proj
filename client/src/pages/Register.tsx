@@ -19,7 +19,7 @@ const Register = () => {
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
+    if (password !== confirmPassword) { // TODO: add other validations
       alert("Passwords do not match");
       return;
     }
