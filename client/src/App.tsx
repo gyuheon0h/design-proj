@@ -8,7 +8,7 @@ import NavigationDrawer from './components/Drawer';
 
 function App() {
   const location = useLocation();
-  const shouldShowDrawer = location.pathname !== '/'; // only don't show on login
+  const shouldShowDrawer = location.pathname !== '/' && location.pathname !== '/register'; // only don't show on login
   // TODO: add sign up page to above
 
   return (

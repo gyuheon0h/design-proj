@@ -47,8 +47,8 @@ const Register = () => {
           padding: 4,
           width: '100%',
           borderRadius: '16px',
-          transform: 'translateX(-10vw)' // bruh it keeps not being centered **KEEP THIS AS
-                                        // VW NOT PX, OR ELSE NOT RESPONSIVE STYLING!!
+        //   transform: 'translateX(-10vw)' // bruh it keeps not being centered **KEEP THIS AS
+        //                                 // VW NOT PX, OR ELSE NOT RESPONSIVE STYLING!!
         }}
       >
         <Typography component="h1" variant="h5" align="center" gutterBottom>
