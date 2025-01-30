@@ -10,7 +10,7 @@ import {
   Link
 } from '@mui/material';
 
-const Auth = () => {
+const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
@@ -86,5 +86,5 @@ const Auth = () => {
   );
 };
 
-export default Auth;
+export default Login;
 

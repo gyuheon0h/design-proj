@@ -1,7 +1,6 @@
 import './App.css';
-import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import Auth from './pages/Auth';
+import Login from './pages/Login';
 import Home from './pages/Home';
 import Shared from './pages/Shared';
 import NavigationDrawer from './components/Drawer';
@@ -18,7 +17,7 @@ function App() {
         {' '}
         {/* Adjust layout */}
         <Routes>
-          <Route path="/" element={<Auth />} />
+          <Route path="/" element={<Login/>} />
           <Route path="/home" element={<Home />} />
           <Route path="/shared" element={<Shared />} />
         </Routes>
