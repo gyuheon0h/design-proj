@@ -24,6 +24,16 @@ class FolderModel extends BaseModel<Folder> {
   async getSubfolders(parentFolderId: string): Promise<Folder[]> {
     return await this.getAllByColumn('parentFolder', parentFolderId);
   }
+
+  // Soft delete a folder
+  async deleteFolder(id: string): Promise<boolean> {
+    return await this.softDelete(id);
+  }
+
+  // Restore a folder
+  async restoreFolder(id: string): Promise<boolean> {
+    return await this.restore(id);
+  }
 }
 
 export default new FolderModel();

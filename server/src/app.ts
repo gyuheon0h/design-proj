@@ -15,7 +15,7 @@ app.get('/', async (req: Request, res: Response) => {
     const files = await StorageService.listAllFiles(); // Assuming this returns file names
     const users = await userModel.getAll();
     const newUser = await userModel.create({
-      username: 'test_user_1',
+      username: 'test_user_z',
     });
     res.send({
       message: 'Welcome to the Express server!',
@@ -32,7 +32,6 @@ app.get('/', async (req: Request, res: Response) => {
 // Routes
 import apiRoutes from './routes/api';
 import StorageService from './storage';
-import { query } from './db_models/db';
 app.use('/api', apiRoutes);
 
 export default app;

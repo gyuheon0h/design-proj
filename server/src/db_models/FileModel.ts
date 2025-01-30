@@ -34,6 +34,16 @@ class FileModel extends BaseModel<File> {
   ): Promise<File | null> {
     return await this.update(id, updatedData);
   }
+
+  // Soft delete a file
+  async deleteFile(id: string): Promise<boolean> {
+    return await this.softDelete(id);
+  }
+
+  // Restore a file
+  async restoreFile(id: string): Promise<boolean> {
+    return await this.restore(id);
+  }
 }
 
 export default new FileModel();
