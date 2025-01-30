@@ -6,7 +6,7 @@ import {
   Typography,
   TextField,
   Button,
-  Box
+  Box,
 } from '@mui/material';
 
 const Register = () => {
@@ -19,8 +19,9 @@ const Register = () => {
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) { // TODO: add other validations
-      alert("Passwords do not match");
+    if (password !== confirmPassword) {
+      // TODO: add other validations
+      alert('Passwords do not match');
       return;
     }
 
@@ -28,7 +29,7 @@ const Register = () => {
 
     // TODO: handle actual registration logic
 
-    navigate('/home'); 
+    navigate('/home');
   };
 
   return (
@@ -47,8 +48,8 @@ const Register = () => {
           padding: 4,
           width: '100%',
           borderRadius: '16px',
-        //   transform: 'translateX(-10vw)' // bruh it keeps not being centered **KEEP THIS AS
-        //                                 // VW NOT PX, OR ELSE NOT RESPONSIVE STYLING!!
+          //   transform: 'translateX(-10vw)' // bruh it keeps not being centered **KEEP THIS AS
+          //                                 // VW NOT PX, OR ELSE NOT RESPONSIVE STYLING!!
         }}
       >
         <Typography component="h1" variant="h5" align="center" gutterBottom>
@@ -61,7 +62,7 @@ const Register = () => {
             required
             fullWidth
             id="name"
-            label="Name"
+            label="Username"
             name="name"
             autoComplete="name"
             value={name}
