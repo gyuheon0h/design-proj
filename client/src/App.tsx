@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Shared from './pages/Shared';
+import Register from './pages/Register';
 import NavigationDrawer from './components/Drawer';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
           <Route path="/" element={<Login/>} />
           <Route path="/home" element={<Home />} />
           <Route path="/shared" element={<Shared />} />
+          <Route path="/register" element={<Register />} />
         </Routes>
       </div>
     </div>
