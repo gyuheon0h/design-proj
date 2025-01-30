@@ -1,3 +1,4 @@
+import { InvalidFieldUpdateError } from '../errorTypes';
 import pool from './db';
 
 class BaseModel<T> {
@@ -48,9 +49,7 @@ class BaseModel<T> {
   // Update a record (excluding accidental updates to deletedAt)
   async update(id: string, data: Partial<T>): Promise<T | null> {
     if ('deletedAt' in data) {
-      throw new Error(
-        "Cannot update 'deletedAt' directly. Use softDelete instead.",
-      );
+      throw new InvalidFieldUpdateError('deletedAt');
     }
 
     const keys = Object.keys(data);
@@ -82,6 +81,18 @@ class BaseModel<T> {
       [id],
     );
     return (result.rowCount ?? 0) > 0;
+  }
+
+  // Delete records based on a column condition
+  async hardDeleteOnCondition<K extends keyof T>(
+    column: K,
+    value: T[K],
+  ): Promise<number> {
+    const result = await pool.query(
+      `DELETE FROM "${this.table}" WHERE ${String(column)} = $1 RETURNING id`,
+      [value],
+    );
+    return result.rowCount ?? 0;
   }
 }
 
