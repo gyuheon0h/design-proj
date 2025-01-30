@@ -1,14 +1,14 @@
 import './App.css';
-import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import Auth from './pages/Auth';
+import Login from './pages/Login';
 import Home from './pages/Home';
 import Shared from './pages/Shared';
+import Register from './pages/Register';
 import NavigationDrawer from './components/Drawer';
 
 function App() {
   const location = useLocation();
-  const shouldShowDrawer = location.pathname !== '/'; // only don't show on login
+  const shouldShowDrawer = location.pathname !== '/' && location.pathname !== '/register'; // only don't show on login
   // TODO: add sign up page to above
 
   return (
@@ -18,9 +18,10 @@ function App() {
         {' '}
         {/* Adjust layout */}
         <Routes>
-          <Route path="/" element={<Auth />} />
+          <Route path="/" element={<Login/>} />
           <Route path="/home" element={<Home />} />
           <Route path="/shared" element={<Shared />} />
+          <Route path="/register" element={<Register />} />
         </Routes>
       </div>
     </div>
