@@ -48,10 +48,16 @@ const NavigationDrawer = () => {
             component={Link}
             to="/home"
             sx={{
+              border: '2px solid #b3d1ff',
               borderRadius: '10px',
-              marginBottom: '8px',
+              padding: '10px 16px',
+              marginBottom: '10px',
+              '&:hover': {
+                backgroundColor: '#e0f2ff',
+              },
               '&.Mui-selected': {
                 backgroundColor: '#dce9ff',
+                borderColor: '#0056b3',
               },
             }}
           >
@@ -74,9 +80,15 @@ const NavigationDrawer = () => {
             component={Link}
             to="/shared"
             sx={{
-              borderRadius: '10px',
+              border: '2px solid #b3d1ff',
+              borderRadius: '12px',
+              padding: '10px 16px',
+              '&:hover': {
+                backgroundColor: '#e0f2ff',
+              },
               '&.Mui-selected': {
                 backgroundColor: '#dce9ff',
+                borderColor: '#0056b3',
               },
             }}
           >
