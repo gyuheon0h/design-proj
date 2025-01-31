@@ -1,6 +1,6 @@
-import express, { Application, Request, Response } from 'express';
-import userModel from './db_models/userModel';
+import express, { Application } from 'express';
 import cors from 'cors';
+import apiRoutes from './routes/api'; // Collects all API routes
 
 const app: Application = express();
 
@@ -8,30 +8,7 @@ const app: Application = express();
 app.use(cors());
 app.use(express.json());
 
-// Root Route
-app.get('/', async (req: Request, res: Response) => {
-  try {
-    // SANITY TESTING INIT DEV
-    const files = await StorageService.listAllFiles(); // Assuming this returns file names
-    const users = await userModel.getAll();
-    const newUser = await userModel.create({
-      username: 'test_user_z',
-    });
-    res.send({
-      message: 'Welcome to the Express server!',
-      files,
-      users: users,
-      newUser: newUser,
-    });
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// Routes
-import apiRoutes from './routes/api';
-import StorageService from './storage';
+// Mount API Routes under `/api`
 app.use('/api', apiRoutes);
 
 export default app;
