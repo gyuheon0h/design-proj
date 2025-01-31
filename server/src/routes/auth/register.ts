@@ -3,7 +3,7 @@ import userModel from '../../db_models/UserModel';
 
 const router = Router();
 
-/** ✅ Register API */
+/** Register API */
 router.post('/', async (req: Request, res: Response) => {
   try {
     const { username, email, passwordHash } = req.body;
