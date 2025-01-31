@@ -1,11 +1,11 @@
 import Divider from '@mui/material/Divider';
 import SearchBar from '../components/SearchBar';
 
-const Shared = () => {
+const Favorites = () => {
   return (
     <div style={{ padding: '20px' }}>
-      <h1>Shared With Me:</h1>
-      <SearchBar location="Shared" />
+      <h1>Your Favorites:</h1>
+      <SearchBar location="Favorites" />
       <h2>Folder</h2>
       <Divider></Divider>
       <h2>Files</h2>
@@ -13,4 +13,4 @@ const Shared = () => {
   );
 };
 
-export default Shared;
+export default Favorites;
