@@ -1,16 +1,62 @@
-import {
-  Drawer,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemButton,
-  ListItemIcon,
-  Typography,
-  Box
-} from '@mui/material';
+import * as React from 'react';
+import Box from '@mui/material/Box';
+import Avatar from '@mui/material/Avatar';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import LogoutIcon from '@mui/icons-material/ExitToApp';
+import { Drawer, List, ListItem, ListItemText, ListItemButton, ListItemIcon as DrawerListItemIcon, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
 import PeopleIcon from '@mui/icons-material/People';
+
+const AccountMenu = () => {
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  return (
+    <React.Fragment>
+      <Tooltip title="Account settings">
+        <IconButton
+          onClick={handleClick}
+          size="small"
+          sx={{ ml: 2 }}
+          aria-controls={open ? 'account-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={open ? 'true' : undefined}
+        >
+          <Avatar sx={{ width: 32, height: 32 }}>M</Avatar>
+        </IconButton>
+      </Tooltip>
+      <Menu
+        anchorEl={anchorEl}
+        id="account-menu"
+        open={open}
+        onClose={handleClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
+        sx={{ mt: -6 }}
+      >
+        <MenuItem onClick={handleClose} sx={{ color: 'red' }}>
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" sx={{ color: 'red' }} />
+          </ListItemIcon>
+          Logout
+        </MenuItem>
+      </Menu>
+    </React.Fragment>
+  );
+};
 
 const NavigationDrawer = () => {
   return (
@@ -28,11 +74,10 @@ const NavigationDrawer = () => {
         },
       }}
     >
-      {/* Logo  */}
       <Box sx={{ padding: '20px 16px', display: 'flex', alignItems: 'center' }}>
-      <Box
+        <Box
           component="img"
-          src="/owl_icon.png" 
+          src="/owl_icon.png"
           alt="Owl Logo"
           sx={{ width: 32, height: 32, marginRight: 1 }}
         />
@@ -61,9 +106,9 @@ const NavigationDrawer = () => {
               },
             }}
           >
-            <ListItemIcon>
+            <DrawerListItemIcon>
               <HomeIcon sx={{ color: '#0056b3' }} />
-            </ListItemIcon>
+            </DrawerListItemIcon>
             <ListItemText
               primary="Home"
               primaryTypographyProps={{
@@ -92,9 +137,9 @@ const NavigationDrawer = () => {
               },
             }}
           >
-            <ListItemIcon>
+            <DrawerListItemIcon>
               <PeopleIcon sx={{ color: '#0056b3' }} />
-            </ListItemIcon>
+            </DrawerListItemIcon>
             <ListItemText
               primary="Shared With Me"
               primaryTypographyProps={{
@@ -105,6 +150,11 @@ const NavigationDrawer = () => {
           </ListItemButton>
         </ListItem>
       </List>
+
+      {/* Avatar with logout functionality */}
+      <Box sx={{ mt: 'auto', padding: '10px' }}>
+        <AccountMenu />
+      </Box>
     </Drawer>
   );
 };
