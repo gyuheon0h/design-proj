@@ -8,7 +8,7 @@ const Home = () => {
     <div style={{ padding: '20px' }}>
       <h1>Your File Storage:</h1>
       <SearchBar location="Storage" />
-      <h2>Folder</h2>
+      <h2>Folders</h2>
       {/* <FileContainer></FileContainer> */}
       <Divider></Divider>
       <h2>Files</h2>

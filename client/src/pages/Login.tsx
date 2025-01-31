@@ -7,7 +7,7 @@ import {
   TextField,
   Button,
   Box,
-  Link
+  Link,
 } from '@mui/material';
 
 const Login = () => {
@@ -30,17 +30,17 @@ const Login = () => {
       <Box
         sx={{
           marginTop: 8,
-          display: "flex", 
-          flexDirection: "column",
-          alignItems: "center",
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
         }}
       >
-        <Paper elevation={3} sx={{ p: 4, width: "100%"}}>
+        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
           <Typography component="h1" variant="h5" align="center" gutterBottom>
             Welcome to Owl Share!
-          </Typography> 
+          </Typography>
 
-          <Box component="form" onSubmit={handleLogin} sx={{ mt: 1}}>
+          <Box component="form" onSubmit={handleLogin} sx={{ mt: 1 }}>
             <TextField
               margin="normal"
               required
@@ -75,11 +75,10 @@ const Login = () => {
             </Button>
             <Box sx={{ textAlign: 'center' }}>
               <Link href="/register" variant="body2">
-                {"New user? Register here"}
+                {'New user? Register here'}
               </Link>
             </Box>
           </Box>
-
         </Paper>
       </Box>
     </Container>
@@ -87,4 +86,3 @@ const Login = () => {
 };
 
 export default Login;
-
