@@ -14,6 +14,7 @@ import PeopleIcon from '@mui/icons-material/People';
 
 const AccountMenu = () => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [username, setUsername] = React.useState<string>('JohnDoe'); 
   const open = Boolean(anchorEl);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -35,7 +36,7 @@ const AccountMenu = () => {
           aria-haspopup="true"
           aria-expanded={open ? 'true' : undefined}
         >
-          <Avatar sx={{ width: 32, height: 32 }}>M</Avatar>
+          <Avatar sx={{ width: 32, height: 32 }}>{username.charAt(0).toUpperCase()}</Avatar>
         </IconButton>
       </Tooltip>
       <Menu
@@ -47,6 +48,11 @@ const AccountMenu = () => {
         anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
         sx={{ mt: -6 }}
       >
+        <MenuItem onClick={handleClose}>
+          <Typography variant="body2" sx={{ mr: 1 }}>
+            Logged in as: {username}
+          </Typography>
+        </MenuItem>
         <MenuItem onClick={handleClose} sx={{ color: 'red' }}>
           <ListItemIcon>
             <LogoutIcon fontSize="small" sx={{ color: 'red' }} />
