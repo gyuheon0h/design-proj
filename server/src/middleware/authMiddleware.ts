@@ -1,21 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import BaseModel from '../db_models/baseModel';
-
-interface Session {
-  id: string;
-  userId: string;
-  token: string;
-  expiresAt: Date;
-}
-
-interface User {
-  id: string;
-  username: string;
-}
-
-// instatiate models
-const sessionModel = new BaseModel<Session>('Session');
-const userModel = new BaseModel<User>('User');
+import SessionModel from '../db_models/SessionModel';
+import UserModel from '../db_models/UserModel';
 
 declare global {
   namespace Express {
@@ -39,14 +24,14 @@ export const authenticateUser = async (
     }
 
     // fetch session using token
-    const session = await sessionModel.getAllByColumn('token', token);
-    if (!session.length || new Date(session[0].expiresAt) < new Date()) {
+    const session = await SessionModel.getSessionByToken(token);
+    if (!session || new Date(session.expiresAt) < new Date()) {
       return res
         .status(401)
         .json({ error: 'Unauthorized: Invalid or expired token' });
     }
 
-    const user = await userModel.getById(session[0].userId);
+    const user = await UserModel.getById(session.userId);
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized: User not found' });
     }
