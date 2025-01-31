@@ -15,6 +15,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
+  // will be called on submit of form (not when clicking button ... prob no diff)
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -22,7 +23,8 @@ const Login = () => {
 
     // TODO: add actual authentication
 
-    navigate('/home');
+    
+    // navigate('/home');
   };
 
   return (
