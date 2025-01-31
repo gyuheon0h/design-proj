@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import registerRoute from './auth/register';
-import protectedRoutes from './auth/protectedRoutes';
+import loginRoute from './auth/login';
 
 const router = Router();
 
 // Collect all API routes
-router.use('/register', registerRoute); // Accessible at /api/register
+router.use('/register', registerRoute);
+router.use('/login', loginRoute);
 
-// add additional protected API routes (routes that require sign-in)
-router.use('/u', protectedRoutes);
+// Protected routes
 
 export default router;

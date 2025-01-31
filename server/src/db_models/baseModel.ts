@@ -11,7 +11,7 @@ class BaseModel<T> {
   // Get all records (excluding soft-deleted ones)
   async getAll(): Promise<T[]> {
     const result = await pool.query(
-      `SELECT * FROM "${this.table}" WHERE deletedAt IS NULL`,
+      `SELECT * FROM "${this.table}" WHERE "deletedAt" IS NULL`,
     );
     return result.rows as T[];
   }
@@ -19,7 +19,7 @@ class BaseModel<T> {
   // Get a record by ID (excluding soft-deleted ones)
   async getById(id: string): Promise<T | null> {
     const result = await pool.query(
-      `SELECT * FROM "${this.table}" WHERE id = $1 AND deletedAt IS NULL`,
+      `SELECT * FROM "${this.table}" WHERE id = $1 AND "deletedAt" IS NULL`,
       [id],
     );
     return (result.rows[0] as T) || null;
@@ -30,7 +30,7 @@ class BaseModel<T> {
     column: K,
     value: T[K],
   ): Promise<T[]> {
-    const query = `SELECT * FROM "${this.table}" WHERE ${String(column)} = $1 AND deletedAt IS NULL`;
+    const query = `SELECT * FROM "${this.table}" WHERE ${String(column)} = $1 AND "deletedAt" IS NULL`;
     const result = await pool.query(query, [value]);
     return result.rows as T[];
   }
@@ -59,7 +59,7 @@ class BaseModel<T> {
 
     const setClause = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
 
-    const query = `UPDATE "${this.table}" SET ${setClause} WHERE id = $${keys.length + 1} AND deletedAt IS NULL RETURNING *;`;
+    const query = `UPDATE "${this.table}" SET ${setClause} WHERE id = $${keys.length + 1} AND "deletedAt" IS NULL RETURNING *;`;
     const result = await pool.query(query, [...values, id]);
 
     return (result.rows[0] as T) || null;
@@ -68,7 +68,7 @@ class BaseModel<T> {
   // Soft delete a record by setting deletedAt to NOW()
   async softDelete(id: string): Promise<boolean> {
     const result = await pool.query(
-      `UPDATE "${this.table}" SET deletedAt = NOW() WHERE id = $1 RETURNING id`,
+      `UPDATE "${this.table}" SET "deletedAt" = NOW() WHERE id = $1 RETURNING id`,
       [id],
     );
     return (result.rowCount ?? 0) > 0;
@@ -77,7 +77,7 @@ class BaseModel<T> {
   // Restore a soft-deleted record by setting deletedAt to NULL
   async restore(id: string): Promise<boolean> {
     const result = await pool.query(
-      `UPDATE "${this.table}" SET deletedAt = NULL WHERE id = $1 RETURNING id`,
+      `UPDATE "${this.table}" SET "deletedAt" = NULL WHERE id = $1 RETURNING id`,
       [id],
     );
     return (result.rowCount ?? 0) > 0;
