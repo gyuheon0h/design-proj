@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Paper, Typography, TextField, Button, Box, Link } from '@mui/material';
+import SHA256 from 'crypto-js/sha256';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -11,13 +12,15 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch('https//:localhost:5001/api/login', {
+      // Hash password before sending
+      const hashedPassword = SHA256(password).toString();
+      const response = await fetch('http://localhost:5001/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Include cookies if needed (for secure session handling)
-        body: JSON.stringify({ username, password }),
+        credentials: 'include', // Include cookies if needed (for secure session handling
+        body: JSON.stringify({ username, passwordHash: hashedPassword }),
       });
 
       if (response.ok) {
