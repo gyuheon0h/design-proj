@@ -6,7 +6,7 @@ import {
   ListItemButton,
   ListItemIcon,
   Typography,
-  Box
+  Box,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
@@ -30,9 +30,9 @@ const NavigationDrawer = () => {
     >
       {/* Logo  */}
       <Box sx={{ padding: '20px 16px', display: 'flex', alignItems: 'center' }}>
-      <Box
+        <Box
           component="img"
-          src="/owl_icon.png" 
+          src="/owl_icon.png"
           alt="Owl Logo"
           sx={{ width: 32, height: 32, marginRight: 1 }}
         />
