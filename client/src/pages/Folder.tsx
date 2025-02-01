@@ -14,8 +14,7 @@ const FolderPage = () => {
       {/* need to get convert to readable folder name */}
       <h2>Folders</h2>
       {/* <FileContainer></FileContainer> */}
-      <Divider></Divider>
-      <h2>Files</h2>
+      <Divider style={{ padding: '20px' }}></Divider> <h2>Files</h2>
       {/* <FolderContainer></FolderContainer> */}
     </div>
   );

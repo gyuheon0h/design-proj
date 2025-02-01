@@ -7,8 +7,7 @@ const Favorites = () => {
       <h1>Your Favorites:</h1>
       <SearchBar location="Favorites" />
       <h2>Folders</h2>
-      <Divider></Divider>
-      <h2>Files</h2>
+      <Divider style={{ padding: '20px' }}></Divider> <h2>Files</h2>
     </div>
   );
 };

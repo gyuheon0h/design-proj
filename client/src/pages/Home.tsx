@@ -20,7 +20,7 @@ const Home = () => {
         fileChildren={[]}
       />
       {/* <FileContainer></FileContainer> */}
-      <Divider></Divider>
+      <Divider style={{ padding: '20px' }}></Divider>
       <h2>Files</h2>
       {/* <FolderContainer></FolderContainer> */}
     </div>
