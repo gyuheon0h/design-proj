@@ -5,7 +5,11 @@ import apiRoutes from './routes/api'; // Collects all API routes
 const app: Application = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000',  // Allow requests from React frontend
+    credentials: true,  // Allow cookies to be sent with requests
+  }));
+  
 app.use(express.json());
 
 // Mount API Routes under `/api`
