@@ -8,15 +8,17 @@ import {
   Button,
   Box,
 } from '@mui/material';
+import axios from 'axios';
+
 
 const Register = () => {
-  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
@@ -25,11 +27,35 @@ const Register = () => {
       return;
     }
 
-    console.log('Registering with:', { name, email, password });
+    console.log('Registering with:', { name: username, email, password });
 
     // TODO: handle actual registration logic
 
-    navigate('/home');
+    try {
+        const passwordHash = password; // TODO: actually hash it. just doing this now
+        // so it's consistent with the backend
+
+        // TODO: change endpoint to not raw string
+        const response = await axios.post('http://localhost:5001/api/register', 
+          {username, email, passwordHash},
+          {
+            withCredentials: true,  // Send cookies automatically
+          }        
+        );
+
+    
+        if (response.status === 201) {
+          console.log("successful registration " + response.data);
+          navigate('/home');
+        } else {
+            const errorData = await response;
+            alert(`Error: ${errorData}`);
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        alert('An unexpected error occurred.');
+      }
+    
   };
 
   return (
@@ -61,19 +87,19 @@ const Register = () => {
             margin="normal"
             required
             fullWidth
-            id="name"
-            label="Username"
-            name="name"
+            id="username"
+            label="username"
+            name="username"
             autoComplete="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
           />
           <TextField
             margin="normal"
             required
             fullWidth
             id="email"
-            label="Email"
+            label="email"
             name="email"
             autoComplete="email"
             value={email}
@@ -84,7 +110,7 @@ const Register = () => {
             required
             fullWidth
             name="password"
-            label="Password"
+            label="password"
             type="password"
             id="password"
             autoComplete="new-password"
