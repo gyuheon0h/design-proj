@@ -91,7 +91,9 @@ const Home = () => {
 
       <Divider style={{ padding: '20px' }} />
 
-      <h2>Files</h2>
+      {/* <h2>Files</h2> */} 
+      {/* can change later, but i commented out the above so i can put Files in file Container so 
+      upload button is on the same line. */}
       <FileContainer files={sampleFiles} />  
     </div>
   );
