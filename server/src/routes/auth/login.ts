@@ -4,10 +4,10 @@ import dotenv from 'dotenv';
 import userModel from '../../db_models/UserModel';
 
 dotenv.config();
-const router = Router();
+const loginRouter = Router();
 
 /** Login API */
-router.post('/', async (req: Request, res: Response) => {
+loginRouter.post('/', async (req: Request, res: Response) => {
   try {
     const { username, passwordHash } = req.body;
 
@@ -32,7 +32,7 @@ router.post('/', async (req: Request, res: Response) => {
 
     res.cookie('authToken', token, {
       httpOnly: true, // dont expose token
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // Update this later
       sameSite: 'strict',
       maxAge: 24 * 60 * 60 * 1000, // 1 day expiry
     });
@@ -44,4 +44,4 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-export default router;
+export default loginRouter;
