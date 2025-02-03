@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', async (req: Request, res: Response) => {
   try {
     const files = await StorageService.listAllFiles(); // Assuming this returns file names
-    const rows = await query('SELECT * FROM users'); // Fetch rows from the database
+    const rows = await query('SELECT * FROM "User"'); // Fetch rows from the database
     res.send({
       message: 'Welcome to the Express server!',
       files,
