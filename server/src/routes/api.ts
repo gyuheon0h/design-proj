@@ -1,13 +1,16 @@
 import { Router } from 'express';
-import registerRoute from './auth/register';
-import loginRoute from './auth/login';
+import registerRouter from './auth/register';
+import loginRouter from './auth/login';
+import fileRouter from './files/files';
+import folderRouter from './folders/folders';
 
 const router = Router();
 
 // Collect all API routes
-router.use('/register', registerRoute);
-router.use('/login', loginRoute);
+router.use('/register', registerRouter);
+router.use('/login', loginRouter);
 
 // Protected routes
-
+router.use('/', fileRouter);
+router.use('/', folderRouter);
 export default router;
