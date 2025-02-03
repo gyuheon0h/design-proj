@@ -32,13 +32,12 @@ const Register = () => {
     // TODO: handle actual registration logic
 
     try {
-        const passwordHash = password + ""; // TODO: actually hash it. just doing this now
+        const passwordHash = password; // TODO: actually hash it. just doing this now
         // so it's consistent with the backend
 
-        const body = {username, email, passwordHash}
         // TODO: change endpoint to not raw string
         const response = await axios.post('http://localhost:5001/api/register', 
-          body,
+          {username, email, passwordHash},
           {
             withCredentials: true,  // Send cookies automatically
           }        
