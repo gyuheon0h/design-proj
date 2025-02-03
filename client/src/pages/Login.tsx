@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Paper, Typography, TextField, Button, Box, Link } from '@mui/material';
 import SHA256 from 'crypto-js/sha256';
+import {
+  Container,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Box,
+  Link
+} from '@mui/material';
 
 const Login = () => {
   const [username, setUsername] = useState('');

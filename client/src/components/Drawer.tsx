@@ -1,16 +1,19 @@
-import * as React from 'react';
-import Box from '@mui/material/Box';
-import Avatar from '@mui/material/Avatar';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import LogoutIcon from '@mui/icons-material/ExitToApp';
-import { Drawer, List, ListItem, ListItemText, ListItemButton, ListItemIcon as DrawerListItemIcon, Typography } from '@mui/material';
+import {
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemButton,
+  ListItemIcon,
+  Typography,
+  Box,
+  Avatar
+} from '@mui/material';
 import { Link } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
 import PeopleIcon from '@mui/icons-material/People';
+import StarIcon from '@mui/icons-material/Star';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const AccountMenu = () => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -125,6 +128,38 @@ const NavigationDrawer = () => {
           </ListItemButton>
         </ListItem>
 
+        {/* Favorites */}
+        <ListItem disablePadding>
+          <ListItemButton
+            component={Link}
+            to="/favorites"
+            sx={{
+              border: '2px solid #b3d1ff',
+              borderRadius: '12px',
+              padding: '10px 16px',
+              marginBottom: '10px',
+              '&:hover': {
+                backgroundColor: '#e0f2ff',
+              },
+              '&.Mui-selected': {
+                backgroundColor: '#dce9ff',
+                borderColor: '#0056b3',
+              },
+            }}
+          >
+            <ListItemIcon>
+              <StarIcon sx={{ color: '#0056b3' }} />
+            </ListItemIcon>
+            <ListItemText
+              primary="Favorites"
+              primaryTypographyProps={{
+                fontWeight: 600,
+                color: '#0056b3',
+              }}
+            />
+          </ListItemButton>
+        </ListItem>
+
         {/* Shared With Me */}
         <ListItem disablePadding>
           <ListItemButton
@@ -134,6 +169,7 @@ const NavigationDrawer = () => {
               border: '2px solid #b3d1ff',
               borderRadius: '12px',
               padding: '10px 16px',
+              marginBottom: '10px',
               '&:hover': {
                 backgroundColor: '#e0f2ff',
               },
@@ -148,6 +184,38 @@ const NavigationDrawer = () => {
             </DrawerListItemIcon>
             <ListItemText
               primary="Shared With Me"
+              primaryTypographyProps={{
+                fontWeight: 600,
+                color: '#0056b3',
+              }}
+            />
+          </ListItemButton>
+        </ListItem>
+
+        {/* Trash */}
+        <ListItem disablePadding>
+          <ListItemButton
+            component={Link}
+            to="/trash"
+            sx={{
+              border: '2px solid #b3d1ff',
+              borderRadius: '12px',
+              padding: '10px 16px',
+              marginBottom: '10px',
+              '&:hover': {
+                backgroundColor: '#e0f2ff',
+              },
+              '&.Mui-selected': {
+                backgroundColor: '#dce9ff',
+                borderColor: '#0056b3',
+              },
+            }}
+          >
+            <ListItemIcon>
+              <DeleteIcon sx={{ color: '#0056b3' }} />
+            </ListItemIcon>
+            <ListItemText
+              primary="Trash"
               primaryTypographyProps={{
                 fontWeight: 600,
                 color: '#0056b3',
