@@ -31,12 +31,14 @@ class BaseModel<T> {
     value: T[K],
   ): Promise<T[]> {
     const query = `SELECT * FROM "${this.table}" WHERE "${String(column)}" = $1 AND "deletedAt" IS NULL`;
+    console.log("query from getALLBYCOLUMN", query)
     const result = await pool.query(query, [value]);
     return result.rows as T[];
   }
 
   // Create a new record
   async create(data: Partial<T>): Promise<T> {
+    console.log("entered create")
     // Wrap each column name in double quotes
     const keys = Object.keys(data)
       .map((key) => `"${key}"`)
@@ -46,7 +48,7 @@ class BaseModel<T> {
     const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
 
     const query = `INSERT INTO "${this.table}" (${keys}) VALUES (${placeholders}) RETURNING *;`;
-
+    console.log("query: ", query)
     const result = await pool.query(query, values);
     return result.rows[0] as T;
   }
