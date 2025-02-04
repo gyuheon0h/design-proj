@@ -34,6 +34,11 @@ class FolderModel extends BaseModel<Folder> {
   async restoreFolder(id: string): Promise<boolean> {
     return await this.restore(id);
   }
+
+  // Create a folder
+  async createFolder(data: Omit<Folder, 'id'>): Promise<Folder> {
+    return await this.create(data);
+  }
 }
 
 export default new FolderModel();
