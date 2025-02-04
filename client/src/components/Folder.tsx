@@ -24,17 +24,24 @@ const Folder = (prop: FolderProp) => {
   const open = Boolean(anchorEl);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation(); // Prevent folder click when opening menu
     setAnchorEl(event.currentTarget);
   };
 
-  const handleOptionsClose = () => {
+  const handleOptionsClose = (event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent click from propagating to Folder click
     setAnchorEl(null);
+  };
+
+  const handleFolderClick = () => {
+    prop.onClick(prop); // Trigger onClick from props when folder is clicked
   };
 
   return (
     <Box
       className="folder"
       data-folder-id={prop.id}
+      onClick={handleFolderClick} // Handle folder click
       sx={{
         position: 'relative',
         width: '150px',

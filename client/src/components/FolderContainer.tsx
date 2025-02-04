@@ -8,11 +8,13 @@ import axios from 'axios';
 interface FolderContainerProps {
   folders: FolderProp[];
   onFolderClick: (folder: FolderProp) => void;
+  currentFolderId: string | null;
 }
 
 const FolderContainer: React.FC<FolderContainerProps> = ({
   folders,
   onFolderClick,
+  currentFolderId,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -95,6 +97,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
       <FolderDialog
         open={open}
         onClose={handleClose}
+        currentFolderId={currentFolderId}
         onFolderCreate={handleCreateFolder}
       />
     </div>

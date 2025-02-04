@@ -11,11 +11,13 @@ import {
 interface FolderDialogProps {
   open: boolean;
   onClose: () => void;
+  currentFolderId: string | null;
   onFolderCreate: (folderName: string, parentFolder: string | null) => void;
 }
 
 const FolderDialog: React.FC<FolderDialogProps> = ({
   open,
+  currentFolderId,
   onClose,
   onFolderCreate,
 }) => {
@@ -23,7 +25,7 @@ const FolderDialog: React.FC<FolderDialogProps> = ({
 
   const handleCreate = () => {
     if (folderName.trim()) {
-      onFolderCreate(folderName, null); // Pass null for parentFolder for now
+      onFolderCreate(folderName, currentFolderId);
       setFolderName('');
       onClose();
     }

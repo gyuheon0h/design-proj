@@ -36,8 +36,13 @@ const Home = () => {
   };
 
   const handleFolderClick = (folder: FolderProp) => {
+    console.log('clicked');
+    setBreadcrumbs((prevBreadcrumbs) => [
+      ...prevBreadcrumbs,
+      { id: folder.id, name: folder.name },
+    ]);
+
     setCurrentFolderId(folder.id);
-    setBreadcrumbs([...breadcrumbs, { id: folder.id, name: folder.name }]);
   };
 
   const handleBreadcrumbClick = (index: number) => {
@@ -69,7 +74,11 @@ const Home = () => {
 
       {/* Folders Section */}
       <div style={{ marginLeft: '10px' }}>
-        <FolderContainer folders={folders} onFolderClick={handleFolderClick} />
+        <FolderContainer
+          folders={folders}
+          onFolderClick={handleFolderClick}
+          currentFolderId={currentFolderId}
+        />
       </div>
 
       <Divider style={{ margin: '20px 0' }} />
