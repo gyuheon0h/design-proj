@@ -14,7 +14,7 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const hashedPassword = "password"; //SHA256(password).toString();
+      const hashedPassword = SHA256(password).toString();
       const response = await fetch('http://localhost:5001/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
