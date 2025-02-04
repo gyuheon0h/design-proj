@@ -74,7 +74,7 @@ const FileContainer: React.FC<FileContainerProps> = ({ files }) => {
             }
           }}
         >
-          + Upload
+          + Create
         </Button>
       </div>
 
