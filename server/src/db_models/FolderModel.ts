@@ -20,9 +20,24 @@ class FolderModel extends BaseModel<Folder> {
     return await this.getAllByColumn('owner', ownerId);
   }
 
-  // Get all subfolders of a folder
-  async getSubfolders(parentFolderId: string): Promise<Folder[]> {
-    return await this.getAllByColumn('parentFolder', parentFolderId);
+  /**
+   * Get all subfolders of a folder for a specific user
+   * @param ownerId
+   * @param parentFolderId
+   * @returns
+   */
+  async getSubfolders(
+    ownerId: string,
+    parentFolderId: string | null,
+  ): Promise<Folder[]> {
+    if (parentFolderId === null) {
+      return await this.getAllByOwnerAndColumnNull(ownerId, 'parentFolder');
+    }
+    return await this.getAllByOwnerAndColumn(
+      ownerId,
+      'parentFolder',
+      parentFolderId,
+    );
   }
 
   // Soft delete a folder

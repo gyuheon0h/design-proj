@@ -31,15 +31,34 @@ class BaseModel<T> {
     value: T[K],
   ): Promise<T[]> {
     const query = `SELECT * FROM "${this.table}" WHERE "${String(column)}" = $1 AND "deletedAt" IS NULL`;
-    console.log("query from getALLBYCOLUMN", query)
+    console.log('query from getALLBYCOLUMN', query);
     const result = await pool.query(query, [value]);
+    return result.rows as T[];
+  }
+
+  // Get records for a certain owner where a column condition is met
+  async getAllByOwnerAndColumn<K extends keyof T>(
+    ownerId: string,
+    column: K,
+    value: T[K],
+  ): Promise<T[]> {
+    const query = `SELECT * FROM "${this.table}" WHERE "owner" = $1 AND "${String(column)}" = $2 AND "deletedAt" IS NULL`;
+    const result = await pool.query(query, [ownerId, value]);
+    return result.rows as T[];
+  }
+
+  // Get records for a certain owner where a column condition is met
+  async getAllByOwnerAndColumnNull<K extends keyof T>(
+    ownerId: string,
+    column: K,
+  ): Promise<T[]> {
+    const query = `SELECT * FROM "${this.table}" WHERE "owner" = $1 AND "${String(column)}" IS NULL AND "deletedAt" IS NULL`;
+    const result = await pool.query(query, [ownerId]);
     return result.rows as T[];
   }
 
   // Create a new record
   async create(data: Partial<T>): Promise<T> {
-    console.log("entered create")
-    // Wrap each column name in double quotes
     const keys = Object.keys(data)
       .map((key) => `"${key}"`)
       .join(', ');
@@ -48,7 +67,7 @@ class BaseModel<T> {
     const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
 
     const query = `INSERT INTO "${this.table}" (${keys}) VALUES (${placeholders}) RETURNING *;`;
-    console.log("query: ", query)
+    console.log('query: ', query);
     const result = await pool.query(query, values);
     return result.rows[0] as T;
   }

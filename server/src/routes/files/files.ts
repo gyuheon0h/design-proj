@@ -1,8 +1,23 @@
 import { Router } from 'express';
-import { authorize } from '../../middleware/authorize';
+import { AuthenticatedRequest, authorize } from '../../middleware/authorize';
 import FileModel from '../../db_models/FileModel';
 
 const fileRouter = Router();
+
+fileRouter.get('/root', authorize, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const userId = req.user.userId;
+    const files = await FileModel.getFilesByOwnerAndFolder(userId, null);
+    return res.json(files);
+  } catch (error) {
+    console.error('Error getting root folder files:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 /**
  * GET /api/files/owner/:ownerId
@@ -31,16 +46,24 @@ fileRouter.get('/owner/:ownerId', authorize, async (req, res) => {
  * Route to get files in a certain folder.
  * this is also protected by authorize
  */
-fileRouter.get('/folder/:folderId', authorize, async (req, res) => {
-  try {
-    const { folderId } = req.params;
+fileRouter.get(
+  '/folder/:folderId',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { folderId } = req.params;
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-    const files = await FileModel.getFilesByFolder(folderId);
-    return res.json(files);
-  } catch (error) {
-    console.error('Error getting files by folder:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+      const userId = req.user.userId;
+      const files = await FileModel.getFilesByOwnerAndFolder(userId, folderId);
+      return res.json(files);
+    } catch (error) {
+      console.error('Error getting files by folder:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
 
 export default fileRouter;
