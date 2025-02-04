@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { theme } from './Styles';
 import App from './App';
+import { UserProvider } from './context/UserContext';
 import './index.css';
 
 const root = ReactDOM.createRoot(
@@ -14,7 +15,9 @@ root.render(
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <BrowserRouter>
-        <App />
+      <UserProvider>
+          <App />
+      </UserProvider>
       </BrowserRouter>
     </ThemeProvider>
   </React.StrictMode>,

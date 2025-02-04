@@ -7,8 +7,12 @@ import {
   TextField,
   Button,
   Box,
+  Snackbar,
+  AlertColor,
+  Alert,
 } from '@mui/material';
 import axios from 'axios';
+import SHA256 from 'crypto-js/sha256';
 
 
 const Register = () => {
@@ -16,7 +20,22 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [openAlert, setOpenAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertSeverity, setAlertSeverity] = useState<AlertColor>('success');
   const navigate = useNavigate();
+
+
+
+  const handleCloseAlert = () => {
+    setOpenAlert(false);
+  };
+
+  const showAlert = (message: string, severity: AlertColor) => {
+    setAlertMessage(message);
+    setAlertSeverity(severity);
+    setOpenAlert(true);
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,8 +51,7 @@ const Register = () => {
     // TODO: handle actual registration logic
 
     try {
-        const passwordHash = password; // TODO: actually hash it. just doing this now
-        // so it's consistent with the backend
+        const passwordHash = SHA256(password).toString(); // hashed password
 
         // TODO: change endpoint to not raw string
         const response = await axios.post('http://localhost:5001/api/register', 
@@ -46,7 +64,8 @@ const Register = () => {
     
         if (response.status === 201) {
           console.log("successful registration " + response.data);
-          navigate('/home');
+          showAlert("Successfully registered! You will now be redirected to login.", 'success');
+          navigate('/');
         } else {
             const errorData = await response;
             alert(`Error: ${errorData}`);
@@ -143,6 +162,22 @@ const Register = () => {
           </Button>
         </Box>
       </Paper>
+      <Snackbar 
+        open={openAlert} 
+        autoHideDuration={6000} 
+        onClose={handleCloseAlert}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseAlert} 
+          severity={alertSeverity}
+          sx={{ width: '100%' }}
+          elevation={6}
+          variant="filled"
+        >
+          {alertMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };
