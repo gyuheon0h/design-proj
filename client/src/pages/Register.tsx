@@ -14,6 +14,7 @@ import {
 import axios from 'axios';
 import SHA256 from 'crypto-js/sha256';
 
+
 const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');

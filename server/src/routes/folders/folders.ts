@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authorize } from '../../middleware/authorize';
 import FolderModel from '../../db_models/FolderModel';
+import { AuthenticatedRequest } from '../../middleware/authorize';
 
 const folderRouter = Router();
 
@@ -8,13 +9,60 @@ const folderRouter = Router();
  * GET /api/folders/parent/:folderId
  * Protected route to get subfolders of a specific folder.
  */
-folderRouter.get('/parent/:folderId', authorize, async (req, res) => {
+folderRouter.get(
+  '/parent/:folderId',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { folderId } = req.params;
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const userId = req.user.userId;
+      const subfolders = await FolderModel.getSubfolders(userId, folderId);
+      return res.json(subfolders);
+    } catch (error) {
+      console.error('Error getting subfolders:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
+/**
+ * POST /api/folders/create
+ * Protected route to create a new folder.
+ * TODO: make this authorized
+ */
+folderRouter.post('/create', async (req, res) => {
   try {
-    const { folderId } = req.params;
-    const subfolders = await FolderModel.getSubfolders(folderId);
-    return res.json(subfolders);
+    const {
+      name,
+      owner,
+      parentFolder,
+      folderChildren: reqFolderChildren,
+      fileChildren: reqFileChildren,
+    } = req.body;
+
+    const folderChildren = reqFolderChildren || [];
+    const fileChildren = reqFileChildren || [];
+
+    // Validate required fields
+    if (!name || !owner) {
+      return res.status(400).json({ error: 'Name and owner are required' });
+    }
+
+    const newFolder = await FolderModel.createFolder({
+      name,
+      owner,
+      createdAt: new Date(),
+      parentFolder: parentFolder || null,
+      folderChildren: folderChildren,
+      fileChildren: fileChildren,
+    });
+
+    return res.status(201).json(newFolder);
   } catch (error) {
-    console.error('Error getting subfolders:', error);
+    console.error('Error creating folder:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });

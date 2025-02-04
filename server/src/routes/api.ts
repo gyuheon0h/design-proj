@@ -11,6 +11,6 @@ router.use('/register', registerRouter);
 router.use('/login', loginRouter);
 
 // Protected routes
-router.use('/', fileRouter);
-router.use('/', folderRouter);
+router.use('/file', fileRouter);
+router.use('/folder', folderRouter);
 export default router;
