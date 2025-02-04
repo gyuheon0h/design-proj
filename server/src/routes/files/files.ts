@@ -9,7 +9,7 @@ const fileRouter = Router();
  * Route to get files owned by a certain user (ownerId).
  * This is protected by authorize
  */
-fileRouter.get('/files/owner/:ownerId', authorize, async (req, res) => {
+fileRouter.get('/owner/:ownerId', authorize, async (req, res) => {
   try {
     const { ownerId } = req.params;
 
@@ -31,7 +31,7 @@ fileRouter.get('/files/owner/:ownerId', authorize, async (req, res) => {
  * Route to get files in a certain folder.
  * this is also protected by authorize
  */
-fileRouter.get('/files/folder/:folderId', authorize, async (req, res) => {
+fileRouter.get('/folder/:folderId', authorize, async (req, res) => {
   try {
     const { folderId } = req.params;
 
