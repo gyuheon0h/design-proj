@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import {
   Dialog,
   DialogActions,
@@ -71,7 +70,10 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
       </DialogContent>
       <DialogActions>
         <Button
-          onClick={() => (setNewFileName(''), onClose())}
+          onClick={() => {
+            setNewFileName('');
+            onClose();
+          }}
           sx={{ fontFamily: typography.fontFamily }}
         >
           Cancel

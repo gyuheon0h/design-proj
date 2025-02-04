@@ -1,100 +1,83 @@
+import React, { useState, useEffect } from 'react';
 import SearchBar from '../components/SearchBar';
-import Folder from '../components/Folder';
-import FileContainer from '../components/FileContainer';  
+import { FolderProp } from '../components/Folder';
+import FileContainer from '../components/FileContainer';
 import Divider from '@mui/material/Divider';
-
-const sampleFiles = [
-  {
-    id: 'file-1',
-    name: 'Project Proposal.pdf',
-    owner: 'Alice',
-    createdAt: new Date('2025-01-25'),
-    lastModifiedBy: 'Bob',
-    lastModifiedAt: new Date('2025-01-30'),
-    parentFolder: null,
-    gcsKey: 'key-1',
-    fileType: 'pdf',
-  },
-  {
-    id: 'file-2',
-    name: 'Data Analysis.csv',
-    owner: 'Jake',
-    createdAt: new Date('2025-01-20'),
-    lastModifiedBy: 'Jake',
-    lastModifiedAt: new Date('2025-01-28'),
-    parentFolder: null,
-    gcsKey: 'key-2',
-    fileType: 'csv',
-  },
-  {
-    id: 'file-3',
-    name: 'Meeting Notes.txt',
-    owner: 'Sophie',
-    createdAt: new Date('2025-01-15'),
-    lastModifiedBy: 'Ethan',
-    lastModifiedAt: new Date('2025-01-29'),
-    parentFolder: null,
-    gcsKey: 'key-3',
-    fileType: 'txt',
-  },
-  {
-    id: 'file-4',
-    name: 'Vacation Photo.jpg',
-    owner: 'Jake',
-    createdAt: new Date('2025-01-10'),
-    lastModifiedBy: 'Jake',
-    lastModifiedAt: new Date('2025-01-22'),
-    parentFolder: null,
-    gcsKey: 'key-4',
-    fileType: 'photo',
-  },
-  {
-    id: 'file-7',
-    name: 'Vacation Photo.jpg',
-    owner: 'Jake',
-    createdAt: new Date('2025-01-10'),
-    lastModifiedBy: 'Jake',
-    lastModifiedAt: new Date('2025-01-22'),
-    parentFolder: null,
-    gcsKey: 'key-4',
-    fileType: 'photo',
-  },
-  {
-    id: 'file-5',
-    name: 'Vacation Photo.jpg',
-    owner: 'Jake',
-    createdAt: new Date('2025-01-10'),
-    lastModifiedBy: 'Jake',
-    lastModifiedAt: new Date('2025-01-22'),
-    parentFolder: null,
-    gcsKey: 'key-4',
-    fileType: 'photo',
-  },
-];
+import axios from 'axios';
+import FolderContainer from '../components/FolderContainer';
 
 const Home = () => {
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null); // Root folder
+  const [folders, setFolders] = useState<FolderProp[]>([]);
+  const [files, setFiles] = useState([]);
+  const [breadcrumbs, setBreadcrumbs] = useState<
+    { id: string | null; name: string }[]
+  >([{ id: null, name: 'Root' }]);
+
+  useEffect(() => {
+    fetchData(currentFolderId);
+  }, [currentFolderId]);
+
+  const fetchData = async (folderId: string | null) => {
+    try {
+      const [foldersRes, filesRes] = await Promise.all([
+        axios.get(`http://localhost:5001/api/folder/parent/${folderId}`, {
+          withCredentials: true,
+        }),
+        axios.get(`http://localhost:5001/api/file/folder/${folderId}`, {
+          withCredentials: true,
+        }),
+      ]);
+      setFolders(foldersRes.data);
+      setFiles(filesRes.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const handleFolderClick = (folder: FolderProp) => {
+    setCurrentFolderId(folder.id);
+    setBreadcrumbs([...breadcrumbs, { id: folder.id, name: folder.name }]);
+  };
+
+  const handleBreadcrumbClick = (index: number) => {
+    const newBreadcrumbs = breadcrumbs.slice(0, index + 1);
+    setBreadcrumbs(newBreadcrumbs);
+    setCurrentFolderId(newBreadcrumbs[newBreadcrumbs.length - 1].id);
+  };
+  console.log('Current Folder ID:', currentFolderId);
+  console.log('Current Files', files);
+  console.log('Current Folders', folders);
+
   return (
     <div style={{ padding: '20px' }}>
       <h1>Your File Storage:</h1>
       <SearchBar location="Storage" />
 
-      <h2>Folders</h2>
-      <Folder
-        id="id"
-        name="Folder"
-        owner="Jake"
-        createdAt={new Date('2025-01-31')}
-        parentFolder={null}
-        folderChildren={[]}
-        fileChildren={[]}
-      />
+      {/* Breadcrumb Navigation */}
+      <div style={{ marginBottom: '10px' }}>
+        {breadcrumbs.map((crumb, index) => (
+          <span
+            key={crumb.id}
+            onClick={() => handleBreadcrumbClick(index)}
+            style={{ cursor: 'pointer', marginRight: '5px' }}
+          >
+            {crumb.name} {index < breadcrumbs.length - 1 ? '>' : ''}
+          </span>
+        ))}
+      </div>
 
-      <Divider style={{ padding: '20px' }} />
+      {/* Folders Section */}
+      <div style={{ marginLeft: '10px' }}>
+        <FolderContainer folders={folders} onFolderClick={handleFolderClick} />
+      </div>
 
-      {/* <h2>Files</h2> */} 
-      {/* can change later, but i commented out the above so i can put Files in file Container so 
-      upload button is on the same line. */}
-      <FileContainer files={sampleFiles} />  
+      <Divider style={{ margin: '20px 0' }} />
+
+      {/* Files Section */}
+      <div style={{ marginLeft: '10px' }}>
+        <FileContainer files={files} />
+      </div>
     </div>
   );
 };

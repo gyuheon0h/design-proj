@@ -42,8 +42,8 @@ class BaseModel<T> {
     column: K,
     value: T[K],
   ): Promise<T[]> {
-    const query = `SELECT * FROM "${this.table}" WHERE "owner" = $1 AND "${String(column)}" = $2 AND "deletedAt" IS NULL`;
-    const result = await pool.query(query, [ownerId, value]);
+    const query = `SELECT * FROM "${this.table}" WHERE "owner" = '${ownerId}' AND "${String(column)}" = $1 AND "deletedAt" IS NULL`;
+    const result = await pool.query(query, [value]);
     return result.rows as T[];
   }
 
@@ -52,8 +52,8 @@ class BaseModel<T> {
     ownerId: string,
     column: K,
   ): Promise<T[]> {
-    const query = `SELECT * FROM "${this.table}" WHERE "owner" = $1 AND "${String(column)}" IS NULL AND "deletedAt" IS NULL`;
-    const result = await pool.query(query, [ownerId]);
+    const query = `SELECT * FROM "${this.table}" WHERE "owner" = '${ownerId}' AND "${String(column)}" IS NULL AND "deletedAt" IS NULL`;
+    const result = await pool.query(query);
     return result.rows as T[];
   }
 
@@ -67,7 +67,6 @@ class BaseModel<T> {
     const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
 
     const query = `INSERT INTO "${this.table}" (${keys}) VALUES (${placeholders}) RETURNING *;`;
-    console.log('query: ', query);
     const result = await pool.query(query, values);
     return result.rows[0] as T;
   }

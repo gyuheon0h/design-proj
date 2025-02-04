@@ -11,7 +11,7 @@ import {
   Menu,
   MenuItem,
   Box,
-  Avatar
+  Avatar,
 } from '@mui/material';
 import { Link, useLocation } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
@@ -21,7 +21,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
 import React, { useState } from 'react';
 import { useUser } from '../context/UserContext';
-import { colors, drawerStyles, activePageStyles} from '../Styles';
+import { colors, drawerStyles, activePageStyles } from '../Styles';
 
 const AccountMenu = () => {
   const { username } = useUser(); // Get the username from context
@@ -40,8 +40,9 @@ const AccountMenu = () => {
    * This should invalidate the cookie (ie setting expiration to be in the past)
    */
   const handleLogout = () => {
-    document.cookie = "sessionToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = "/";
+    document.cookie =
+      'sessionToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    window.location.href = '/';
   };
 
   return (
@@ -85,17 +86,8 @@ const AccountMenu = () => {
   );
 };
 
-
-
 const NavigationDrawer = () => {
   const location = useLocation();
-  
-  const menuItems = [
-    { label: 'Home', icon: <HomeIcon />, path: '/home' },
-    { label: 'Favorites', icon: <StarIcon />, path: '/favorites' },
-    { label: 'Shared With Me', icon: <PeopleIcon />, path: '/shared' },
-    { label: 'Trash', icon: <DeleteIcon />, path: '/trash' }
-  ];
 
   return (
     <Drawer
@@ -125,7 +117,11 @@ const NavigationDrawer = () => {
         />
         <Typography
           variant="h1"
-          sx={{ fontWeight: 700, fontFamily: '"Kurale", serif', color: colors.darkBlue }}
+          sx={{
+            fontWeight: 700,
+            fontFamily: '"Kurale", serif',
+            color: colors.darkBlue,
+          }}
         >
           Owl Share
         </Typography>

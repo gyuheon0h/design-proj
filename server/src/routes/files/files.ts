@@ -55,9 +55,15 @@ fileRouter.get(
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
-
       const userId = req.user.userId;
-      const files = await FileModel.getFilesByOwnerAndFolder(userId, folderId);
+
+      let files;
+      if (folderId === 'null') {
+        files = await FileModel.getFilesByOwnerAndFolder(userId, null);
+      } else {
+        files = await FileModel.getFilesByOwnerAndFolder(userId, folderId);
+      }
+
       return res.json(files);
     } catch (error) {
       console.error('Error getting files by folder:', error);

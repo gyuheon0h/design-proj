@@ -52,7 +52,7 @@ const FileContainer: React.FC<FileContainerProps> = ({ files }) => {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div>
       {/* Header section with title and upload button */}
       <div
         style={{
