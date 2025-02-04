@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '@mui/material';
 import FileComponent from './File';
-import UploadDialog from '../pages/UploadDialog'; 
-import { colors, typography } from '../Styles'; 
+import UploadDialog from '../pages/UploadDialog';
+import { colors, typography } from '../Styles';
 
 interface File {
   id: string;
@@ -26,25 +26,42 @@ const FileContainer: React.FC<FileContainerProps> = ({ files }) => {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  const handleFileUpload = (fileName: string) => {
-    console.log(`New file created: ${fileName}`);
-    // handle file creation here!
-    // smth like
-    // const new file: File = {
-      // id: 
-      // name: 
-      // ...
-    // }
-    // const [fileList, setFileList] = useState<File[]>(files); somewhere above
-    // setFileList()
-    // handleClose()
+  const handleUploadFile = async (
+    file: Blob | File,
+    fileName: string,
+    parentFolder: string | null,
+  ) => {
+    const formData = new FormData();
+    formData.append('file', file as Blob);
+    formData.append('fileName', fileName);
+    if (parentFolder) {
+      formData.append('parentFolder', parentFolder);
+    }
+    // try {
+    //   const response = await axios.post('/api/files/upload', formData, {
+    //     headers: { 'Content-Type': 'multipart/form-data' },
+    //     withCredentials: true,
+    //   });
 
+    //   console.log('Upload successful:', response.data);
+    //   return response.data;
+    // } catch (error) {
+    //   console.error('Upload failed:', error);
+    //   throw error;
+    // }
   };
 
   return (
     <div style={{ padding: '20px' }}>
       {/* Header section with title and upload button */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '15px',
+        }}
+      >
         {/* <Typography
           variant="h4"
           sx={{
@@ -56,14 +73,14 @@ const FileContainer: React.FC<FileContainerProps> = ({ files }) => {
           Files
         </Typography> */}
         {/* fix alignment for the above */}
-        <h2>Files</h2> 
-        
-        <Button 
-          variant="contained" 
-          onClick={handleOpen} 
+        <h2>Files</h2>
+
+        <Button
+          variant="contained"
+          onClick={handleOpen}
           sx={{
-            backgroundColor: colors.lightBlue, 
-            color: colors.darkBlue, 
+            backgroundColor: colors.lightBlue,
+            color: colors.darkBlue,
             fontFamily: typography.fontFamily,
             fontSize: typography.fontSize.medium,
             fontWeight: 'bold',
@@ -71,7 +88,7 @@ const FileContainer: React.FC<FileContainerProps> = ({ files }) => {
             '&:hover': {
               backgroundColor: colors.darkBlue,
               color: colors.white,
-            }
+            },
           }}
         >
           + Create
@@ -95,7 +112,11 @@ const FileContainer: React.FC<FileContainerProps> = ({ files }) => {
       ))}
 
       {/* Dialog */}
-      <UploadDialog open={open} onClose={handleClose} onFileUpload={handleFileUpload} />
+      <UploadDialog
+        open={open}
+        onClose={handleClose}
+        onFileUpload={handleUploadFile}
+      />
     </div>
   );
 };
