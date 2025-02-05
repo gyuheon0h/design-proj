@@ -50,23 +50,21 @@ fileRouter.get('/owner/:ownerId', authorize, async (req, res) => {
  * Route to get files in a certain folder.
  * this is also protected by authorize
  */
-fileRouter.get(
-  '/folder/:folderId',
+fileRouter.post(
+  '/folder',
   authorize,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const { folderId } = req.params;
+      const { folderId } = req.body;
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
       const userId = req.user.userId;
 
-      let files;
-      if (folderId === 'null') {
-        files = await FileModel.getFilesByOwnerAndFolder(userId, null);
-      } else {
-        files = await FileModel.getFilesByOwnerAndFolder(userId, folderId);
-      }
+      const files = await FileModel.getFilesByOwnerAndFolder(
+        userId,
+        folderId || null,
+      );
 
       return res.json(files);
     } catch (error) {

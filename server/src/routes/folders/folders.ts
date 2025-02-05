@@ -9,23 +9,22 @@ const folderRouter = Router();
  * GET /api/folders/parent/:folderId
  * Protected route to get subfolders of a specific folder.
  */
-folderRouter.get(
-  '/parent/:folderId',
+folderRouter.post(
+  '/parent',
   authorize,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const { folderId } = req.params;
+      const { folderId } = req.body; // Get from request body
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
       const userId = req.user.userId;
 
-      let subfolders;
-      if (folderId === 'null') {
-        subfolders = await FolderModel.getSubfolders(userId, null);
-      } else {
-        subfolders = await FolderModel.getSubfolders(userId, folderId);
-      }
+      // Handle null case properly
+      const subfolders = await FolderModel.getSubfolders(
+        userId,
+        folderId || null,
+      );
 
       return res.json(subfolders);
     } catch (error) {

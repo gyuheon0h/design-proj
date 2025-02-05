@@ -32,12 +32,16 @@ const Home = () => {
   const fetchData = async (folderId: string | null) => {
     try {
       const [foldersRes, filesRes] = await Promise.all([
-        axios.get(`http://localhost:5001/api/folder/parent/${folderId}`, {
-          withCredentials: true,
-        }),
-        axios.get(`http://localhost:5001/api/file/folder/${folderId}`, {
-          withCredentials: true,
-        }),
+        axios.post(
+          `http://localhost:5001/api/folder/parent`,
+          { folderId },
+          { withCredentials: true },
+        ),
+        axios.post(
+          `http://localhost:5001/api/file/folder`,
+          { folderId },
+          { withCredentials: true },
+        ),
       ]);
       setFolders(foldersRes.data);
       setFiles(filesRes.data);
