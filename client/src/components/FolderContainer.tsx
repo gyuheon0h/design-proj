@@ -45,6 +45,22 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     }
   };
 
+  const handleDeleteFolder = async (folderId: string) => {
+    try {
+      const response = await axios.delete(
+        `http://localhost:5001/api/folder/delete/${folderId}`,
+        {
+          withCredentials: true,
+        },
+      );
+
+      refreshFolders(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting file:', error);
+    }
+  };
+
   return (
     <div>
       {/* Header section with title and create button */}
@@ -91,6 +107,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
             folderChildren={folder.folderChildren}
             fileChildren={folder.fileChildren}
             onClick={() => onFolderClick(folder)}
+            onFolderDelete={handleDeleteFolder}
           />
         ))}
       </div>

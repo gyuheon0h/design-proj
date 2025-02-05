@@ -17,6 +17,7 @@ export interface FolderProp {
   folderChildren: string[];
   fileChildren: string[];
   onClick: (folder: FolderProp) => void;
+  onFolderDelete: (folderId: string) => Promise<void>;
 }
 
 const Folder = (prop: FolderProp) => {
@@ -179,7 +180,10 @@ const Folder = (prop: FolderProp) => {
           <Divider sx={{ my: 0.2, color: colors.darkBlue }} />
 
           <MenuItem
-            onClick={handleOptionsClose}
+            onClick={(e) => {
+              handleOptionsClose(e);
+              prop.onFolderDelete(prop.id);
+            }}
             sx={{
               color: colors.darkBlue,
               paddingRight: '16px',
