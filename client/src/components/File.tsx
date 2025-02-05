@@ -132,7 +132,7 @@ const FileComponent = (props: File) => {
           </Typography>
         </Tooltip>
 
-        <Tooltip title={props.owner} arrow>
+        <Tooltip title={ownerUserName} arrow>
           <Typography
             variant="body2"
             color="text.secondary"
