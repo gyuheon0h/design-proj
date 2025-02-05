@@ -81,4 +81,19 @@ folderRouter.post(
   },
 );
 
+/**
+ * GET /api/folder/foldername/:folderId
+ * Get the name of a folder by id
+ */
+folderRouter.get('/foldername/:folderId', async (req, res) => {
+  try {
+    const { folderId } = req.params;
+    const folderName = await FolderModel.getFolderName(folderId);
+    return res.json(folderName);
+  } catch (error) {
+    console.error('Error getting folder name:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 export default folderRouter;

@@ -22,7 +22,7 @@ function App() {
         {/* Adjust layout */}
         <Routes>
           <Route path="/" element={<Login />} />
-          <Route path="/home" element={<Home />} />
+          <Route path="/home/*?" element={<Home />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/shared" element={<Shared />} />
           <Route path="/trash" element={<Trash />} />

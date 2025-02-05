@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import { FolderProp } from '../components/Folder';
 import FileContainer from '../components/FileContainer';
@@ -7,15 +8,25 @@ import axios from 'axios';
 import FolderContainer from '../components/FolderContainer';
 
 const Home = () => {
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null); // Root folder
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Extract folder IDs from URL
+  const folderPath = location.pathname
+    .replace('/home', '')
+    .split('/')
+    .filter(Boolean);
+  const currentFolderId = folderPath.length
+    ? folderPath[folderPath.length - 1]
+    : null; // Last part of the path
+
   const [folders, setFolders] = useState<FolderProp[]>([]);
   const [files, setFiles] = useState([]);
-  const [breadcrumbs, setBreadcrumbs] = useState<
-    { id: string | null; name: string }[]
-  >([{ id: null, name: 'Home' }]);
+  const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({}); // Map folder IDs to names
 
   useEffect(() => {
     fetchData(currentFolderId);
+    fetchFolderNames(folderPath); // Fetch names for all folders in breadcrumb
   }, [currentFolderId]);
 
   const fetchData = async (folderId: string | null) => {
@@ -35,19 +46,29 @@ const Home = () => {
     }
   };
 
-  const handleFolderClick = (folder: FolderProp) => {
-    setBreadcrumbs((prevBreadcrumbs) => [
-      ...prevBreadcrumbs,
-      { id: folder.id, name: folder.name },
-    ]);
+  const fetchFolderNames = async (folderIds: string[]) => {
+    try {
+      const nameRequests = folderIds.map((id) =>
+        axios.get(`http://localhost:5001/api/folder/foldername/${id}`, {}),
+      );
+      const nameResponses = await Promise.all(nameRequests);
+      console.log(nameResponses);
+      const newFolderNames: { [key: string]: string } = {};
+      folderIds.forEach((id, index) => {
+        newFolderNames[id] = nameResponses[index].data; // Map folder ID to name
+      });
+      setFolderNames((prevNames) => ({ ...prevNames, ...newFolderNames }));
+    } catch (error) {
+      console.error('Error fetching folder names:', error);
+    }
+  };
 
-    setCurrentFolderId(folder.id);
+  const handleFolderClick = (folder: FolderProp) => {
+    navigate(`/home/${[...folderPath, folder.id].join('/')}`);
   };
 
   const handleBreadcrumbClick = (index: number) => {
-    const newBreadcrumbs = breadcrumbs.slice(0, index + 1);
-    setBreadcrumbs(newBreadcrumbs);
-    setCurrentFolderId(newBreadcrumbs[newBreadcrumbs.length - 1].id);
+    navigate(`/home/${folderPath.slice(0, index + 1).join('/')}`);
   };
 
   return (
@@ -63,13 +84,15 @@ const Home = () => {
           paddingTop: '4vh',
         }}
       >
-        {breadcrumbs.map((crumb, index) => (
+        {['Home', ...folderPath].map((crumb, index) => (
           <span
-            key={crumb.id}
-            onClick={() => handleBreadcrumbClick(index)}
+            key={index}
+            onClick={() => handleBreadcrumbClick(index - 1)}
             style={{ cursor: 'pointer', marginRight: '5px' }}
           >
-            {crumb.name} {index < breadcrumbs.length - 1 ? '>' : ''}
+            {index === 0 ? 'Home' : folderNames[crumb] || crumb}{' '}
+            {/* Show folder name if available */}
+            {index < folderPath.length ? ' > ' : ''}
           </span>
         ))}
       </div>

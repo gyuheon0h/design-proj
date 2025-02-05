@@ -54,6 +54,12 @@ class FolderModel extends BaseModel<Folder> {
   async createFolder(data: Omit<Folder, 'id'>): Promise<Folder> {
     return await this.create(data);
   }
+
+  // Get foldername by id
+  async getFolderName(id: string): Promise<string> {
+    const folder = await this.getById(id);
+    return folder?.name || '';
+  }
 }
 
 export default new FolderModel();
