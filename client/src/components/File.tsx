@@ -19,7 +19,10 @@ import ImageIcon from '@mui/icons-material/Image';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import MovieIcon from '@mui/icons-material/Movie';
 import TableChartIcon from '@mui/icons-material/TableChart';
-import { getUsernameById } from '../miscellHelpers/userHelpers';
+import {
+  getUsernameById,
+  downloadFile,
+} from '../miscellHelpers/helperRequests';
 
 interface File {
   id: string;
@@ -57,7 +60,6 @@ const getFileIcon = (fileType: string) => {
 };
 
 const FileComponent = (props: File) => {
-  // TODO THIS IS BUGGED
   const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
   useEffect(() => {
     const fetchOwnerUserName = async () => {
@@ -198,6 +200,18 @@ const FileComponent = (props: File) => {
 
         <MenuItem onClick={handleOptionsClose}>
           <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Delete
+        </MenuItem>
+
+        <Divider sx={{ my: 0.2 }} />
+
+        <MenuItem
+          onClick={() => {
+            downloadFile(props.id, props.name);
+            handleOptionsClose();
+          }}
+        >
+          <InsertDriveFileIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+          Download
         </MenuItem>
       </Menu>
     </Card>

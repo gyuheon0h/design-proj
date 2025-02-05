@@ -124,4 +124,22 @@ fileRouter.post(
   },
 );
 
+fileRouter.get('/download/:fileId', authorize, async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const file = await FileModel.getById(fileId);
+
+    if (!file) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    const fileStream = await StorageService.getFileStream(file.gcsKey);
+    res.setHeader('Content-Disposition', `attachment; filename="${file.name}"`);
+    fileStream.pipe(res);
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 export default fileRouter;
