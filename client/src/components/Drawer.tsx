@@ -26,6 +26,7 @@ const NavigationDrawer = () => {
         width: drawerStyles.width,
         flexShrink: 0,
         '& .MuiDrawer-paper': drawerStyles.paper,
+        userSelect: 'none'
       }}
     >
       {/* Logo Section */}
