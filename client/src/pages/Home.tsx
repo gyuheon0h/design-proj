@@ -97,7 +97,7 @@ const Home = () => {
             onClick={() => handleBreadcrumbClick(index - 1)}
             style={{ cursor: 'pointer', marginRight: '5px' }}
           >
-            {index === 0 ? 'Home' : folderNames[crumb] || crumb}{' '}
+            {index === 0 ? 'Home' : folderNames[crumb] || ''}{' '}
             {/* Show folder name if available */}
             {index < folderPath.length ? ' > ' : ''}
           </span>
