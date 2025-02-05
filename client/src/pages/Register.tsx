@@ -7,16 +7,34 @@ import {
   TextField,
   Button,
   Box,
+  Snackbar,
+  AlertColor,
+  Alert,
 } from '@mui/material';
+import axios from 'axios';
+import SHA256 from 'crypto-js/sha256';
 
 const Register = () => {
-  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [openAlert, setOpenAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertSeverity, setAlertSeverity] = useState<AlertColor>('success');
   const navigate = useNavigate();
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleCloseAlert = () => {
+    setOpenAlert(false);
+  };
+
+  const showAlert = (message: string, severity: AlertColor) => {
+    setAlertMessage(message);
+    setAlertSeverity(severity);
+    setOpenAlert(true);
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
@@ -25,11 +43,32 @@ const Register = () => {
       return;
     }
 
-    console.log('Registering with:', { name, email, password });
+    try {
+      const passwordHash = SHA256(password).toString(); // hashed password
 
-    // TODO: handle actual registration logic
+      // TODO: change endpoint to not raw string
+      const response = await axios.post(
+        'http://localhost:5001/api/register',
+        { username, email, passwordHash },
+        {
+          withCredentials: true, // Send cookies automatically
+        },
+      );
 
-    navigate('/home');
+      if (response.status === 201) {
+        showAlert(
+          'Successfully registered! You will now be redirected to login.',
+          'success',
+        );
+        navigate('/');
+      } else {
+        const errorData = await response;
+        alert(`Error: ${errorData}`);
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert('An unexpected error occurred.');
+    }
   };
 
   return (
@@ -61,19 +100,19 @@ const Register = () => {
             margin="normal"
             required
             fullWidth
-            id="name"
-            label="Username"
-            name="name"
+            id="username"
+            label="username"
+            name="username"
             autoComplete="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
           />
           <TextField
             margin="normal"
             required
             fullWidth
             id="email"
-            label="Email"
+            label="email"
             name="email"
             autoComplete="email"
             value={email}
@@ -84,7 +123,7 @@ const Register = () => {
             required
             fullWidth
             name="password"
-            label="Password"
+            label="password"
             type="password"
             id="password"
             autoComplete="new-password"
@@ -117,6 +156,22 @@ const Register = () => {
           </Button>
         </Box>
       </Paper>
+      <Snackbar
+        open={openAlert}
+        autoHideDuration={6000}
+        onClose={handleCloseAlert}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseAlert}
+          severity={alertSeverity}
+          sx={{ width: '100%' }}
+          elevation={6}
+          variant="filled"
+        >
+          {alertMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

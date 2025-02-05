@@ -25,6 +25,11 @@ class UserModel extends BaseModel<User> {
     const users = await this.getAllByColumn('username', username);
     return users.length > 0 ? users[0] : null;
   }
+
+  async getUsernameById(id: string): Promise<string> {
+    const user = await this.getById(id);
+    return user ? user.username : '';
+  }
 }
 
 export default new UserModel();

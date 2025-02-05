@@ -19,6 +19,14 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(409).json({ message: 'Username already taken.' });
     }
 
+    // Check if email already regitsered
+    const emailExists = await userModel.userExists(email);
+    if (emailExists) {
+      return res
+        .status(409)
+        .json({ message: 'You already registered with this email 🙄.' });
+    }
+
     // Create new user
     const newUser = await userModel.create({ username, email, passwordHash });
 

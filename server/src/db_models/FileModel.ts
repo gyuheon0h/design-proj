@@ -27,6 +27,20 @@ class FileModel extends BaseModel<File> {
     return await this.getAllByColumn('parentFolder', folderId);
   }
 
+  async getFilesByOwnerAndFolder(
+    ownerId: string,
+    parentFolderId: string | null,
+  ): Promise<File[]> {
+    if (parentFolderId === null) {
+      return await this.getAllByOwnerAndColumnNull(ownerId, 'parentFolder');
+    }
+    return await this.getAllByOwnerAndColumn(
+      ownerId,
+      'parentFolder',
+      parentFolderId,
+    );
+  }
+
   // Update file metadata (e.g., name, last modified by)
   async updateFileMetadata(
     id: string,

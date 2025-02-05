@@ -6,9 +6,10 @@ import UploadIcon from '@mui/icons-material/Upload';
 import Divider from '@mui/material/Divider';
 import { Box, Typography, IconButton, Menu, MenuItem } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import { colors } from '../Styles';
 import { colors} from '../Styles';
 
-interface FolderProp {
+export interface FolderProp {
   id: string;
   name: string;
   owner: string;
@@ -16,6 +17,7 @@ interface FolderProp {
   parentFolder: string | null;
   folderChildren: string[];
   fileChildren: string[];
+  onClick: (folder: FolderProp) => void;
 }
 
 const Folder = (prop: FolderProp) => {
@@ -23,17 +25,24 @@ const Folder = (prop: FolderProp) => {
   const open = Boolean(anchorEl);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
 
-  const handleOptionsClose = () => {
+  const handleOptionsClose = (event: React.MouseEvent) => {
+    event.stopPropagation();
     setAnchorEl(null);
+  };
+
+  const handleFolderClick = () => {
+    prop.onClick(prop);
   };
 
   return (
     <Box
       className="folder"
       data-folder-id={prop.id}
+      onClick={handleFolderClick} // Handle folder click
       sx={{
         position: 'relative',
         width: '150px',
@@ -133,7 +142,11 @@ const Folder = (prop: FolderProp) => {
             }}
           >
             <SendIcon
-              sx={{ color: colors.darkBlue, fontSize: '20px', marginRight: '9px' }}
+              sx={{
+                color: colors.darkBlue,
+                fontSize: '20px',
+                marginRight: '9px',
+              }}
             />
             Share
           </MenuItem>
@@ -155,7 +168,11 @@ const Folder = (prop: FolderProp) => {
             }}
           >
             <DriveFileRenameOutlineIcon
-              sx={{ color: colors.darkBlue, fontSize: '20px', marginRight: '9px' }}
+              sx={{
+                color: colors.darkBlue,
+                fontSize: '20px',
+                marginRight: '9px',
+              }}
             />
             Rename
           </MenuItem>
@@ -177,7 +194,11 @@ const Folder = (prop: FolderProp) => {
             }}
           >
             <DeleteIcon
-              sx={{ color: colors.darkBlue, fontSize: '20px', marginRight: '9px' }}
+              sx={{
+                color: colors.darkBlue,
+                fontSize: '20px',
+                marginRight: '9px',
+              }}
             />
             Delete
           </MenuItem>
@@ -199,7 +220,11 @@ const Folder = (prop: FolderProp) => {
             }}
           >
             <UploadIcon
-              sx={{ color: colors.darkBlue, fontSize: '20px', marginRight: '9px' }}
+              sx={{
+                color: colors.darkBlue,
+                fontSize: '20px',
+                marginRight: '9px',
+              }}
             />
             Upload
           </MenuItem>

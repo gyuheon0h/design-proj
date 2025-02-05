@@ -6,14 +6,85 @@ import {
   ListItemButton,
   ListItemIcon,
   Typography,
+  Tooltip,
+  IconButton,
+  Menu,
+  MenuItem,
   Box,
+  Avatar,
 } from '@mui/material';
 import { Link, useLocation } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
 import PeopleIcon from '@mui/icons-material/People';
 import StarIcon from '@mui/icons-material/Star';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { colors, drawerStyles, activePageStyles} from '../Styles';
+import LogoutIcon from '@mui/icons-material/Logout';
+import React, { useState } from 'react';
+import { useUser } from '../context/UserContext';
+import { colors, drawerStyles, activePageStyles } from '../Styles';
+
+const AccountMenu = () => {
+  const { username } = useUser(); // Get the username from context
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  /**
+   * This should invalidate the cookie (ie setting expiration to be in the past)
+   */
+  const handleLogout = () => {
+    document.cookie =
+      'sessionToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    window.location.href = '/';
+  };
+
+  return (
+    <React.Fragment>
+      <Tooltip title="Account settings">
+        <IconButton
+          onClick={handleClick}
+          size="small"
+          sx={{ ml: 2 }}
+          aria-controls={open ? 'account-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={open ? 'true' : undefined}
+        >
+          <Avatar sx={{ width: 32, height: 32 }}>
+            {username ? username.charAt(0).toUpperCase() : '?'}
+          </Avatar>
+        </IconButton>
+      </Tooltip>
+      <Menu
+        anchorEl={anchorEl}
+        id="account-menu"
+        open={open}
+        onClose={handleClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
+        sx={{ mt: -6 }}
+      >
+        <MenuItem onClick={handleClose}>
+          <Typography variant="body2" sx={{ mr: 1 }}>
+            Logged in as: {username || 'Guest'}
+          </Typography>
+        </MenuItem>
+        <MenuItem onClick={handleLogout} sx={{ color: 'red' }}>
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" sx={{ color: 'red' }} />
+          </ListItemIcon>
+          Logout
+        </MenuItem>
+      </Menu>
+    </React.Fragment>
+  );
+};
 
 const NavigationDrawer = () => {
   const location = useLocation();
@@ -26,7 +97,6 @@ const NavigationDrawer = () => {
         width: drawerStyles.width,
         flexShrink: 0,
         '& .MuiDrawer-paper': drawerStyles.paper,
-        userSelect: 'none'
       }}
     >
       {/* Logo Section */}
@@ -47,7 +117,11 @@ const NavigationDrawer = () => {
         />
         <Typography
           variant="h1"
-          sx={{ fontWeight: 700, fontFamily: '"Kurale", serif', color: colors.darkBlue }}
+          sx={{
+            fontWeight: 700,
+            fontFamily: '"Kurale", serif',
+            color: colors.darkBlue,
+          }}
         >
           Owl Share
         </Typography>
@@ -139,6 +213,11 @@ const NavigationDrawer = () => {
           </ListItemButton>
         </ListItem>
       </List>
+
+      {/* Avatar with logout functionality */}
+      <Box sx={{ mt: 'auto', padding: '10px' }}>
+        <AccountMenu />
+      </Box>
     </Drawer>
   );
 };
