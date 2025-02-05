@@ -95,19 +95,19 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
   }
 });
 
-folderRouter.delete('/delete/:fileId', authorize, async (req, res) => {
+folderRouter.delete('/delete/:folderId', authorize, async (req, res) => {
   try {
-    const { fileId } = req.params;
-    const file = await FolderModel.getById(fileId);
+    const { fileId: folderId } = req.params;
+    const file = await FolderModel.getById(folderId);
 
     if (!file) {
-      return res.status(404).json({ message: 'File not found' });
+      return res.status(404).json({ message: 'Folder not found' });
     }
 
-    await FolderModel.softDelete(fileId);
-    return res.json({ message: 'File deleted successfully' });
+    await FolderModel.softDelete(folderId);
+    return res.json({ message: 'Folder deleted successfully' });
   } catch (error) {
-    console.error('Error deleting file:', error);
+    console.error('Error deleting folder:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
