@@ -36,7 +36,7 @@ folderRouter.get(
 );
 
 /**
- * POST /api/folder/create
+ * POST /api/folders/create
  * Protected route to create a new folder.
  * TODO: make this authorized
  */
@@ -80,18 +80,5 @@ folderRouter.post(
     }
   },
 );
-
-// GET /api/folder/:folderId
-// Route to get a folder name by ID
-folderRouter.get('/foldername/:folderId', async (req, res) => {
-  try {
-    const { folderId } = req.params;
-    const folderName = await FolderModel.getFolderNameById(folderId);
-    return res.json(folderName);
-  } catch (error) {
-    console.error('Error getting folder name:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 
 export default folderRouter;

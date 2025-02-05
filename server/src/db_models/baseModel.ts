@@ -58,6 +58,7 @@ class BaseModel<T> {
 
   // Create a new record
   async create(data: Partial<T>): Promise<T> {
+    console.log('CREATE ON FILE MODEL EXECS');
     const keys = Object.keys(data)
       .map((key) => `"${key}"`)
       .join(', ');
