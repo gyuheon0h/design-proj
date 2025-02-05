@@ -1,26 +1,33 @@
 import React, { useState } from 'react';
-import Folder, { FolderProp } from '../components/Folder';
 import { Box, Button, Slider } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import Folder, { FolderProp } from './Folder';
+import FolderDialog from '../pages/CreateFolderDialog';
+import { colors, typography } from '../Styles';
+import axios from 'axios';
 
 interface FolderContainerProps {
-  initialFolders: FolderProp[];
+  folders: FolderProp[];
+  onFolderClick: (folder: FolderProp) => void;
+  currentFolderId: string | null;
+  refreshFolders: (folderId: string | null) => void;
   itemsPerPage: number;
 }
 
 const FolderContainer: React.FC<FolderContainerProps> = ({
-  initialFolders,
+  folders,
+  onFolderClick,
+  currentFolderId,
+  refreshFolders,
   itemsPerPage,
 }) => {
-  const initialVisibleFolders = initialFolders.slice(0, itemsPerPage);
-
-  const [folders] = useState<FolderProp[]>(initialFolders);
-  const [visibleFolders, setVisibleFolders] = useState<FolderProp[]>(
-    initialVisibleFolders,
-  );
+  const [open, setOpen] = useState(false);
   const [activeStartIndex, setActiveStartIndex] = useState(0);
   const [activeEndIndex, setActiveEndIndex] = useState(
-    Math.min(itemsPerPage, initialFolders.length),
+    Math.min(itemsPerPage, folders.length),
+  );
+  const [visibleFolders, setVisibleFolders] = useState(
+    folders.slice(0, itemsPerPage),
   );
 
   const sliderMax = Math.max(folders.length - itemsPerPage, 0);
@@ -50,8 +57,60 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     }
   };
 
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+
+  const handleCreateFolder = async (
+    folderName: string,
+    parentFolder: string | null,
+  ) => {
+    const requestBody = { name: folderName, parentFolder };
+    try {
+      const response = await axios.post(
+        'http://localhost:5001/api/folder/create',
+        requestBody,
+        { withCredentials: true },
+      );
+      refreshFolders(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Folder creation failed:', error);
+      throw error;
+    }
+  };
+
   return (
     <Box className="folder-container" sx={{ width: '100%' }}>
+      {/* Header section with title and create button */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '15px',
+        }}
+      >
+        <h2>Folders</h2>
+        <Button
+          variant="contained"
+          onClick={handleOpen}
+          sx={{
+            backgroundColor: colors.lightBlue,
+            color: colors.darkBlue,
+            fontFamily: typography.fontFamily,
+            fontSize: typography.fontSize.medium,
+            fontWeight: 'bold',
+            marginLeft: '15px',
+            '&:hover': {
+              backgroundColor: colors.darkBlue,
+              color: colors.white,
+            },
+          }}
+        >
+          + Create Folder
+        </Button>
+      </Box>
+
       {/* Main container for arrow buttons and visible folders */}
       <Box
         sx={{
@@ -83,7 +142,11 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
           }}
         >
           {visibleFolders.map((folder) => (
-            <Folder key={folder.id} {...folder} />
+            <Folder
+              key={folder.id}
+              {...folder}
+              onClick={() => onFolderClick(folder)}
+            />
           ))}
         </Box>
 
@@ -120,6 +183,14 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
           }}
         />
       </Box>
+
+      {/* Dialog */}
+      <FolderDialog
+        open={open}
+        onClose={handleClose}
+        currentFolderId={currentFolderId}
+        onFolderCreate={handleCreateFolder}
+      />
     </Box>
   );
 };

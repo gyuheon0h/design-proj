@@ -4,7 +4,15 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const authorize = (req: Request, res: Response, next: NextFunction) => {
+export interface AuthenticatedRequest extends Request {
+  user?: { userId: string; username: string };
+}
+
+export const authorize = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     // Get token from cookies
     const token = req.cookies?.authToken;
@@ -15,8 +23,11 @@ export const authorize = (req: Request, res: Response, next: NextFunction) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
-    (req as any).user = decoded; // decoded is {userId, username}
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
+      userId: string;
+      username: string;
+    };
+    req.user = decoded; // Set the user on the request object
 
     next(); // Proceed to the next handler
   } catch (error) {

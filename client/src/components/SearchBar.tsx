@@ -6,6 +6,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import EventIcon from '@mui/icons-material/Event';
 import Filter from './Filter';
+import {colors, typography} from '../Styles';
 
 interface SearchBarProps {
   location: string;
@@ -28,7 +29,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ location }) => {
         variant="outlined"
         placeholder={`Search in ${location}`}
         sx={{
-          maxWidth: 700,
+          maxWidth: 680,
           backgroundColor: '#f0f2f5',
           borderRadius: '50px',
           '& .MuiOutlinedInput-root': {
@@ -38,11 +39,15 @@ const SearchBar: React.FC<SearchBarProps> = ({ location }) => {
           '& .MuiOutlinedInput-notchedOutline': {
             border: 'none',
           },
+          '& .MuiInputBase-input::placeholder': {
+            color: colors.darkGrey,
+            opacity: 1, 
+          },
         }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <SearchIcon sx={{ color: 'gray' }} />
+              <SearchIcon sx={{ color: colors.darkGrey }} />
             </InputAdornment>
           ),
         }}

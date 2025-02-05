@@ -6,43 +6,128 @@ import {
   ListItemButton,
   ListItemIcon,
   Typography,
+  Tooltip,
+  IconButton,
+  Menu,
+  MenuItem,
   Box,
+  Avatar,
 } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
 import PeopleIcon from '@mui/icons-material/People';
 import StarIcon from '@mui/icons-material/Star';
 import DeleteIcon from '@mui/icons-material/Delete';
+import LogoutIcon from '@mui/icons-material/Logout';
+import React, { useState } from 'react';
+import { useUser } from '../context/UserContext';
+import { colors, drawerStyles, activePageStyles } from '../Styles';
+
+const AccountMenu = () => {
+  const { username } = useUser(); // Get the username from context
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  /**
+   * This should invalidate the cookie (ie setting expiration to be in the past)
+   */
+  const handleLogout = () => {
+    document.cookie =
+      'sessionToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    window.location.href = '/';
+  };
+
+  return (
+    <React.Fragment>
+      <Tooltip title="Account settings">
+        <IconButton
+          onClick={handleClick}
+          size="small"
+          sx={{ ml: 2 }}
+          aria-controls={open ? 'account-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={open ? 'true' : undefined}
+        >
+          <Avatar sx={{ width: 32, height: 32 }}>
+            {username ? username.charAt(0).toUpperCase() : '?'}
+          </Avatar>
+        </IconButton>
+      </Tooltip>
+      <Menu
+        anchorEl={anchorEl}
+        id="account-menu"
+        open={open}
+        onClose={handleClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
+        sx={{ mt: -6 }}
+      >
+        <MenuItem onClick={handleClose}>
+          <Typography variant="body2" sx={{ mr: 1 }}>
+            Logged in as: {username || 'Guest'}
+          </Typography>
+        </MenuItem>
+        <MenuItem onClick={handleLogout} sx={{ color: 'red' }}>
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" sx={{ color: 'red' }} />
+          </ListItemIcon>
+          Logout
+        </MenuItem>
+      </Menu>
+    </React.Fragment>
+  );
+};
 
 const NavigationDrawer = () => {
+  const location = useLocation();
+
   return (
     <Drawer
       variant="permanent"
       anchor="left"
       sx={{
-        width: 250,
+        width: drawerStyles.width,
         flexShrink: 0,
-        '& .MuiDrawer-paper': {
-          width: 250,
-          boxSizing: 'border-box',
-          backgroundColor: '#f5f8ff',
-          padding: '10px',
-        },
+        '& .MuiDrawer-paper': drawerStyles.paper,
       }}
     >
-      {/* Logo  */}
-      <Box sx={{ padding: '20px 16px', display: 'flex', alignItems: 'center' }}>
+      {/* Logo Section */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          padding: '15px 0px',
+          gap: 1,
+        }}
+      >
         <Box
           component="img"
           src="/owl_icon.png"
           alt="Owl Logo"
-          sx={{ width: 32, height: 32, marginRight: 1 }}
+          sx={{ width: 64, height: 64 }}
         />
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+        <Typography
+          variant="h1"
+          sx={{
+            fontWeight: 700,
+            fontFamily: '"Kurale", serif',
+            color: colors.darkBlue,
+          }}
+        >
           Owl Share
         </Typography>
       </Box>
 
+      {/* Navigation List */}
       <List>
         {/* Home */}
         <ListItem disablePadding>
@@ -50,29 +135,18 @@ const NavigationDrawer = () => {
             component={Link}
             to="/home"
             sx={{
-              border: '2px solid #b3d1ff',
+              border: `2px solid ${colors.lightBlue}`,
               borderRadius: '10px',
               padding: '10px 16px',
               marginBottom: '10px',
-              '&:hover': {
-                backgroundColor: '#e0f2ff',
-              },
-              '&.Mui-selected': {
-                backgroundColor: '#dce9ff',
-                borderColor: '#0056b3',
-              },
+              '&:hover': { backgroundColor: colors.hover },
+              ...(location.pathname === '/home' ? activePageStyles : {}),
             }}
           >
             <ListItemIcon>
-              <HomeIcon sx={{ color: '#0056b3' }} />
+              <HomeIcon sx={{ color: colors.darkBlue }} />
             </ListItemIcon>
-            <ListItemText
-              primary="Home"
-              primaryTypographyProps={{
-                fontWeight: 600,
-                color: '#0056b3',
-              }}
-            />
+            <ListItemText primary="Home" />
           </ListItemButton>
         </ListItem>
 
@@ -82,29 +156,18 @@ const NavigationDrawer = () => {
             component={Link}
             to="/favorites"
             sx={{
-              border: '2px solid #b3d1ff',
-              borderRadius: '12px',
+              border: `2px solid ${colors.lightBlue}`,
+              borderRadius: '10px',
               padding: '10px 16px',
               marginBottom: '10px',
-              '&:hover': {
-                backgroundColor: '#e0f2ff',
-              },
-              '&.Mui-selected': {
-                backgroundColor: '#dce9ff',
-                borderColor: '#0056b3',
-              },
+              '&:hover': { backgroundColor: colors.hover },
+              ...(location.pathname === '/favorites' ? activePageStyles : {}),
             }}
           >
             <ListItemIcon>
-              <StarIcon sx={{ color: '#0056b3' }} />
+              <StarIcon sx={{ color: colors.darkBlue }} />
             </ListItemIcon>
-            <ListItemText
-              primary="Favorites"
-              primaryTypographyProps={{
-                fontWeight: 600,
-                color: '#0056b3',
-              }}
-            />
+            <ListItemText primary="Favorites" />
           </ListItemButton>
         </ListItem>
 
@@ -114,29 +177,18 @@ const NavigationDrawer = () => {
             component={Link}
             to="/shared"
             sx={{
-              border: '2px solid #b3d1ff',
-              borderRadius: '12px',
+              border: `2px solid ${colors.lightBlue}`,
+              borderRadius: '10px',
               padding: '10px 16px',
               marginBottom: '10px',
-              '&:hover': {
-                backgroundColor: '#e0f2ff',
-              },
-              '&.Mui-selected': {
-                backgroundColor: '#dce9ff',
-                borderColor: '#0056b3',
-              },
+              '&:hover': { backgroundColor: colors.hover },
+              ...(location.pathname === '/shared' ? activePageStyles : {}),
             }}
           >
             <ListItemIcon>
-              <PeopleIcon sx={{ color: '#0056b3' }} />
+              <PeopleIcon sx={{ color: colors.darkBlue }} />
             </ListItemIcon>
-            <ListItemText
-              primary="Shared With Me"
-              primaryTypographyProps={{
-                fontWeight: 600,
-                color: '#0056b3',
-              }}
-            />
+            <ListItemText primary="Shared With Me" />
           </ListItemButton>
         </ListItem>
 
@@ -146,32 +198,26 @@ const NavigationDrawer = () => {
             component={Link}
             to="/trash"
             sx={{
-              border: '2px solid #b3d1ff',
-              borderRadius: '12px',
+              border: `2px solid ${colors.lightBlue}`,
+              borderRadius: '10px',
               padding: '10px 16px',
               marginBottom: '10px',
-              '&:hover': {
-                backgroundColor: '#e0f2ff',
-              },
-              '&.Mui-selected': {
-                backgroundColor: '#dce9ff',
-                borderColor: '#0056b3',
-              },
+              '&:hover': { backgroundColor: colors.hover },
+              ...(location.pathname === '/trash' ? activePageStyles : {}),
             }}
           >
             <ListItemIcon>
-              <DeleteIcon sx={{ color: '#0056b3' }} />
+              <DeleteIcon sx={{ color: colors.darkBlue }} />
             </ListItemIcon>
-            <ListItemText
-              primary="Trash"
-              primaryTypographyProps={{
-                fontWeight: 600,
-                color: '#0056b3',
-              }}
-            />
+            <ListItemText primary="Trash" />
           </ListItemButton>
         </ListItem>
       </List>
+
+      {/* Avatar with logout functionality */}
+      <Box sx={{ mt: 'auto', padding: '10px' }}>
+        <AccountMenu />
+      </Box>
     </Drawer>
   );
 };

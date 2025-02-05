@@ -6,6 +6,7 @@ import UploadIcon from '@mui/icons-material/Upload';
 import Divider from '@mui/material/Divider';
 import { Box, Typography, IconButton, Menu, MenuItem } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import { colors } from '../Styles';
 
 export interface FolderProp {
   id: string;
@@ -15,6 +16,7 @@ export interface FolderProp {
   parentFolder: string | null;
   folderChildren: string[];
   fileChildren: string[];
+  onClick: (folder: FolderProp) => void;
 }
 
 const Folder = (prop: FolderProp) => {
@@ -22,17 +24,24 @@ const Folder = (prop: FolderProp) => {
   const open = Boolean(anchorEl);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
 
-  const handleOptionsClose = () => {
+  const handleOptionsClose = (event: React.MouseEvent) => {
+    event.stopPropagation();
     setAnchorEl(null);
+  };
+
+  const handleFolderClick = () => {
+    prop.onClick(prop);
   };
 
   return (
     <Box
       className="folder"
       data-folder-id={prop.id}
+      onClick={handleFolderClick} // Handle folder click
       sx={{
         position: 'relative',
         width: '150px',
@@ -55,7 +64,7 @@ const Folder = (prop: FolderProp) => {
           left: '0px',
           width: '70px',
           height: '15px',
-          backgroundColor: '#e0f2ff',
+          backgroundColor: colors.lightBlue,
           borderRadius: '5px 5px 0 0',
           transition: 'background-color 0.3s',
         }}
@@ -67,7 +76,7 @@ const Folder = (prop: FolderProp) => {
         sx={{
           width: '100%',
           height: '100%',
-          backgroundColor: '#e0f2ff',
+          backgroundColor: colors.lightBlue,
           borderRadius: '0px 10px 5px 5px',
           boxShadow: '2px 2px 5px rgba(0,0,0,0.2)',
           display: 'flex',
@@ -78,9 +87,9 @@ const Folder = (prop: FolderProp) => {
       >
         {/* Folder Name */}
         <Typography
-          variant="body2"
+          variant="h4"
           sx={{
-            color: '#5d4037',
+            color: colors.darkBlue,
             fontWeight: 'bold',
             textAlign: 'center',
             maxWidth: '100px',
@@ -120,85 +129,101 @@ const Folder = (prop: FolderProp) => {
           <MenuItem
             onClick={handleOptionsClose}
             sx={{
-              color: '#0056b3',
+              color: colors.darkBlue,
               paddingRight: '16px',
               '&:hover': {
                 backgroundColor: '#e0f2ff',
               },
               '&.Mui-selected': {
                 backgroundColor: '#dce9ff',
-                borderColor: '#0056b3',
+                borderColor: colors.darkBlue,
               },
             }}
           >
             <SendIcon
-              sx={{ color: '#0056b3', fontSize: '20px', marginRight: '9px' }}
+              sx={{
+                color: colors.darkBlue,
+                fontSize: '20px',
+                marginRight: '9px',
+              }}
             />
             Share
           </MenuItem>
 
-          <Divider sx={{ my: 0.2, color: '#0056b3' }} />
+          <Divider sx={{ my: 0.2, color: colors.darkBlue }} />
 
           <MenuItem
             onClick={handleOptionsClose}
             sx={{
-              color: '#0056b3',
+              color: colors.darkBlue,
               paddingRight: '16px',
               '&:hover': {
                 backgroundColor: '#e0f2ff',
               },
               '&.Mui-selected': {
                 backgroundColor: '#dce9ff',
-                borderColor: '#0056b3',
+                borderColor: colors.darkBlue,
               },
             }}
           >
             <DriveFileRenameOutlineIcon
-              sx={{ color: '#0056b3', fontSize: '20px', marginRight: '9px' }}
+              sx={{
+                color: colors.darkBlue,
+                fontSize: '20px',
+                marginRight: '9px',
+              }}
             />
             Rename
           </MenuItem>
 
-          <Divider sx={{ my: 0.2, color: '#0056b3' }} />
+          <Divider sx={{ my: 0.2, color: colors.darkBlue }} />
 
           <MenuItem
             onClick={handleOptionsClose}
             sx={{
-              color: '#0056b3',
+              color: colors.darkBlue,
               paddingRight: '16px',
               '&:hover': {
                 backgroundColor: '#e0f2ff',
               },
               '&.Mui-selected': {
                 backgroundColor: '#dce9ff',
-                borderColor: '#0056b3',
+                borderColor: colors.darkBlue,
               },
             }}
           >
             <DeleteIcon
-              sx={{ color: '#0056b3', fontSize: '20px', marginRight: '9px' }}
+              sx={{
+                color: colors.darkBlue,
+                fontSize: '20px',
+                marginRight: '9px',
+              }}
             />
             Delete
           </MenuItem>
 
-          <Divider sx={{ my: 0.2, color: '#0056b3' }} />
+          <Divider sx={{ my: 0.2, color: colors.darkBlue }} />
 
           <MenuItem
             onClick={handleOptionsClose}
             sx={{
-              color: '#0056b3',
+              color: colors.darkBlue,
               paddingRight: '16px',
               '&:hover': {
                 backgroundColor: '#e0f2ff',
               },
               '&.Mui-selected': {
                 backgroundColor: '#dce9ff',
-                borderColor: '#0056b3',
+                borderColor: colors.darkBlue,
               },
             }}
           >
             <UploadIcon
-              sx={{ color: '#0056b3', fontSize: '20px', marginRight: '9px' }}
+              sx={{
+                color: colors.darkBlue,
+                fontSize: '20px',
+                marginRight: '9px',
+              }}
             />
             Upload
           </MenuItem>
