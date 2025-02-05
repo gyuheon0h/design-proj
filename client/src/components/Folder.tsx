@@ -6,6 +6,8 @@ import UploadIcon from '@mui/icons-material/Upload';
 import Divider from '@mui/material/Divider';
 import { Box, Typography, IconButton, Menu, MenuItem } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors } from '../Styles';
 
 export interface FolderProp {
@@ -21,6 +23,7 @@ export interface FolderProp {
 
 const Folder = (prop: FolderProp) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [favorited, setFavorited] = useState(false);
   const open = Boolean(anchorEl);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -37,11 +40,16 @@ const Folder = (prop: FolderProp) => {
     prop.onClick(prop);
   };
 
+  const toggleFavorite = (event: React.MouseEvent) => {
+    event.stopPropagation(); // idk why but i feel like this is necessary
+    setFavorited((prev) => !prev);
+  };
+
   return (
     <Box
       className="folder"
       data-folder-id={prop.id}
-      onClick={handleFolderClick} // Handle folder click
+      onClick={handleFolderClick}
       sx={{
         position: 'relative',
         width: '150px',
@@ -101,6 +109,19 @@ const Folder = (prop: FolderProp) => {
           {prop.name}
         </Typography>
 
+        {/* Favorites ❤️ */}
+        <IconButton
+          onClick={toggleFavorite}
+          sx={{
+            position: 'absolute',
+            top: '5px',
+            right: '5px',
+            color: favorited ? '#FF6347' : colors.darkBlue,
+          }}
+        >
+          {favorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+        </IconButton>
+
         {/* More Options Button */}
         <IconButton
           onClick={handleOptionsClick}
@@ -116,7 +137,6 @@ const Folder = (prop: FolderProp) => {
 
         {/* Dropdown Menu */}
         <Menu
-          id="options-menu"
           anchorEl={anchorEl}
           open={open}
           onClose={handleOptionsClose}
