@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export async function getUsernameById(id: string): Promise<string> {
   try {
-    const response = await axios.get(`http://localhost:5001/api/user/user`, {
+    const response = await axios.get(`http://localhost:5001/api/user/`, {
       params: { id },
     });
     return response.data?.user.username || '';
