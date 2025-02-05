@@ -57,8 +57,8 @@ const getFileIcon = (fileType: string) => {
 };
 
 const FileComponent = (props: File) => {
+  // TODO THIS IS BUGGED
   const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
-
   useEffect(() => {
     const fetchOwnerUserName = async () => {
       if (props.owner) {
@@ -148,7 +148,7 @@ const FileComponent = (props: File) => {
         </Tooltip>
 
         <Tooltip
-          title={`Last Modified: ${formattedLastModifiedDate} by ${props.lastModifiedBy || 'N/A'}`}
+          title={`Last Modified: ${formattedLastModifiedDate} by ${props.lastModifiedBy || ownerUserName}`}
           arrow
         >
           <Typography

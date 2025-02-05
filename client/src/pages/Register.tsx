@@ -43,8 +43,6 @@ const Register = () => {
       return;
     }
 
-    console.log('Registering with:', { name: username, email, password });
-
     try {
       const passwordHash = SHA256(password).toString(); // hashed password
 
@@ -58,7 +56,6 @@ const Register = () => {
       );
 
       if (response.status === 201) {
-        console.log('successful registration ' + response.data);
         showAlert(
           'Successfully registered! You will now be redirected to login.',
           'success',

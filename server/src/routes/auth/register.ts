@@ -6,7 +6,6 @@ const router = Router();
 /** Register API */
 router.post('/', async (req: Request, res: Response) => {
   try {
-    console.log("req body", req.body)
     const { username, email, passwordHash } = req.body;
 
     // Validate request body
@@ -23,7 +22,9 @@ router.post('/', async (req: Request, res: Response) => {
     // Check if email already regitsered
     const emailExists = await userModel.userExists(email);
     if (emailExists) {
-      return res.status(409).json({ message: 'You already registered with this email 🙄.' });
+      return res
+        .status(409)
+        .json({ message: 'You already registered with this email 🙄.' });
     }
 
     // Create new user

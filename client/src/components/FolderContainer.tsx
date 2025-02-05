@@ -35,7 +35,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         },
       );
 
-      console.log('Folder creation successful:', response.data);
       return response.data;
     } catch (error) {
       console.error('Folder creation failed:', error);

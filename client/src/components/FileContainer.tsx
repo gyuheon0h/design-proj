@@ -33,16 +33,12 @@ const FileContainer: React.FC<FileContainerProps> = ({
 
   const handleUploadFile = async (file: Blob, fileName: string) => {
     const formData = new FormData();
-    console.log(file, fileName, currentFolderId);
     formData.append('file', file);
     formData.append('fileName', fileName);
     if (currentFolderId) {
       formData.append('parentFolder', currentFolderId);
     }
     try {
-      for (let pair of formData.entries()) {
-        console.log(pair);
-      }
       const response = await axios.post(
         'http://localhost:5001/api/file/upload',
         formData,
