@@ -60,7 +60,7 @@ const Home = () => {
       <SearchBar location="Storage" />
 
       {/* Breadcrumb Navigation */}
-      <div style={{ marginBottom: '10px', paddingLeft: '11px', paddingTop: '4vh'}}>
+      <div style={{ marginBottom: '10px', paddingLeft: '0.6vw', paddingTop: '4vh'}}>
         {breadcrumbs.map((crumb, index) => (
           <span
             key={crumb.id}
