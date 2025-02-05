@@ -15,7 +15,6 @@ export const authorize = (
 ) => {
   try {
     // Get token from cookies
-    console.log('Cookies received:', req.cookies);
     const token = req.cookies?.authToken;
     if (!token) {
       return res

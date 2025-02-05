@@ -1,5 +1,14 @@
-import React, { useState } from 'react';
-import { Card, Typography, IconButton, Menu, MenuItem, Divider, Box, Tooltip } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import {
+  Card,
+  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
+  Divider,
+  Box,
+  Tooltip,
+} from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
@@ -10,11 +19,12 @@ import ImageIcon from '@mui/icons-material/Image';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import MovieIcon from '@mui/icons-material/Movie';
 import TableChartIcon from '@mui/icons-material/TableChart';
+import { getUsernameById } from '../miscellHelpers/userHelpers';
 
 interface File {
   id: string;
   name: string;
-  owner: string;
+  owner: string; // THIS IS UUID
   createdAt: Date;
   lastModifiedBy: string | null;
   lastModifiedAt: Date;
@@ -30,7 +40,11 @@ const getFileIcon = (fileType: string) => {
     case 'txt':
       return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
     case 'pdf':
-      return <InsertDriveFileIcon sx={{ fontSize: 30, marginRight: '10px', color: 'red' }} />;
+      return (
+        <InsertDriveFileIcon
+          sx={{ fontSize: 30, marginRight: '10px', color: 'red' }}
+        />
+      );
     case 'photo':
       return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
     case 'mp3':
@@ -43,6 +57,24 @@ const getFileIcon = (fileType: string) => {
 };
 
 const FileComponent = (props: File) => {
+  const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
+
+  useEffect(() => {
+    const fetchOwnerUserName = async () => {
+      if (props.owner) {
+        try {
+          const username = await getUsernameById(props.owner);
+          setOwnerUserName(username || 'Unknown');
+        } catch (error) {
+          console.error('Error fetching username:', error);
+          setOwnerUserName('Unknown');
+        }
+      }
+    };
+
+    fetchOwnerUserName();
+  }, [props.owner]); // Runs effect when `props.owner` changes need to do this bc react tsx needs to render synchronously
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -53,6 +85,11 @@ const FileComponent = (props: File) => {
   const handleOptionsClose = () => {
     setAnchorEl(null);
   };
+
+  const lastModifiedDate = new Date(props.lastModifiedAt);
+  const formattedLastModifiedDate = !isNaN(lastModifiedDate.getTime())
+    ? lastModifiedDate.toLocaleDateString()
+    : 'Unknown';
 
   return (
     <Card
@@ -71,7 +108,15 @@ const FileComponent = (props: File) => {
     >
       {getFileIcon(props.fileType)}
 
-      <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, overflow: 'hidden', justifyContent: 'space-around' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          flexGrow: 1,
+          overflow: 'hidden',
+          justifyContent: 'space-around',
+        }}
+      >
         <Tooltip title={props.name} arrow>
           <Typography
             variant="subtitle1"
@@ -88,14 +133,36 @@ const FileComponent = (props: File) => {
         </Tooltip>
 
         <Tooltip title={props.owner} arrow>
-          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            Owner: {props.owner}
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              maxWidth: '150px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Owner: {ownerUserName}
           </Typography>
         </Tooltip>
 
-        <Tooltip title={`Last Modified: ${props.lastModifiedAt.toLocaleDateString()} by ${props.lastModifiedBy || 'N/A'}`} arrow>
-          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            Last Modified: {props.lastModifiedAt.toLocaleDateString()} by {props.lastModifiedBy || 'N/A'}
+        <Tooltip
+          title={`Last Modified: ${formattedLastModifiedDate} by ${props.lastModifiedBy || 'N/A'}`}
+          arrow
+        >
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              maxWidth: '200px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Last Modified: {formattedLastModifiedDate} by{' '}
+            {props.lastModifiedBy || 'N/A'}
           </Typography>
         </Tooltip>
       </Box>
@@ -121,7 +188,10 @@ const FileComponent = (props: File) => {
         <Divider sx={{ my: 0.2 }} />
 
         <MenuItem onClick={handleOptionsClose}>
-          <DriveFileRenameOutlineIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Rename
+          <DriveFileRenameOutlineIcon
+            sx={{ fontSize: '20px', marginRight: '9px' }}
+          />{' '}
+          Rename
         </MenuItem>
 
         <Divider sx={{ my: 0.2 }} />

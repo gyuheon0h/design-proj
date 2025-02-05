@@ -13,11 +13,7 @@ import { typography } from '../Styles';
 interface UploadDialogProps {
   open: boolean;
   onClose: () => void;
-  onFileUpload: (
-    file: Blob | File,
-    fileName: string,
-    parentFolder: string | null,
-  ) => Promise<void>;
+  onFileUpload: (file: Blob | File, fileName: string) => Promise<void>;
 }
 
 const UploadDialog: React.FC<UploadDialogProps> = ({
@@ -39,7 +35,7 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
   const handleUploadClick = async () => {
     if (file) {
       try {
-        await onFileUpload(file, newFileName, null);
+        await onFileUpload(file, newFileName);
         setFile(null);
         setNewFileName('');
         onClose();

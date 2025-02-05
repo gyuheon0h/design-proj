@@ -31,7 +31,6 @@ class BaseModel<T> {
     value: T[K],
   ): Promise<T[]> {
     const query = `SELECT * FROM "${this.table}" WHERE "${String(column)}" = $1 AND "deletedAt" IS NULL`;
-    console.log('query from getALLBYCOLUMN', query);
     const result = await pool.query(query, [value]);
     return result.rows as T[];
   }
@@ -59,6 +58,7 @@ class BaseModel<T> {
 
   // Create a new record
   async create(data: Partial<T>): Promise<T> {
+    console.log('CREATE ON FILE MODEL EXECS');
     const keys = Object.keys(data)
       .map((key) => `"${key}"`)
       .join(', ');

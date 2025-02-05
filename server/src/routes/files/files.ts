@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import { AuthenticatedRequest, authorize } from '../../middleware/authorize';
+import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
+import StorageService from '../../storage';
 import FileModel from '../../db_models/FileModel';
 
 const fileRouter = Router();
+const upload = multer(); // Using memory storage to keep things minimal (TODO: implement streaming)
 
 fileRouter.get('/root', authorize, async (req: AuthenticatedRequest, res) => {
   try {
@@ -67,6 +71,54 @@ fileRouter.get(
       return res.json(files);
     } catch (error) {
       console.error('Error getting files by folder:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
+/**
+ * POST /api/files/upload
+ * Route to upload a file
+ */
+fileRouter.post(
+  '/upload',
+  authorize,
+  upload.single('file'),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+
+      const { originalname, buffer, mimetype } = req.file;
+      const { parentFolder = null, fileName } = req.body;
+      const userId = (req as any).user.userId;
+
+      // Generate a unique file ID and file pagth
+      const fileId = uuidv4();
+      const gcsFilePath = `uploads/${userId}/${parentFolder || 'root'}/${fileId}-${originalname}`;
+
+      // Upload to GCS
+      await StorageService.uploadFile(gcsFilePath, buffer, mimetype);
+
+      // Save metadata to the database
+      const fileMetadata = await FileModel.create({
+        id: fileId,
+        name: fileName,
+        owner: userId,
+        createdAt: new Date(),
+        lastModifiedBy: null,
+        lastModifiedAt: new Date(),
+        parentFolder: parentFolder || null, // Allow null for root files
+        gcsKey: gcsFilePath,
+        fileType: mimetype,
+      });
+
+      return res
+        .status(201)
+        .json({ message: 'File uploaded successfully', file: fileMetadata });
+    } catch (error) {
+      console.error('File upload error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   },

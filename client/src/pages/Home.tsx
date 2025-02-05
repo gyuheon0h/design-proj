@@ -36,7 +36,6 @@ const Home = () => {
   };
 
   const handleFolderClick = (folder: FolderProp) => {
-    console.log('clicked');
     setBreadcrumbs((prevBreadcrumbs) => [
       ...prevBreadcrumbs,
       { id: folder.id, name: folder.name },
@@ -50,9 +49,6 @@ const Home = () => {
     setBreadcrumbs(newBreadcrumbs);
     setCurrentFolderId(newBreadcrumbs[newBreadcrumbs.length - 1].id);
   };
-  console.log('Current Folder ID:', currentFolderId);
-  console.log('Current Files', files);
-  console.log('Current Folders', folders);
 
   return (
     <div style={{ padding: '20px' }}>
@@ -60,7 +56,13 @@ const Home = () => {
       <SearchBar location="Storage" />
 
       {/* Breadcrumb Navigation */}
-      <div style={{ marginBottom: '10px', paddingLeft: '0.6vw', paddingTop: '4vh'}}>
+      <div
+        style={{
+          marginBottom: '10px',
+          paddingLeft: '0.6vw',
+          paddingTop: '4vh',
+        }}
+      >
         {breadcrumbs.map((crumb, index) => (
           <span
             key={crumb.id}
@@ -85,7 +87,7 @@ const Home = () => {
 
       {/* Files Section */}
       <div style={{ marginLeft: '10px' }}>
-        <FileContainer files={files} />
+        <FileContainer files={files} currentFolderId={currentFolderId} />
       </div>
     </div>
   );

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Button } from '@mui/material';
 import FileComponent from './File';
-import UploadDialog from '../pages/UploadDialog';
+import UploadDialog from '../pages/CreateFileDialog';
 import { colors, typography } from '../Styles';
+import axios from 'axios';
 
 interface File {
   id: string;
@@ -18,37 +19,42 @@ interface File {
 
 interface FileContainerProps {
   files: File[];
+  currentFolderId: string | null;
 }
 
-const FileContainer: React.FC<FileContainerProps> = ({ files }) => {
+const FileContainer: React.FC<FileContainerProps> = ({
+  files,
+  currentFolderId,
+}) => {
   const [open, setOpen] = useState(false);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  const handleUploadFile = async (
-    file: Blob | File,
-    fileName: string,
-    parentFolder: string | null,
-  ) => {
+  const handleUploadFile = async (file: Blob, fileName: string) => {
     const formData = new FormData();
-    formData.append('file', file as Blob);
+    console.log(file, fileName, currentFolderId);
+    formData.append('file', file);
     formData.append('fileName', fileName);
-    if (parentFolder) {
-      formData.append('parentFolder', parentFolder);
+    if (currentFolderId) {
+      formData.append('parentFolder', currentFolderId);
     }
-    // try {
-    //   const response = await axios.post('/api/files/upload', formData, {
-    //     headers: { 'Content-Type': 'multipart/form-data' },
-    //     withCredentials: true,
-    //   });
-
-    //   console.log('Upload successful:', response.data);
-    //   return response.data;
-    // } catch (error) {
-    //   console.error('Upload failed:', error);
-    //   throw error;
-    // }
+    try {
+      for (let pair of formData.entries()) {
+        console.log(pair);
+      }
+      const response = await axios.post(
+        'http://localhost:5001/api/file/upload',
+        formData,
+        {
+          withCredentials: true,
+        },
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Upload failed:', error);
+      throw error;
+    }
   };
 
   return (
