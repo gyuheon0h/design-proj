@@ -14,7 +14,6 @@ import {
 import axios from 'axios';
 import SHA256 from 'crypto-js/sha256';
 
-
 const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -24,8 +23,6 @@ const Register = () => {
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState<AlertColor>('success');
   const navigate = useNavigate();
-
-
 
   const handleCloseAlert = () => {
     setOpenAlert(false);
@@ -48,33 +45,33 @@ const Register = () => {
 
     console.log('Registering with:', { name: username, email, password });
 
-    // TODO: handle actual registration logic
-
     try {
-        const passwordHash = SHA256(password).toString(); // hashed password
+      const passwordHash = SHA256(password).toString(); // hashed password
 
-        // TODO: change endpoint to not raw string
-        const response = await axios.post('http://localhost:5001/api/register', 
-          {username, email, passwordHash},
-          {
-            withCredentials: true,  // Send cookies automatically
-          }        
+      // TODO: change endpoint to not raw string
+      const response = await axios.post(
+        'http://localhost:5001/api/register',
+        { username, email, passwordHash },
+        {
+          withCredentials: true, // Send cookies automatically
+        },
+      );
+
+      if (response.status === 201) {
+        console.log('successful registration ' + response.data);
+        showAlert(
+          'Successfully registered! You will now be redirected to login.',
+          'success',
         );
-
-    
-        if (response.status === 201) {
-          console.log("successful registration " + response.data);
-          showAlert("Successfully registered! You will now be redirected to login.", 'success');
-          navigate('/');
-        } else {
-            const errorData = await response;
-            alert(`Error: ${errorData}`);
-        }
-      } catch (error) {
-        console.error('Registration error:', error);
-        alert('An unexpected error occurred.');
+        navigate('/');
+      } else {
+        const errorData = await response;
+        alert(`Error: ${errorData}`);
       }
-    
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert('An unexpected error occurred.');
+    }
   };
 
   return (
@@ -162,14 +159,14 @@ const Register = () => {
           </Button>
         </Box>
       </Paper>
-      <Snackbar 
-        open={openAlert} 
-        autoHideDuration={6000} 
+      <Snackbar
+        open={openAlert}
+        autoHideDuration={6000}
         onClose={handleCloseAlert}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert 
-          onClose={handleCloseAlert} 
+        <Alert
+          onClose={handleCloseAlert}
           severity={alertSeverity}
           sx={{ width: '100%' }}
           elevation={6}
