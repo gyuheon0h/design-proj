@@ -34,6 +34,7 @@ interface File {
   parentFolder: string | null;
   gcsKey: string;
   fileType: string;
+  handleDeleteFile: (fileId: string) => void;
 }
 
 const getFileIcon = (fileType: string) => {
@@ -198,7 +199,12 @@ const FileComponent = (props: File) => {
 
         <Divider sx={{ my: 0.2 }} />
 
-        <MenuItem onClick={handleOptionsClose}>
+        <MenuItem
+          onClick={() => {
+            props.handleDeleteFile(props.id);
+            handleOptionsClose();
+          }}
+        >
           <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Delete
         </MenuItem>
 

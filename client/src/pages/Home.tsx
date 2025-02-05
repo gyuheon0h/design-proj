@@ -27,6 +27,9 @@ const Home = () => {
   useEffect(() => {
     fetchData(currentFolderId);
     fetchFolderNames(folderPath); // Fetch names for all folders in breadcrumb
+    // We dont want to rerender on folderPath change (This seems to exhaust express resources)
+    // Although this is not the best solution, it works for now
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFolderId]);
 
   const fetchData = async (folderId: string | null) => {
@@ -94,7 +97,7 @@ const Home = () => {
             onClick={() => handleBreadcrumbClick(index - 1)}
             style={{ cursor: 'pointer', marginRight: '5px' }}
           >
-            {index === 0 ? 'Home' : folderNames[crumb] || crumb}{' '}
+            {index === 0 ? 'Home' : folderNames[crumb] || ''}{' '}
             {/* Show folder name if available */}
             {index < folderPath.length ? ' > ' : ''}
           </span>
