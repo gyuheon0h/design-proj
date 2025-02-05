@@ -7,7 +7,6 @@ import Divider from '@mui/material/Divider';
 import { Box, Typography, IconButton, Menu, MenuItem } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { colors } from '../Styles';
-import { colors} from '../Styles';
 
 export interface FolderProp {
   id: string;

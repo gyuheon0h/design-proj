@@ -3,8 +3,6 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { theme } from './Styles';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import { theme } from './Styles';
 import App from './App';
 import { UserProvider } from './context/UserContext';
 import './index.css';
