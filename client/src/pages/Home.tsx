@@ -12,7 +12,7 @@ const Home = () => {
   const [files, setFiles] = useState([]);
   const [breadcrumbs, setBreadcrumbs] = useState<
     { id: string | null; name: string }[]
-  >([{ id: null, name: 'Root' }]);
+  >([{ id: null, name: 'Home' }]);
 
   useEffect(() => {
     fetchData(currentFolderId);
@@ -60,7 +60,7 @@ const Home = () => {
       <SearchBar location="Storage" />
 
       {/* Breadcrumb Navigation */}
-      <div style={{ marginBottom: '10px' }}>
+      <div style={{ marginBottom: '10px', paddingLeft: '11px', paddingTop: '4vh'}}>
         {breadcrumbs.map((crumb, index) => (
           <span
             key={crumb.id}
