@@ -3,7 +3,7 @@ import UserModel from '../../db_models/UserModel';
 
 const userRouter = Router();
 
-userRouter.get('/user', async (req, res) => {
+userRouter.get('/', async (req, res) => {
   try {
     const userId = req.query.id;
     const user = await UserModel.getById(userId as string);
