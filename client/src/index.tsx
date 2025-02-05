@@ -6,6 +6,7 @@ import { theme } from './Styles';
 import App from './App';
 import { UserProvider } from './context/UserContext';
 import './index.css';
+import './index.css';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement,
@@ -14,11 +15,14 @@ root.render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <ThemeProvider theme={theme}>
+      <CssBaseline />
       <BrowserRouter>
-      <UserProvider>
+        <UserProvider>
           <App />
-      </UserProvider>
+        </UserProvider>
       </BrowserRouter>
+    </ThemeProvider>
     </ThemeProvider>
   </React.StrictMode>,
 );

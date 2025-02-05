@@ -6,7 +6,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import EventIcon from '@mui/icons-material/Event';
 import Filter from './Filter';
-import { colors} from '../Styles';
+import {colors, typography} from '../Styles';
 
 interface SearchBarProps {
   location: string;
