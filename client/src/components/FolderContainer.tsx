@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Button, Slider } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import Folder, { FolderProp } from './Folder';
@@ -23,24 +23,25 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [activeStartIndex, setActiveStartIndex] = useState(0);
-  const [activeEndIndex, setActiveEndIndex] = useState(
-    Math.min(itemsPerPage, folders.length),
-  );
-  const [visibleFolders, setVisibleFolders] = useState(
-    folders.slice(0, itemsPerPage),
-  );
+  const [visibleFolders, setVisibleFolders] = useState<FolderProp[]>([]);
+
+  useEffect(() => {
+    setVisibleFolders(
+      folders.slice(activeStartIndex, activeStartIndex + itemsPerPage),
+    );
+  }, [folders, itemsPerPage, activeStartIndex]);
 
   const sliderMax = Math.max(folders.length - itemsPerPage, 0);
 
   const updateVisibleFolders = (newStartIndex: number) => {
-    const newEndIndex = newStartIndex + itemsPerPage;
     setActiveStartIndex(newStartIndex);
-    setActiveEndIndex(newEndIndex);
-    setVisibleFolders(folders.slice(newStartIndex, newEndIndex));
+    setVisibleFolders(
+      folders.slice(newStartIndex, newStartIndex + itemsPerPage),
+    );
   };
 
   const handleNext = () => {
-    if (activeEndIndex < folders.length) {
+    if (activeStartIndex + itemsPerPage < folders.length) {
       updateVisibleFolders(activeStartIndex + 1);
     }
   };
@@ -81,7 +82,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 
   return (
     <Box className="folder-container" sx={{ width: '100%' }}>
-      {/* Header section with title and create button */}
       <Box
         sx={{
           display: 'flex',
@@ -111,7 +111,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         </Button>
       </Box>
 
-      {/* Main container for arrow buttons and visible folders */}
       <Box
         sx={{
           display: 'flex',
@@ -153,13 +152,12 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         <Button
           className="right-button"
           onClick={handleNext}
-          disabled={activeEndIndex >= folders.length}
+          disabled={activeStartIndex + itemsPerPage >= folders.length}
         >
           <KeyboardArrowRight />
         </Button>
       </Box>
 
-      {/* Slider to navigate through the folders */}
       <Box sx={{ px: 2, display: 'flex', justifyContent: 'center' }}>
         <Slider
           value={activeStartIndex}
@@ -184,7 +182,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         />
       </Box>
 
-      {/* Dialog */}
       <FolderDialog
         open={open}
         onClose={handleClose}
