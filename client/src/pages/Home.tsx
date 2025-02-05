@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import { FolderProp } from '../components/Folder';
 import FileContainer from '../components/FileContainer';
@@ -7,19 +8,28 @@ import axios from 'axios';
 import FolderContainer from '../components/FolderContainer';
 
 const Home = () => {
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null); // Root folder
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Extract folder path from URL
+  const folderPath = location.pathname
+    .replace('/home', '')
+    .split('/')
+    .filter(Boolean);
+  const currentFolderId = folderPath.length
+    ? folderPath[folderPath.length - 1]
+    : null; // Last part of the path
+
   const [folders, setFolders] = useState<FolderProp[]>([]);
   const [files, setFiles] = useState([]);
-  const [breadcrumbs, setBreadcrumbs] = useState<
-    { id: string | null; name: string }[]
-  >([{ id: null, name: 'Home' }]);
 
   useEffect(() => {
     fetchData(currentFolderId);
-  }, [currentFolderId]);
+  }, [currentFolderId, location.pathname]); // Runs when folder changes
 
   const fetchData = async (folderId: string | null) => {
     try {
+      // Fetch folders & files inside the current folder
       const [foldersRes, filesRes] = await Promise.all([
         axios.get(`http://localhost:5001/api/folder/parent/${folderId}`, {
           withCredentials: true,
@@ -36,18 +46,11 @@ const Home = () => {
   };
 
   const handleFolderClick = (folder: FolderProp) => {
-    setBreadcrumbs((prevBreadcrumbs) => [
-      ...prevBreadcrumbs,
-      { id: folder.id, name: folder.name },
-    ]);
-
-    setCurrentFolderId(folder.id);
+    navigate(`/home/${[...folderPath, folder.id].join('/')}`); // Append folder ID to path
   };
 
   const handleBreadcrumbClick = (index: number) => {
-    const newBreadcrumbs = breadcrumbs.slice(0, index + 1);
-    setBreadcrumbs(newBreadcrumbs);
-    setCurrentFolderId(newBreadcrumbs[newBreadcrumbs.length - 1].id);
+    navigate(`/home/${folderPath.slice(0, index + 1).join('/')}`);
   };
 
   return (
@@ -63,13 +66,13 @@ const Home = () => {
           paddingTop: '4vh',
         }}
       >
-        {breadcrumbs.map((crumb, index) => (
+        {['Home', ...folderPath].map((crumb, index) => (
           <span
-            key={crumb.id}
-            onClick={() => handleBreadcrumbClick(index)}
+            key={index}
+            onClick={() => handleBreadcrumbClick(index - 1)}
             style={{ cursor: 'pointer', marginRight: '5px' }}
           >
-            {crumb.name} {index < breadcrumbs.length - 1 ? '>' : ''}
+            {crumb} {index < folderPath.length ? '>' : ''}
           </span>
         ))}
       </div>
