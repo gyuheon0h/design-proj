@@ -57,6 +57,22 @@ const FileContainer: React.FC<FileContainerProps> = ({
     }
   };
 
+  const handleDeleteFile = async (fileId: string) => {
+    try {
+      const response = await axios.delete(
+        `http://localhost:5001/api/file/delete/${fileId}`,
+        {
+          withCredentials: true,
+        },
+      );
+
+      refreshFiles(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting file:', error);
+    }
+  };
+
   return (
     <div>
       {/* Header section with title and upload button */}
@@ -114,6 +130,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
           parentFolder={file.parentFolder}
           gcsKey={file.gcsKey}
           fileType={file.fileType}
+          handleDeleteFile={handleDeleteFile}
         />
       ))}
 
