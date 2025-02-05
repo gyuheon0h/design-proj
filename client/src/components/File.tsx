@@ -162,7 +162,7 @@ const FileComponent = (props: File) => {
             }}
           >
             Last Modified: {formattedLastModifiedDate} by{' '}
-            {props.lastModifiedBy || 'N/A'}
+            {props.lastModifiedBy || ownerUserName}
           </Typography>
         </Tooltip>
       </Box>
