@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import SHA256 from 'crypto-js/sha256';
+import { colors } from '../Styles';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -78,57 +79,88 @@ const Register = () => {
       sx={{
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
         minHeight: '100vh',
+        backgroundColor: colors.white,
       }}
     >
       <Paper
-        elevation={3}
+        elevation={0}
         sx={{
           padding: 4,
           width: '100%',
           borderRadius: '16px',
-          //   transform: 'translateX(-10vw)' // bruh it keeps not being centered **KEEP THIS AS
-          //                                 // VW NOT PX, OR ELSE NOT RESPONSIVE STYLING!!
+          backgroundColor: colors.lightBlue,
+          textAlign: 'center',
         }}
       >
-        <Typography component="h1" variant="h5" align="center" gutterBottom>
-          SIGN UP
+        <Typography
+          component="h1"
+          variant="h5"
+          sx={{
+            fontWeight: 'bold',
+            color: colors.darkBlue,
+            fontSize: 24,
+          }}
+        >
+          Sign Up for Owl Share!
         </Typography>
 
-        <Box component="form" onSubmit={handleRegister} sx={{ mt: 1 }}>
+        <Box component="form" onSubmit={handleRegister} sx={{ mt: 3 }}>
           <TextField
             margin="normal"
             required
             fullWidth
             id="username"
-            label="username"
+            label="Username"
             name="username"
             autoComplete="name"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            sx={{
+              backgroundColor: colors.white,
+              borderRadius: '8px',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '8px',
+              },
+            }}
           />
           <TextField
             margin="normal"
             required
             fullWidth
             id="email"
-            label="email"
+            label="Email"
             name="email"
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            sx={{
+              backgroundColor: colors.white,
+              borderRadius: '8px',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '8px',
+              },
+            }}
           />
           <TextField
             margin="normal"
             required
             fullWidth
             name="password"
-            label="password"
+            label="Password"
             type="password"
             id="password"
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            sx={{
+              backgroundColor: colors.white,
+              borderRadius: '8px',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '8px',
+              },
+            }}
           />
           <TextField
             margin="normal"
@@ -140,6 +172,13 @@ const Register = () => {
             id="confirmPassword"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
+            sx={{
+              backgroundColor: colors.white,
+              borderRadius: '8px',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '8px',
+              },
+            }}
           />
           <Button
             type="submit"
@@ -148,11 +187,15 @@ const Register = () => {
             sx={{
               mt: 3,
               mb: 2,
-              backgroundColor: '#000',
-              '&:hover': { backgroundColor: '#333' },
+              backgroundColor: colors.darkBlue,
+              color: colors.white,
+              borderRadius: '8px',
+              '&:hover': {
+                backgroundColor: '#0E147A',
+              },
             }}
           >
-            Create Account
+            Register
           </Button>
         </Box>
       </Paper>
