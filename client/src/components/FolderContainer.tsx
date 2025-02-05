@@ -9,12 +9,14 @@ interface FolderContainerProps {
   folders: FolderProp[];
   onFolderClick: (folder: FolderProp) => void;
   currentFolderId: string | null;
+  refreshFolders: (folderId: string | null) => void;
 }
 
 const FolderContainer: React.FC<FolderContainerProps> = ({
   folders,
   onFolderClick,
   currentFolderId,
+  refreshFolders,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -35,6 +37,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         },
       );
 
+      refreshFolders(currentFolderId);
       return response.data;
     } catch (error) {
       console.error('Folder creation failed:', error);

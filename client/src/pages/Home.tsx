@@ -107,6 +107,7 @@ const Home = () => {
           folders={folders}
           onFolderClick={handleFolderClick}
           currentFolderId={currentFolderId}
+          refreshFolders={fetchData}
         />
       </div>
 
@@ -114,7 +115,11 @@ const Home = () => {
 
       {/* Files Section */}
       <div style={{ marginLeft: '10px' }}>
-        <FileContainer files={files} currentFolderId={currentFolderId} />
+        <FileContainer
+          files={files}
+          currentFolderId={currentFolderId}
+          refreshFiles={fetchData}
+        />
       </div>
     </div>
   );

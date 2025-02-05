@@ -20,11 +20,13 @@ interface File {
 interface FileContainerProps {
   files: File[];
   currentFolderId: string | null;
+  refreshFiles: (folderId: string | null) => void;
 }
 
 const FileContainer: React.FC<FileContainerProps> = ({
   files,
   currentFolderId,
+  refreshFiles,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -46,6 +48,8 @@ const FileContainer: React.FC<FileContainerProps> = ({
           withCredentials: true,
         },
       );
+
+      refreshFiles(currentFolderId);
       return response.data;
     } catch (error) {
       console.error('Upload failed:', error);
