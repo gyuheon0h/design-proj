@@ -6,7 +6,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import EventIcon from '@mui/icons-material/Event';
 import Filter from './Filter';
-import {colors, typography} from '../Styles';
+import {colors} from '../Styles';
 
 interface SearchBarProps {
   location: string;
@@ -16,11 +16,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ location }) => {
   return (
     <Box
       sx={{
+        position: 'sticky',
+        top: 0,
+        backgroundColor: 'white',
+        zIndex: 1000,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         width: '100%',
-        mt: 2,
       }}
     >
       {/* Search Bar */}
