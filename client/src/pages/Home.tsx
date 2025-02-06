@@ -11,37 +11,34 @@ const Home = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Extract folder IDs from URL
   const folderPath = location.pathname
     .replace('/home', '')
     .split('/')
     .filter(Boolean);
   const currentFolderId = folderPath.length
     ? folderPath[folderPath.length - 1]
-    : null; // Last part of the path
+    : null;
 
   const [folders, setFolders] = useState<FolderProp[]>([]);
   const [files, setFiles] = useState([]);
-  const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({}); // Map folder IDs to names
+  const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
+  const itemsPerPage = 5;
 
   useEffect(() => {
     fetchData(currentFolderId);
-    fetchFolderNames(folderPath); // Fetch names for all folders in breadcrumb
-    // We dont want to rerender on folderPath change (This seems to exhaust express resources)
-    // Although this is not the best solution, it works for now
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchFolderNames(folderPath);
   }, [currentFolderId]);
 
   const fetchData = async (folderId: string | null) => {
     try {
       const [foldersRes, filesRes] = await Promise.all([
         axios.post(
-          `http://localhost:5001/api/folder/parent`,
+          'http://localhost:5001/api/folder/parent',
           { folderId },
           { withCredentials: true },
         ),
         axios.post(
-          `http://localhost:5001/api/file/folder`,
+          'http://localhost:5001/api/file/folder',
           { folderId },
           { withCredentials: true },
         ),
@@ -56,13 +53,12 @@ const Home = () => {
   const fetchFolderNames = async (folderIds: string[]) => {
     try {
       const nameRequests = folderIds.map((id) =>
-        axios.get(`http://localhost:5001/api/folder/foldername/${id}`, {}),
+        axios.get(`http://localhost:5001/api/folder/foldername/${id}`),
       );
       const nameResponses = await Promise.all(nameRequests);
-      console.log(nameResponses);
       const newFolderNames: { [key: string]: string } = {};
       folderIds.forEach((id, index) => {
-        newFolderNames[id] = nameResponses[index].data; // Map folder ID to name
+        newFolderNames[id] = nameResponses[index].data;
       });
       setFolderNames((prevNames) => ({ ...prevNames, ...newFolderNames }));
     } catch (error) {
@@ -83,7 +79,6 @@ const Home = () => {
       <h1>Your File Storage:</h1>
       <SearchBar location="Storage" />
 
-      {/* Breadcrumb Navigation */}
       <div
         style={{
           marginBottom: '10px',
@@ -98,25 +93,23 @@ const Home = () => {
             style={{ cursor: 'pointer', marginRight: '5px' }}
           >
             {index === 0 ? 'Home' : folderNames[crumb] || ''}{' '}
-            {/* Show folder name if available */}
             {index < folderPath.length ? ' > ' : ''}
           </span>
         ))}
       </div>
 
-      {/* Folders Section */}
       <div style={{ marginLeft: '10px' }}>
         <FolderContainer
           folders={folders}
           onFolderClick={handleFolderClick}
           currentFolderId={currentFolderId}
           refreshFolders={fetchData}
+          itemsPerPage={itemsPerPage}
         />
       </div>
 
       <Divider style={{ margin: '20px 0' }} />
 
-      {/* Files Section */}
       <div style={{ marginLeft: '10px' }}>
         <FileContainer
           files={files}
