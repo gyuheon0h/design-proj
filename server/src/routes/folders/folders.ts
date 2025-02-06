@@ -95,4 +95,32 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
   }
 });
 
+/**
+ * PATCH /api/files/favorite/:fileId
+ * Route to favorite a file
+ */
+folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
+  //TODO: make sure front end handles the that only owner can favorite a file
+  try {
+    const { folderId } = req.params;
+    const folder = await FolderModel.getById(folderId);
+
+    if (!folder) {
+      return res.status(404).json({ message: 'Folder not found' });
+    }
+
+    // const folderMetadata = await FolderModel.updateFolderMetadata(folderId, {
+    //   isFavorited: !folder.isFavorited,
+    // }); //TODO: wait for tim to add isFavorited bool field to folder model and postgres
+
+    return res.status(200).json({
+      message: 'Folder favorited successfully',
+      // folder: folderMetadata,
+    });
+  } catch (error) {
+    console.error('Folder favorite error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 export default folderRouter;

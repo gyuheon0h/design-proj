@@ -80,6 +80,21 @@ const FileContainer: React.FC<FileContainerProps> = ({
     }
   };
 
+  //ANYA: file favoriting handler
+  const handleFavoriteFile = async (fileId: string) => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:5001/api/file/favorite/${fileId}`,
+        { withCredentials: true },
+      );
+
+      refreshFiles(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Error favoriting file:', error);
+    }
+  };
+
   const toggleFavoriteFile = (fileId: string) => {
     setFilesState((prevFiles) =>
       prevFiles.map((file) =>

@@ -45,6 +45,20 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     }
   };
 
+  const handleFavoriteFolder = async (folderId: string) => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:5001/api/file/favorite/${folderId}`,
+        { withCredentials: true },
+      );
+
+      refreshFolders(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Error favoriting folder:', error);
+    }
+  };
+
   return (
     <div>
       {/* Header section with title and create button */}
