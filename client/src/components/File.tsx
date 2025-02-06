@@ -26,6 +26,7 @@ import {
 import RenameFileDialog from './RenameFileDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import {colors} from '../Styles'
 
 interface FileComponentProps {
   id: string;
@@ -196,7 +197,7 @@ const FileComponent = (props: FileComponentProps) => {
         <IconButton
           onClick={handleFavoriteFile}
           sx={{
-            color: props.isFavorited ? '#FF6347' : '#5d4037',
+            color: props.isFavorited ? '#FF6347' : colors.darkBlue,
           }}
         >
           {props.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
