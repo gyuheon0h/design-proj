@@ -77,17 +77,14 @@ const FileContainer: React.FC<FileContainerProps> = ({
     try {
       const response = await axios.patch(
         `http://localhost:5001/api/file/rename/${fileId}`,
-        {
-          withCredentials: true,
-        },
+        { fileName },
+        { withCredentials: true },
       );
-
-      // TODO: make rename endpoint
 
       refreshFiles(currentFolderId);
       return response.data;
     } catch (error) {
-      console.error('Error deleting file:', error);
+      console.error('Error renaming file:', error);
     }
   };
 

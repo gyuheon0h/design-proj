@@ -23,7 +23,7 @@ import {
   getUsernameById,
   downloadFile,
 } from '../miscellHelpers/helperRequests';
-import RenameFileDialog from './RenameFileDialog'; // Import the dialog
+import RenameFileDialog from './RenameFileDialog';
 
 interface File {
   id: string;
@@ -36,7 +36,7 @@ interface File {
   gcsKey: string;
   fileType: string;
   handleDeleteFile: (fileId: string) => void;
-  handleRenameFile: (fileId: string, newFileName: string) => void; // Add this prop
+  handleRenameFile: (fileId: string, newFileName: string) => void;
 }
 
 const getFileIcon = (fileType: string) => {
@@ -99,7 +99,7 @@ const FileComponent = (props: File) => {
   };
 
   const handleRenameFile = (newFileName: string) => {
-    props.handleRenameFile(props.id, newFileName); // Call the parent handler
+    props.handleRenameFile(props.id, newFileName);
   };
 
   const lastModifiedDate = new Date(props.lastModifiedAt);

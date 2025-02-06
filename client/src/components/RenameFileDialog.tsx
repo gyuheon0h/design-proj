@@ -6,6 +6,7 @@ import {
   DialogActions,
   TextField,
   Button,
+  Box,
 } from '@mui/material';
 
 interface RenameFileDialogProps {
@@ -15,24 +16,37 @@ interface RenameFileDialogProps {
   onFileRename: (fileName: string) => void;
 }
 
+function parseFileName(fileName: string) {
+  const lastDot = fileName.lastIndexOf('.');
+  if (lastDot === -1) {
+    return {
+      baseName: fileName,
+      extension: '',
+    };
+  }
+  return {
+    baseName: fileName.slice(0, lastDot),
+    extension: fileName.slice(lastDot),
+  };
+}
+
 const RenameFileDialog: React.FC<RenameFileDialogProps> = ({
   open,
   fileName,
   onClose,
   onFileRename,
 }) => {
-  const [currentFileName, setCurrentFileName] = useState(fileName);
+  const { baseName: initialBaseName, extension } = parseFileName(fileName);
+  const [baseName, setBaseName] = useState(initialBaseName);
 
   useEffect(() => {
-    if (open) {
-      setCurrentFileName(fileName);
-    }
-  }, [fileName, open]);
+    const { baseName: parsedBaseName } = parseFileName(fileName);
+    setBaseName(parsedBaseName);
+  }, [fileName]);
 
   const handleRename = () => {
-    if (currentFileName.trim()) {
-      onFileRename(currentFileName);
-      setCurrentFileName(fileName);
+    if (baseName.trim()) {
+      onFileRename(baseName + extension);
       onClose();
     }
   };
@@ -44,20 +58,28 @@ const RenameFileDialog: React.FC<RenameFileDialogProps> = ({
         <TextField
           autoFocus
           margin="dense"
-          label={currentFileName}
+          label={initialBaseName}
           type="text"
           fullWidth
           variant="outlined"
-          value={fileName}
-          onChange={(e) => setCurrentFileName(e.target.value)}
+          value={baseName}
+          onChange={(e) => setBaseName(e.target.value)}
         />
+        <Box mt={2} component="span">
+          Extension: {extension}
+        </Box>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="primary">
           Cancel
         </Button>
-        <Button onClick={handleRename} color="primary" variant="contained">
-          Create
+        <Button
+          onClick={handleRename}
+          color="primary"
+          variant="contained"
+          disabled={baseName.trim() === initialBaseName.trim()}
+        >
+          Rename
         </Button>
       </DialogActions>
     </Dialog>
