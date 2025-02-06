@@ -40,8 +40,7 @@ const AccountMenu = () => {
    * This should invalidate the cookie (ie setting expiration to be in the past)
    */
   const handleLogout = () => {
-    document.cookie =
-      'sessionToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = '';
     window.location.href = '/';
   };
 
