@@ -103,11 +103,18 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
 folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
   //TODO: make sure front end handles the that only owner can favorite a file
   try {
+    const userId = (req as any).user.userId;
     const { folderId } = req.params;
     const folder = await FolderModel.getById(folderId);
 
     if (!folder) {
       return res.status(404).json({ message: 'Folder not found' });
+    }
+
+    if (userId != folder.owner) {
+      return res.status(401).json({
+        message: 'Unauthorized: User cannot favorite folders they do not own',
+      });
     }
 
     const folderMetadata = await FolderModel.updateFolderMetadata(folderId, {
