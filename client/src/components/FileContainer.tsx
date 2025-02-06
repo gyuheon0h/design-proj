@@ -29,35 +29,6 @@ const FileContainer: React.FC<FileContainerProps> = ({
   currentFolderId,
   refreshFiles,
 }) => {
-  const [open, setOpen] = useState(false);
-
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-
-  const handleUploadFile = async (file: Blob, fileName: string) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('fileName', fileName);
-    if (currentFolderId) {
-      formData.append('parentFolder', currentFolderId);
-    }
-    try {
-      const response = await axios.post(
-        'http://localhost:5001/api/file/upload',
-        formData,
-        {
-          withCredentials: true,
-        },
-      );
-
-      refreshFiles(currentFolderId);
-      return response.data;
-    } catch (error) {
-      console.error('Upload failed:', error);
-      throw error;
-    }
-  };
-
   const handleDeleteFile = async (fileId: string) => {
     try {
       const response = await axios.delete(
@@ -112,25 +83,6 @@ const FileContainer: React.FC<FileContainerProps> = ({
         </Typography> */}
         {/* fix alignment for the above */}
         <h2>Files</h2>
-
-        <Button
-          variant="contained"
-          onClick={handleOpen}
-          sx={{
-            backgroundColor: colors.lightBlue,
-            color: colors.darkBlue,
-            fontFamily: typography.fontFamily,
-            fontSize: typography.fontSize.medium,
-            fontWeight: 'bold',
-            marginLeft: '15px',
-            '&:hover': {
-              backgroundColor: colors.darkBlue,
-              color: colors.white,
-            },
-          }}
-        >
-          + Create
-        </Button>
       </div>
 
       {/* File List */}
@@ -151,13 +103,6 @@ const FileContainer: React.FC<FileContainerProps> = ({
           handleRenameFile={handleRenameFile}
         />
       ))}
-
-      {/* Dialog */}
-      <UploadDialog
-        open={open}
-        onClose={handleClose}
-        onFileUpload={handleUploadFile}
-      />
     </div>
   );
 };
