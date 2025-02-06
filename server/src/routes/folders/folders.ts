@@ -70,6 +70,7 @@ folderRouter.post(
         parentFolder: parentFolder || null,
         folderChildren: folderChildren,
         fileChildren: fileChildren,
+        isFavorited: false,
       });
 
       return res.status(201).json(newFolder);

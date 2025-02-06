@@ -8,6 +8,7 @@ interface Folder {
   parentFolder: string | null;
   folderChildren: string[];
   fileChildren: string[];
+  isFavorited: boolean;
 }
 
 class FolderModel extends BaseModel<Folder> {
