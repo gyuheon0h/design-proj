@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Slider } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
-import Folder, { FolderProp } from './Folder';
+import Folder, { FolderProps } from './Folder';
 import FolderDialog from './CreateFolderDialog';
 import { colors, typography } from '../Styles';
 import axios from 'axios';
 
 interface FolderContainerProps {
-  folders: FolderProp[];
-  onFolderClick: (folder: FolderProp) => void;
+  folders: FolderProps[];
+  onFolderClick: (folder: FolderProps) => void;
   currentFolderId: string | null;
   refreshFolders: (folderId: string | null) => void;
   itemsPerPage: number;
@@ -22,7 +22,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   itemsPerPage,
 }) => {
   const [activeStartIndex, setActiveStartIndex] = useState(0);
-  const [visibleFolders, setVisibleFolders] = useState<FolderProp[]>([]);
+  const [visibleFolders, setVisibleFolders] = useState<FolderProps[]>([]);
 
   useEffect(() => {
     setVisibleFolders(
@@ -78,6 +78,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     try {
       const response = await axios.patch(
         `http://localhost:5001/api/folder/favorite/${folderId}`,
+        {},
         { withCredentials: true },
       );
 
@@ -142,7 +143,8 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
               fileChildren={folder.fileChildren}
               isFavorited={folder.isFavorited}
               onClick={() => onFolderClick(folder)}
-              onFolderDelete={handleDeleteFolder}
+              handleDeleteFolder={handleDeleteFolder}
+              handleFavoriteFolder={handleFavoriteFolder}
             />
           ))}
         </Box>

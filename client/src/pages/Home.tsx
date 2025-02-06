@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
-import { FolderProp } from '../components/Folder';
+import { FolderProps } from '../components/Folder';
 import FileContainer from '../components/FileContainer';
 import Divider from '@mui/material/Divider';
 import axios from 'axios';
@@ -23,7 +23,7 @@ const Home = () => {
     ? folderPath[folderPath.length - 1]
     : null;
 
-  const [folders, setFolders] = useState<FolderProp[]>([]);
+  const [folders, setFolders] = useState<FolderProps[]>([]);
   const [files, setFiles] = useState([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
   const itemsPerPage = 5;
@@ -71,7 +71,7 @@ const Home = () => {
     }
   };
 
-  const handleFolderClick = (folder: FolderProp) => {
+  const handleFolderClick = (folder: FolderProps) => {
     navigate(`/home/${[...folderPath, folder.id].join('/')}`);
   };
 

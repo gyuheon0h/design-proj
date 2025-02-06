@@ -110,13 +110,13 @@ folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
       return res.status(404).json({ message: 'Folder not found' });
     }
 
-    // const folderMetadata = await FolderModel.updateFolderMetadata(folderId, {
-    //   isFavorited: !folder.isFavorited,
-    // }); //TODO: wait for tim to add isFavorited bool field to folder model and postgres
+    const folderMetadata = await FolderModel.updateFolderMetadata(folderId, {
+      isFavorited: !folder.isFavorited,
+    });
 
     return res.status(200).json({
       message: 'Folder favorited successfully',
-      // folder: folderMetadata,
+      folder: folderMetadata,
     });
   } catch (error) {
     console.error('Folder favorite error:', error);
