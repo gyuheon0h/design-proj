@@ -75,6 +75,38 @@ fileRouter.post(
 );
 
 /**
+ * GET /api/files/favorites/:ownerId
+ * Route to get favorited files owned by a certain user (ownerId).
+ * This is protected by authorize
+ */
+
+//TODO: made an attempt at writing the favorites endpoint but got stuck lol
+// fileRouter.get('/favorites/:ownerId', authorize, async (req, res) => {
+//   try {
+//     const { ownerId } = req.params;
+
+//     // ******** CHECK THIS OUT If we only want to let users get their own files
+//     if ((req as any).user.userId !== ownerId) {
+//       return res
+//         .status(403)
+//         .json({
+//           message: 'Forbidden: You can only access your own favorited files.',
+//         });
+//     }
+
+//     const favoritedFiles = await FileModel.getAllByOwnerAndColumn(
+//       ownerId,
+//       'isFavorited',
+//       true,
+//     );
+//     return res.json(favoritedFiles);
+//   } catch (error) {
+//     console.error('Error getting files by owner:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
+/**
  * POST /api/files/upload
  * Route to upload a file
  */
