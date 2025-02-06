@@ -80,7 +80,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
     }
   };
 
-  //ANYA: file favoriting handler
+  //FILE FAVORITING HANDLER, favorites the file given fileId
   const handleFavoriteFile = async (fileId: string) => {
     try {
       const response = await axios.patch(

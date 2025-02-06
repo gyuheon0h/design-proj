@@ -45,6 +45,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     }
   };
 
+  //FOLDER FAVORITING HANDLER
   const handleFavoriteFolder = async (folderId: string) => {
     try {
       const response = await axios.patch(
