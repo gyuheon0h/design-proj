@@ -21,7 +21,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   refreshFolders,
   itemsPerPage,
 }) => {
-  const [open, setOpen] = useState(false);
   const [activeStartIndex, setActiveStartIndex] = useState(0);
   const [visibleFolders, setVisibleFolders] = useState<FolderProp[]>([]);
 
@@ -58,28 +57,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     }
   };
 
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-
-  const handleCreateFolder = async (
-    folderName: string,
-    parentFolder: string | null,
-  ) => {
-    const requestBody = { name: folderName, parentFolder };
-    try {
-      const response = await axios.post(
-        'http://localhost:5001/api/folder/create',
-        requestBody,
-        { withCredentials: true },
-      );
-      refreshFolders(currentFolderId);
-      return response.data;
-    } catch (error) {
-      console.error('Folder creation failed:', error);
-      throw error;
-    }
-  };
-
   const handleDeleteFolder = async (folderId: string) => {
     try {
       const response = await axios.delete(
@@ -107,24 +84,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         }}
       >
         <h2>Folders</h2>
-        <Button
-          variant="contained"
-          onClick={handleOpen}
-          sx={{
-            backgroundColor: colors.lightBlue,
-            color: colors.darkBlue,
-            fontFamily: typography.fontFamily,
-            fontSize: typography.fontSize.medium,
-            fontWeight: 'bold',
-            marginLeft: '15px',
-            '&:hover': {
-              backgroundColor: colors.darkBlue,
-              color: colors.white,
-            },
-          }}
-        >
-          + Create Folder
-        </Button>
       </Box>
 
       <Box
@@ -205,12 +164,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
           }}
         />
       </Box>
-      <FolderDialog
-        open={open}
-        onClose={handleClose}
-        currentFolderId={currentFolderId}
-        onFolderCreate={handleCreateFolder}
-      />
     </Box>
   );
 };
