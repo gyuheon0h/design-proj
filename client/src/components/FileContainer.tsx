@@ -15,6 +15,7 @@ interface File {
   parentFolder: string | null;
   gcsKey: string;
   fileType: string;
+  isFavorited: boolean;
 }
 
 interface FileContainerProps {
@@ -144,6 +145,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
           lastModifiedAt={file.lastModifiedAt}
           parentFolder={file.parentFolder}
           gcsKey={file.gcsKey}
+          isFavorited={file.isFavorited}
           fileType={file.fileType}
           handleDeleteFile={handleDeleteFile}
           handleRenameFile={handleRenameFile}

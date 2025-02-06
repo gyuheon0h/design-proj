@@ -35,6 +35,7 @@ interface File {
   parentFolder: string | null;
   gcsKey: string;
   fileType: string;
+  isFavorited: boolean;
   handleDeleteFile: (fileId: string) => void;
   handleRenameFile: (fileId: string, newFileName: string) => void;
 }
