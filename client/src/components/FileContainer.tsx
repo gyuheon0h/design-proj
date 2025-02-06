@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@mui/material';
 import FileComponent from './File';
-import UploadDialog from '../pages/CreateFileDialog';
+import UploadDialog from './CreateFileDialog';
 import { colors, typography } from '../Styles';
 import axios from 'axios';
 
@@ -15,6 +15,7 @@ interface File {
   parentFolder: string | null;
   gcsKey: string;
   fileType: string;
+  isFavorited: boolean;
 }
 
 interface FileContainerProps {
@@ -70,6 +71,21 @@ const FileContainer: React.FC<FileContainerProps> = ({
       return response.data;
     } catch (error) {
       console.error('Error deleting file:', error);
+    }
+  };
+
+  const handleRenameFile = async (fileId: string, fileName: string) => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:5001/api/file/rename/${fileId}`,
+        { fileName },
+        { withCredentials: true },
+      );
+
+      refreshFiles(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Error renaming file:', error);
     }
   };
 
@@ -129,8 +145,10 @@ const FileContainer: React.FC<FileContainerProps> = ({
           lastModifiedAt={file.lastModifiedAt}
           parentFolder={file.parentFolder}
           gcsKey={file.gcsKey}
+          isFavorited={file.isFavorited}
           fileType={file.fileType}
           handleDeleteFile={handleDeleteFile}
+          handleRenameFile={handleRenameFile}
         />
       ))}
 

@@ -35,14 +35,13 @@ class BaseModel<T> {
     return result.rows as T[];
   }
 
-  // Get records for a certain owner where a column condition is met
   async getAllByOwnerAndColumn<K extends keyof T>(
     ownerId: string,
     column: K,
     value: T[K],
   ): Promise<T[]> {
-    const query = `SELECT * FROM "${this.table}" WHERE "owner" = '${ownerId}' AND "${String(column)}" = $1 AND "deletedAt" IS NULL`;
-    const result = await pool.query(query, [value]);
+    const query = `SELECT * FROM "${this.table}" WHERE "owner" = $1 AND "${String(column)}" = $2 AND "deletedAt" IS NULL`;
+    const result = await pool.query(query, [ownerId, value]);
     return result.rows as T[];
   }
 

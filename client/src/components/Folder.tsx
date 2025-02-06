@@ -18,6 +18,7 @@ export interface FolderProp {
   parentFolder: string | null;
   folderChildren: string[];
   fileChildren: string[];
+  isFavorited: boolean;
   onClick: (folder: FolderProp) => void;
   onFolderDelete: (folderId: string) => Promise<void>;
 }

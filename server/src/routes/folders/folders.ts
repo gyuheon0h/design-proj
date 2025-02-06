@@ -70,6 +70,7 @@ folderRouter.post(
         parentFolder: parentFolder || null,
         folderChildren: folderChildren,
         fileChildren: fileChildren,
+        isFavorited: false,
       });
 
       return res.status(201).json(newFolder);
@@ -97,10 +98,10 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
 
 folderRouter.delete('/delete/:folderId', authorize, async (req, res) => {
   try {
-    const { fileId: folderId } = req.params;
-    const file = await FolderModel.getById(folderId);
+    const { folderId } = req.params;
+    const folder = await FolderModel.getById(folderId);
 
-    if (!file) {
+    if (!folder) {
       return res.status(404).json({ message: 'Folder not found' });
     }
 

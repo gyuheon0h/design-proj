@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -196,6 +196,9 @@ const Register = () => {
             }}
           >
             Register
+          </Button>
+          <Button component={Link} to="/">
+            Or Sign In
           </Button>
         </Box>
       </Paper>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Button, Slider } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import Folder, { FolderProp } from './Folder';
-import FolderDialog from '../pages/CreateFolderDialog';
+import FolderDialog from './CreateFolderDialog';
 import { colors, typography } from '../Styles';
 import axios from 'axios';
 
@@ -159,8 +159,16 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
           {visibleFolders.map((folder) => (
             <Folder
               key={folder.id}
-              {...folder}
+              id={folder.id}
+              name={folder.name}
+              owner={folder.owner}
+              createdAt={folder.createdAt}
+              parentFolder={folder.parentFolder}
+              folderChildren={folder.folderChildren}
+              fileChildren={folder.fileChildren}
+              isFavorited={folder.isFavorited}
               onClick={() => onFolderClick(folder)}
+              onFolderDelete={handleDeleteFolder}
             />
           ))}
         </Box>
