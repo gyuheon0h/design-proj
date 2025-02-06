@@ -115,6 +115,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
           fileType={file.fileType}
           handleDeleteFile={handleDeleteFile}
           handleRenameFile={handleRenameFile}
+          handleFavoriteFile={handleFavoriteFile}
         />
       ))}
     </div>

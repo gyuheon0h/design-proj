@@ -27,7 +27,7 @@ import RenameFileDialog from './RenameFileDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 
-interface File {
+interface FileComponentProps {
   id: string;
   name: string;
   owner: string;
@@ -40,6 +40,7 @@ interface File {
   isFavorited: boolean;
   handleDeleteFile: (fileId: string) => void;
   handleRenameFile: (fileId: string, newFileName: string) => void;
+  handleFavoriteFile: (fileId: string) => void;
 }
 
 const getFileIcon = (fileType: string) => {
@@ -65,7 +66,7 @@ const getFileIcon = (fileType: string) => {
   }
 };
 
-const FileComponent = (props: File) => {
+const FileComponent = (props: FileComponentProps) => {
   const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -103,6 +104,10 @@ const FileComponent = (props: File) => {
 
   const handleRenameFile = (newFileName: string) => {
     props.handleRenameFile(props.id, newFileName);
+  };
+
+  const handleFavoriteFile = () => {
+    props.handleFavoriteFile(props.id);
   };
 
   const lastModifiedDate = new Date(props.lastModifiedAt);
@@ -189,9 +194,7 @@ const FileComponent = (props: File) => {
 
         {/* Favorites Toggle Button */}
         <IconButton
-          onClick={(event) => {
-            console.log('Toggled favorite: ', props.id, props.isFavorited);
-          }}
+          onClick={handleFavoriteFile}
           sx={{
             color: props.isFavorited ? '#FF6347' : '#5d4037',
           }}
