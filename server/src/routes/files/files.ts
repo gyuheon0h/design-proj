@@ -142,6 +142,7 @@ fileRouter.post(
         parentFolder: parentFolder || null, // Allow null for root files
         gcsKey: gcsFilePath,
         fileType: mimetype,
+        isFavorited: false,
       });
 
       return res

@@ -148,7 +148,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
       </div>
 
       {/* File List */}
-      {filesState.map((file) => (
+      {files.map((file) => (
         <FileComponent
           key={file.id}
           id={file.id}
