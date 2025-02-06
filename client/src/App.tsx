@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import NavigationDrawer from './components/Drawer';
 import Favorites from './pages/Favorites';
 import Trash from './pages/Trash';
+import Settings from './pages/Settings';
 
 function App() {
   const location = useLocation();
@@ -27,6 +28,8 @@ function App() {
           <Route path="/shared" element={<Shared />} />
           <Route path="/trash" element={<Trash />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/settings" element={<Settings />} />
+
         </Routes>
       </div>
     </div>

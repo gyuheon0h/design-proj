@@ -21,6 +21,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
 import React, { useState } from 'react';
 import { useUser } from '../context/UserContext';
+import { Settings as SettingsIcon } from '@mui/icons-material';
 import { colors, drawerStyles, activePageStyles } from '../Styles';
 
 const AccountMenu = () => {
@@ -79,6 +80,12 @@ const AccountMenu = () => {
             <LogoutIcon fontSize="small" sx={{ color: 'red' }} />
           </ListItemIcon>
           Logout
+        </MenuItem>
+        <MenuItem component={Link} to="/settings" onClick={handleClose}>
+          <ListItemIcon>
+            <SettingsIcon fontSize="small" />
+          </ListItemIcon>
+          Settings
         </MenuItem>
       </Menu>
     </React.Fragment>
