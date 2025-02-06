@@ -10,10 +10,12 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { typography } from '../Styles';
 import CreateButton from '../components/CreateButton';
+import { useUser } from '../context/UserContext';
 
 const Home = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const userContext = useUser();
 
   const folderPath = location.pathname
     .replace('/home', '')
@@ -150,6 +152,7 @@ const Home = () => {
             currentFolderId={currentFolderId}
             refreshFolders={fetchData}
             itemsPerPage={itemsPerPage}
+            username={userContext?.username || ''}
           />
         </div>
 
