@@ -159,4 +159,39 @@ fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
   }
 });
 
+/**
+ * PATCH /api/files/rename/:fileId
+ * Route to rename a file (also updates lastModifiedBy and lastModifiedAt)
+ */
+fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
+  try {
+    const { fileName } = req.body;
+    if (!fileName) {
+      return res.status(400).json({ message: 'No new file name provided' });
+    }
+
+    const userId = (req as any).user.userId;
+    const { fileId } = req.params;
+    const file = await FileModel.getById(fileId);
+
+    if (!file) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    const fileMetadata = await FileModel.updateFileMetadata(fileId, {
+      name: fileName,
+      lastModifiedBy: userId, //TODO: may need to get userName thru userId
+      lastModifiedAt: new Date(),
+    });
+
+    return res.status(200).json({
+      message: 'File renamed successfully',
+      file: fileMetadata,
+    });
+  } catch (error) {
+    console.error('File rename error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 export default fileRouter;

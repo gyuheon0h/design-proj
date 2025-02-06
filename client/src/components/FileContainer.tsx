@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@mui/material';
 import FileComponent from './File';
-import UploadDialog from '../pages/CreateFileDialog';
+import UploadDialog from './CreateFileDialog';
 import { colors, typography } from '../Styles';
 import axios from 'axios';
 
@@ -73,6 +73,21 @@ const FileContainer: React.FC<FileContainerProps> = ({
     }
   };
 
+  const handleRenameFile = async (fileId: string, fileName: string) => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:5001/api/file/rename/${fileId}`,
+        { fileName },
+        { withCredentials: true },
+      );
+
+      refreshFiles(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Error renaming file:', error);
+    }
+  };
+
   return (
     <div>
       {/* Header section with title and upload button */}
@@ -131,6 +146,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
           gcsKey={file.gcsKey}
           fileType={file.fileType}
           handleDeleteFile={handleDeleteFile}
+          handleRenameFile={handleRenameFile}
         />
       ))}
 
