@@ -21,14 +21,17 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
 import React, { useState } from 'react';
 import { useUser } from '../context/UserContext';
+import { Settings as SettingsIcon } from '@mui/icons-material';
 import { colors, drawerStyles, activePageStyles } from '../Styles';
+import SettingsDialog from './SettingsDialog';
 
 const AccountMenu = () => {
-  const { username } = useUser(); // Get the username from context
+  const { username } = useUser();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const open = Boolean(anchorEl);
 
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -36,13 +39,18 @@ const AccountMenu = () => {
     setAnchorEl(null);
   };
 
-  /**
-   * This should invalidate the cookie (ie setting expiration to be in the past)
-   */
   const handleLogout = () => {
-    document.cookie =
-      'sessionToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    window.location.href = '/';
+    try {
+      document.cookie.split(';').forEach(cookie => {
+        const [name] = cookie.split('=');
+        document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+      });
+      window.location.reload();
+      window.location.replace('/');
+    } catch (error) {
+      console.error('Error during logout:', error);
+      window.location.replace('/');
+    }
   };
 
   return (
@@ -81,7 +89,23 @@ const AccountMenu = () => {
           </ListItemIcon>
           Logout
         </MenuItem>
+        <MenuItem 
+          onClick={() => {
+            handleClose();
+            setSettingsOpen(true);
+          }}
+        >
+          <ListItemIcon>
+            <SettingsIcon fontSize="small" />
+          </ListItemIcon>
+          Settings
+        </MenuItem>
       </Menu>
+      
+      <SettingsDialog 
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
     </React.Fragment>
   );
 };

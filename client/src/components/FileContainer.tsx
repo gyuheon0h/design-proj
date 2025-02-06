@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@mui/material';
 import FileComponent from './File';
-import UploadDialog from '../pages/CreateFileDialog';
+import UploadDialog from './CreateFileDialog';
 import { colors, typography } from '../Styles';
 import axios from 'axios';
 
@@ -29,41 +29,6 @@ const FileContainer: React.FC<FileContainerProps> = ({
   currentFolderId,
   refreshFiles,
 }) => {
-  const [open, setOpen] = useState(false);
-  const [filesState, setFilesState] = useState<File[]>(
-    files.map((file) => ({
-      ...file,
-      isFavorited: file.isFavorited ?? false, // Default to false if undefined
-    })),
-  );
-
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-
-  const handleUploadFile = async (file: Blob, fileName: string) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('fileName', fileName);
-    if (currentFolderId) {
-      formData.append('parentFolder', currentFolderId);
-    }
-    try {
-      const response = await axios.post(
-        'http://localhost:5001/api/file/upload',
-        formData,
-        {
-          withCredentials: true,
-        },
-      );
-
-      refreshFiles(currentFolderId);
-      return response.data;
-    } catch (error) {
-      console.error('Upload failed:', error);
-      throw error;
-    }
-  };
-
   const handleDeleteFile = async (fileId: string) => {
     try {
       const response = await axios.delete(
@@ -77,6 +42,20 @@ const FileContainer: React.FC<FileContainerProps> = ({
       return response.data;
     } catch (error) {
       console.error('Error deleting file:', error);
+    }
+  };
+  const handleRenameFile = async (fileId: string, fileName: string) => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:5001/api/file/rename/${fileId}`,
+        { fileName },
+        { withCredentials: true },
+      );
+
+      refreshFiles(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Error renaming file:', error);
     }
   };
 
@@ -93,14 +72,6 @@ const FileContainer: React.FC<FileContainerProps> = ({
     } catch (error) {
       console.error('Error favoriting file:', error);
     }
-  };
-
-  const toggleFavoriteFile = (fileId: string) => {
-    setFilesState((prevFiles) =>
-      prevFiles.map((file) =>
-        file.id === fileId ? { ...file, isFavorited: !file.isFavorited } : file,
-      ),
-    );
   };
 
   return (
@@ -126,25 +97,6 @@ const FileContainer: React.FC<FileContainerProps> = ({
         </Typography> */}
         {/* fix alignment for the above */}
         <h2>Files</h2>
-
-        <Button
-          variant="contained"
-          onClick={handleOpen}
-          sx={{
-            backgroundColor: colors.lightBlue,
-            color: colors.darkBlue,
-            fontFamily: typography.fontFamily,
-            fontSize: typography.fontSize.medium,
-            fontWeight: 'bold',
-            marginLeft: '15px',
-            '&:hover': {
-              backgroundColor: colors.darkBlue,
-              color: colors.white,
-            },
-          }}
-        >
-          + Create
-        </Button>
       </div>
 
       {/* File List */}
@@ -159,19 +111,12 @@ const FileContainer: React.FC<FileContainerProps> = ({
           lastModifiedAt={file.lastModifiedAt}
           parentFolder={file.parentFolder}
           gcsKey={file.gcsKey}
+          isFavorited={file.isFavorited}
           fileType={file.fileType}
           handleDeleteFile={handleDeleteFile}
-          isFavorited={file.isFavorited}
-          toggleFavoriteFile={() => toggleFavoriteFile(file.id)}
+          handleRenameFile={handleRenameFile}
         />
       ))}
-
-      {/* Dialog */}
-      <UploadDialog
-        open={open}
-        onClose={handleClose}
-        onFileUpload={handleUploadFile}
-      />
     </div>
   );
 };
