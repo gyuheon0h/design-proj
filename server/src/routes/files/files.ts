@@ -208,7 +208,7 @@ fileRouter.patch('/favorite/:fileId', authorize, async (req, res) => {
     }
 
     if (userId != file.owner) {
-      return res.status(401).json({
+      return res.status(403).json({
         message: 'Unauthorized: User cannot favorite files they do not own',
       });
     }

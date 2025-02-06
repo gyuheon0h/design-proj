@@ -112,7 +112,7 @@ folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
     }
 
     if (userId != folder.owner) {
-      return res.status(401).json({
+      return res.status(403).json({
         message: 'Unauthorized: User cannot favorite folders they do not own',
       });
     }
