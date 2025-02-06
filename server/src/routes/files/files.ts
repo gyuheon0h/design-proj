@@ -80,31 +80,28 @@ fileRouter.post(
  * This is protected by authorize
  */
 
-//TODO: made an attempt at writing the favorites endpoint but got stuck lol
-// fileRouter.get('/favorites/:ownerId', authorize, async (req, res) => {
-//   try {
-//     const { ownerId } = req.params;
+fileRouter.get('/favorites/:ownerId', authorize, async (req, res) => {
+  try {
+    const { ownerId } = req.params;
 
-//     // ******** CHECK THIS OUT If we only want to let users get their own files
-//     if ((req as any).user.userId !== ownerId) {
-//       return res
-//         .status(403)
-//         .json({
-//           message: 'Forbidden: You can only access your own favorited files.',
-//         });
-//     }
+    // ******** CHECK THIS OUT If we only want to let users get their own files
+    if ((req as any).user.userId !== ownerId) {
+      return res.status(403).json({
+        message: 'Forbidden: You can only access your own favorited files.',
+      });
+    }
 
-//     const favoritedFiles = await FileModel.getAllByOwnerAndColumn(
-//       ownerId,
-//       'isFavorited',
-//       true,
-//     );
-//     return res.json(favoritedFiles);
-//   } catch (error) {
-//     console.error('Error getting files by owner:', error);
-//     return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
+    const favoritedFiles = await FileModel.getAllByOwnerAndColumn(
+      ownerId,
+      'isFavorited',
+      true,
+    );
+    return res.json(favoritedFiles);
+  } catch (error) {
+    console.error('Error getting files by owner:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 /**
  * POST /api/files/upload
@@ -208,7 +205,7 @@ fileRouter.patch('/favorite/:fileId', authorize, async (req, res) => {
     }
 
     if (userId != file.owner) {
-      return res.status(401).json({
+      return res.status(403).json({
         message: 'Unauthorized: User cannot favorite files they do not own',
       });
     }

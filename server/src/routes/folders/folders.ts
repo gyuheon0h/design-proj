@@ -97,6 +97,35 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
 });
 
 /**
+ * GET /api/files/favorites/:ownerId
+ * Route to get favorited files owned by a certain user (ownerId).
+ * This is protected by authorize
+ */
+
+folderRouter.get('/favorites/:ownerId', authorize, async (req, res) => {
+  try {
+    const { ownerId } = req.params;
+
+    // ******** CHECK THIS OUT If we only want to let users get their own files
+    if ((req as any).user.userId !== ownerId) {
+      return res.status(403).json({
+        message: 'Forbidden: You can only access your own favorited files.',
+      });
+    }
+
+    const favoritedFiles = await FolderModel.getAllByOwnerAndColumn(
+      ownerId,
+      'isFavorited',
+      true,
+    );
+    return res.json(favoritedFiles);
+  } catch (error) {
+    console.error('Error getting files by owner:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+/**
  * PATCH /api/files/favorite/:fileId
  * Route to favorite a file
  */
@@ -112,7 +141,7 @@ folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
     }
 
     if (userId != folder.owner) {
-      return res.status(401).json({
+      return res.status(403).json({
         message: 'Unauthorized: User cannot favorite folders they do not own',
       });
     }
