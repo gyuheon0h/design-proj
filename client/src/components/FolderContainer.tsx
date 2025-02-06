@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Box, Button, Slider } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import Folder, { FolderProps } from './Folder';
-import FolderDialog from './CreateFolderDialog';
-import { colors, typography } from '../Styles';
 import axios from 'axios';
 
 interface FolderContainerProps {
