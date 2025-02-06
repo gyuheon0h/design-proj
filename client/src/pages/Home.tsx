@@ -9,6 +9,7 @@ import FolderContainer from '../components/FolderContainer';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { typography } from '../Styles';
+import CreateButton from '../components/CreateButton';
 
 const Home = () => {
   const location = useLocation();
@@ -163,6 +164,10 @@ const Home = () => {
           />
         </div>
       </Box>
+      <CreateButton
+        currentFolderId={currentFolderId}
+        refresh={fetchData}
+      ></CreateButton>
     </Box>
   );
 };
