@@ -207,6 +207,12 @@ fileRouter.patch('/favorite/:fileId', authorize, async (req, res) => {
       return res.status(404).json({ message: 'File not found' });
     }
 
+    if (userId != file.owner) {
+      return res.status(401).json({
+        message: 'Unauthorized: User cannot favorite files they do not own',
+      });
+    }
+
     const fileMetadata = await FileModel.updateFileMetadata(fileId, {
       isFavorited: !file.isFavorited,
     });
