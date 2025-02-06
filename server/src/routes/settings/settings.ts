@@ -5,17 +5,12 @@ import jwt from 'jsonwebtoken';
 
 const settingsRouter = Router();
 
-// All routes require authentication
-settingsRouter.use(authorize);
-
-// Original route: /api/verify-password
-// New route: /api/settings/verify-password
-settingsRouter.post('/verify-password', async (req: AuthenticatedRequest, res) => {
+settingsRouter.post('/verify-password', authorize, async (req: AuthenticatedRequest, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-
+    
     const { passwordHash } = req.body;
     const userId = req.user.userId;
     
@@ -35,9 +30,7 @@ settingsRouter.post('/verify-password', async (req: AuthenticatedRequest, res) =
   }
 });
 
-// Original route: /api/update-profile
-// New route: /api/settings/update-profile
-settingsRouter.post('/update-profile', async (req: AuthenticatedRequest, res) => {
+settingsRouter.post('/update-profile', authorize, async (req: AuthenticatedRequest, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -90,9 +83,7 @@ settingsRouter.post('/update-profile', async (req: AuthenticatedRequest, res) =>
   }
 });
 
-// Original route: /api/delete-account
-// New route: /api/settings/delete-account
-settingsRouter.delete('/delete-account', async (req: AuthenticatedRequest, res) => {
+settingsRouter.delete('/delete-account', authorize, async (req: AuthenticatedRequest, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });

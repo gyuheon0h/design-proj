@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   TextField,
+  Button,
+  Box,
   Typography,
   InputAdornment,
 } from '@mui/material';
@@ -11,22 +15,29 @@ import { useUser } from '../context/UserContext';
 import LockIcon from '@mui/icons-material/Lock';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SHA256 from 'crypto-js/sha256';
+import { typography } from '../Styles';
 
-const SettingsPage = () => {
+interface SettingsDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
   const { username: contextUsername, setUsername: updateContextUsername } = useUser();
+  const navigate = useNavigate();
+  
   const [formData, setFormData] = useState({
     username: '',
     currentPassword: '',
     newPassword: ''
   });
+  
   const [errors, setErrors] = useState({
     username: false,
     currentPassword: false
   });
-  const navigate = useNavigate();
 
   useEffect(() => {
-    // Initialize form with current username from context
     if (contextUsername) {
       setFormData(prev => ({
         ...prev,
@@ -42,7 +53,6 @@ const SettingsPage = () => {
       ...prev,
       [field]: event.target.value
     }));
-    // Clear error when user starts typing
     if (errors[field as keyof typeof errors]) {
       setErrors(prev => ({
         ...prev,
@@ -53,7 +63,7 @@ const SettingsPage = () => {
 
   const verifyPassword = async (password: string): Promise<boolean> => {
     try {
-      const hashedPassword = SHA256(password).toString()
+      const hashedPassword = SHA256(password).toString();
       const response = await fetch('http://localhost:5001/api/settings/verify-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -62,7 +72,6 @@ const SettingsPage = () => {
       });
 
       if (!response.ok) {
-        const error = await response.json();
         setErrors(prev => ({
           ...prev,
           currentPassword: true
@@ -89,19 +98,16 @@ const SettingsPage = () => {
       try {
         const updateData: { username?: string; newPassword?: string } = {};
         
-        // Only include username if it's changed
         if (formData.username !== contextUsername) {
           updateData.username = formData.username;
         }
         
-        // Only include password if it's provided
         if (formData.newPassword) {
           updateData.newPassword = SHA256(formData.newPassword).toString();
         }
 
-        // Don't make the request if there's nothing to update
         if (Object.keys(updateData).length === 0) {
-          navigate('/home');
+          onClose();
           return;
         }
 
@@ -113,11 +119,10 @@ const SettingsPage = () => {
         });
 
         if (response.ok) {
-          // Update context username if it was changed
           if (updateData.username) {
             updateContextUsername(updateData.username);
           }
-          navigate('/home');
+          onClose();
         } else {
           const error = await response.json();
           if (error.error === 'Username already taken') {
@@ -160,95 +165,109 @@ const SettingsPage = () => {
     }
   };
 
+  const handleClose = () => {
+    setFormData({
+      username: contextUsername || '',
+      currentPassword: '',
+      newPassword: ''
+    });
+    setErrors({
+      username: false,
+      currentPassword: false
+    });
+    onClose();
+  };
+
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 3,
-        padding: 4,
-        maxWidth: 400,
-        margin: '0 auto',
-        backgroundColor: '#f9f9f9',
-        borderRadius: '12px',
-        boxShadow: 2,
-      }}
+    <Dialog 
+      open={open} 
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
     >
-      <Typography variant="h4" fontWeight="bold" sx={{ color: '#333' }}>
+      <DialogTitle sx={{ 
+        fontFamily: typography.fontFamily,
+        textAlign: 'center',
+        fontWeight: 'bold'
+      }}>
         Account Settings
-      </Typography>
+      </DialogTitle>
+      
+      <DialogContent>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <Typography variant="body2" sx={{ textAlign: 'center', mb: 1 }}>
+            To edit any fields, please enter your current password.
+          </Typography>
 
-      <Typography variant="body2">
-        To edit any fields, please enter your current password.
-      </Typography>
+          <TextField
+            label="Username"
+            value={formData.username}
+            onChange={handleInputChange('username')}
+            error={errors.username}
+            helperText={errors.username ? 'Username already taken' : ''}
+            fullWidth
+          />
 
-      <TextField
-        label="Username"
-        value={formData.username}
-        onChange={handleInputChange('username')}
-        error={errors.username}
-        helperText={errors.username ? 'Username already taken' : ''}
-        fullWidth
-      />
+          <TextField
+            label="Current Password"
+            type="password"
+            value={formData.currentPassword}
+            onChange={handleInputChange('currentPassword')}
+            error={errors.currentPassword}
+            helperText={errors.currentPassword ? 'Incorrect password' : ''}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
 
-      <TextField
-        label="Current Password"
-        type="password"
-        value={formData.currentPassword}
-        onChange={handleInputChange('currentPassword')}
-        error={errors.currentPassword}
-        helperText={errors.currentPassword ? 'Incorrect password' : ''}
-        fullWidth
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <LockIcon />
-            </InputAdornment>
-          ),
-        }}
-      />
+          <TextField
+            label="New Password"
+            type="password"
+            value={formData.newPassword}
+            onChange={handleInputChange('newPassword')}
+            fullWidth
+          />
+        </Box>
+      </DialogContent>
 
-      <TextField
-        label="New Password"
-        type="password"
-        value={formData.newPassword}
-        onChange={handleInputChange('newPassword')}
-        fullWidth
-      />
-
-      <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
-        <Button variant="contained" color="primary" fullWidth onClick={handleSaveChanges}>
-          Save Changes
-        </Button>
+      <DialogActions sx={{ flexDirection: 'column', padding: 3, gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
+          <Button 
+            variant="contained" 
+            onClick={handleSaveChanges}
+            fullWidth
+            sx={{ fontFamily: typography.fontFamily }}
+          >
+            Save Changes
+          </Button>
+          <Button
+            onClick={handleClose}
+            variant="outlined"
+            fullWidth
+            sx={{ fontFamily: typography.fontFamily }}
+          >
+            Cancel
+          </Button>
+        </Box>
+        
         <Button
-          variant="outlined"
-          sx={{
-            color: '#666',
-            borderColor: '#bbb',
-            '&:hover': {
-              backgroundColor: '#f2f2f2',
-              borderColor: '#aaa',
-            },
-          }}
+          variant="contained"
+          color="error"
           fullWidth
-          onClick={() => navigate('/home')}
+          startIcon={<DeleteIcon />}
+          onClick={handleDeleteAccount}
+          sx={{ mt: 1, fontFamily: typography.fontFamily }}
         >
-          Cancel
+          Delete Account
         </Button>
-      </Box>
-
-      <Button
-        variant="contained"
-        color="error"
-        fullWidth
-        startIcon={<DeleteIcon />}
-        onClick={handleDeleteAccount}
-      >
-        Delete Account
-      </Button>
-    </Box>
+      </DialogActions>
+    </Dialog>
   );
 };
 
-export default SettingsPage;
+export default SettingsDialog;
