@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
-import { Button } from '@mui/material';
 import FileComponent from './File';
-import UploadDialog from './CreateFileDialog';
-import { colors, typography } from '../Styles';
 import axios from 'axios';
 
 interface File {
