@@ -30,6 +30,36 @@ class UserModel extends BaseModel<User> {
     const user = await this.getById(id);
     return user ? user.username : '';
   }
+
+  // Delete user account - uses soft delete by default
+  async delete(userId: string): Promise<boolean> {
+    try {
+      return await this.softDelete(userId);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw error;
+    }
+  }
+
+  // Permanently delete user account - use with caution
+  async hardDelete(userId: string): Promise<number> {
+    try {
+      return await this.hardDeleteOnCondition('id', userId);
+    } catch (error) {
+      console.error('Error permanently deleting user:', error);
+      throw error;
+    }
+  }
+
+  // Restore a soft-deleted user account
+  async restoreUser(userId: string): Promise<boolean> {
+    try {
+      return await this.restore(userId);
+    } catch (error) {
+      console.error('Error restoring user:', error);
+      throw error;
+    }
+  }
 }
 
 export default new UserModel();
