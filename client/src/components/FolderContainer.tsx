@@ -159,8 +159,15 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
           {visibleFolders.map((folder) => (
             <Folder
               key={folder.id}
-              {...folder}
+              id={folder.id}
+              name={folder.name}
+              owner={folder.owner}
+              createdAt={folder.createdAt}
+              parentFolder={folder.parentFolder}
+              folderChildren={folder.folderChildren}
+              fileChildren={folder.fileChildren}
               onClick={() => onFolderClick(folder)}
+              onFolderDelete={handleDeleteFolder}
             />
           ))}
         </Box>

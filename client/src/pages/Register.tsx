@@ -14,7 +14,6 @@ import {
 import axios from 'axios';
 import SHA256 from 'crypto-js/sha256';
 import { colors } from '../Styles';
-import CloseIcon from '@mui/icons-material/Close';
 
 const Register = () => {
   const [username, setUsername] = useState('');

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import { FolderProp } from '../components/Folder';
@@ -30,6 +30,7 @@ const Home = () => {
   useEffect(() => {
     fetchData(currentFolderId);
     fetchFolderNames(folderPath);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFolderId]);
 
   const fetchData = async (folderId: string | null) => {
@@ -98,9 +99,9 @@ const Home = () => {
           variant="h1"
           sx={{
             fontWeight: 'bold',
-            fontFamily: typography.fontFamily, 
-            fontSize: typography.fontSize.extraLarge, 
-            color: '#161C94', 
+            fontFamily: typography.fontFamily,
+            fontSize: typography.fontSize.extraLarge,
+            color: '#161C94',
             marginLeft: '10px',
             paddingTop: '25px',
             paddingBottom: '30px',
@@ -113,7 +114,14 @@ const Home = () => {
         <SearchBar location="Storage" />
 
         {/* Breadcrumb Navigation */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '14px',
+          }}
+        >
           {['Home', ...folderPath].map((crumb, index) => (
             <span
               key={index}
@@ -134,14 +142,14 @@ const Home = () => {
 
       {/* Scrollable Content */}
       <Box sx={{ flexGrow: 1, overflowY: 'auto', padding: '20px' }}>
-          <div style={{ marginLeft: '10px' }}>
+        <div style={{ marginLeft: '10px' }}>
           <FolderContainer
             folders={folders}
             onFolderClick={handleFolderClick}
             currentFolderId={currentFolderId}
             refreshFolders={fetchData}
             itemsPerPage={itemsPerPage}
-        />
+          />
         </div>
 
         <Divider style={{ margin: '20px 0' }} />
