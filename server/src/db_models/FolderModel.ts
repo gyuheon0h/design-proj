@@ -61,6 +61,14 @@ class FolderModel extends BaseModel<Folder> {
     const folder = await this.getById(id);
     return folder?.name || '';
   }
+
+  // Update folder metadata (e.g., name, isFavorited)
+  async updateFolderMetadata(
+    id: string,
+    updatedData: Partial<Folder>,
+  ): Promise<Folder | null> {
+    return await this.update(id, updatedData);
+  }
 }
 
 export default new FolderModel();

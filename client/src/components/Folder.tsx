@@ -10,7 +10,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors } from '../Styles';
 
-export interface FolderProp {
+export interface FolderProps {
   id: string;
   name: string;
   owner: string;
@@ -19,13 +19,13 @@ export interface FolderProp {
   folderChildren: string[];
   fileChildren: string[];
   isFavorited: boolean;
-  onClick: (folder: FolderProp) => void;
-  onFolderDelete: (folderId: string) => Promise<void>;
+  onClick: (folder: FolderProps) => void;
+  handleDeleteFolder: (folderId: string) => Promise<void>;
+  handleFavoriteFolder: (folderId: string) => void;
 }
 
-const Folder = (prop: FolderProp) => {
+const Folder = (props: FolderProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [favorited, setFavorited] = useState(false);
   const open = Boolean(anchorEl);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -39,18 +39,18 @@ const Folder = (prop: FolderProp) => {
   };
 
   const handleFolderClick = () => {
-    prop.onClick(prop);
+    props.onClick(props);
   };
 
-  const toggleFavorite = (event: React.MouseEvent) => {
-    event.stopPropagation(); // idk why but i feel like this is necessary
-    setFavorited((prev) => !prev);
+  const handleFavoriteFolder = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    props.handleFavoriteFolder(props.id);
   };
 
   return (
     <Box
       className="folder"
-      data-folder-id={prop.id}
+      data-folder-id={props.id}
       onClick={handleFolderClick}
       sx={{
         position: 'relative',
@@ -108,20 +108,19 @@ const Folder = (prop: FolderProp) => {
             whiteSpace: 'nowrap',
           }}
         >
-          {prop.name}
+          {props.name}
         </Typography>
 
-        {/* Favorites ❤️ */}
         <IconButton
-          onClick={toggleFavorite}
+          onClick={handleFavoriteFolder}
           sx={{
             position: 'absolute',
             top: '5px',
             right: '5px',
-            color: favorited ? '#FF6347' : colors.darkBlue,
+            color: props.isFavorited ? '#FF6347' : colors.darkBlue,
           }}
         >
-          {favorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+          {props.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
         </IconButton>
 
         {/* More Options Button */}
@@ -203,7 +202,7 @@ const Folder = (prop: FolderProp) => {
           <MenuItem
             onClick={(e) => {
               handleOptionsClose(e);
-              prop.onFolderDelete(prop.id);
+              props.handleDeleteFolder(props.id);
             }}
             sx={{
               color: colors.darkBlue,

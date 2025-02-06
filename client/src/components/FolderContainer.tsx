@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Slider } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
-import Folder, { FolderProp } from './Folder';
-import FolderDialog from './CreateFolderDialog';
-import { colors, typography } from '../Styles';
+import Folder, { FolderProps } from './Folder';
 import axios from 'axios';
+import { getUsernameById } from '../miscellHelpers/helperRequests';
 
 interface FolderContainerProps {
-  folders: FolderProp[];
-  onFolderClick: (folder: FolderProp) => void;
+  folders: FolderProps[];
+  onFolderClick: (folder: FolderProps) => void;
   currentFolderId: string | null;
   refreshFolders: (folderId: string | null) => void;
   itemsPerPage: number;
+  username: string; // logged in user
 }
 
 const FolderContainer: React.FC<FolderContainerProps> = ({
@@ -20,9 +20,10 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   currentFolderId,
   refreshFolders,
   itemsPerPage,
+  username,
 }) => {
   const [activeStartIndex, setActiveStartIndex] = useState(0);
-  const [visibleFolders, setVisibleFolders] = useState<FolderProp[]>([]);
+  const [visibleFolders, setVisibleFolders] = useState<FolderProps[]>([]);
 
   useEffect(() => {
     setVisibleFolders(
@@ -70,6 +71,29 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
       return response.data;
     } catch (error) {
       console.error('Error deleting file:', error);
+    }
+  };
+
+  //FOLDER FAVORITING HANDLER, favorites the folder given folderId
+  const handleFavoriteFolder = async (folderId: string, owner: string) => {
+
+    const ownerUsername = await getUsernameById(owner);
+
+    if (ownerUsername !== username) {
+      alert('You do not have permission to favorite this folder.');
+      return;
+    }
+    try {
+      const response = await axios.patch(
+        `http://localhost:5001/api/folder/favorite/${folderId}`,
+        {},
+        { withCredentials: true },
+      );
+
+      refreshFolders(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Error favoriting folder:', error);
     }
   };
 
@@ -127,8 +151,9 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
               fileChildren={folder.fileChildren}
               isFavorited={folder.isFavorited}
               onClick={() => onFolderClick(folder)}
-              onFolderDelete={handleDeleteFolder}
-            />
+              handleDeleteFolder={handleDeleteFolder}
+              handleFavoriteFolder={() => handleFavoriteFolder(folder.id, folder.owner)}
+              />
           ))}
         </Box>
 

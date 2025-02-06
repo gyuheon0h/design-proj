@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { Button } from '@mui/material';
 import FileComponent from './File';
-import UploadDialog from './CreateFileDialog';
-import { colors, typography } from '../Styles';
 import axios from 'axios';
+import { getUsernameById } from '../miscellHelpers/helperRequests';
 
 interface File {
   id: string;
@@ -21,6 +19,7 @@ interface File {
 interface FileContainerProps {
   files: File[];
   currentFolderId: string | null;
+  username: string; // logged in user
   refreshFiles: (folderId: string | null) => void;
 }
 
@@ -28,6 +27,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
   files,
   currentFolderId,
   refreshFiles,
+  username,
 }) => {
   const handleDeleteFile = async (fileId: string) => {
     try {
@@ -44,7 +44,6 @@ const FileContainer: React.FC<FileContainerProps> = ({
       console.error('Error deleting file:', error);
     }
   };
-
   const handleRenameFile = async (fileId: string, fileName: string) => {
     try {
       const response = await axios.patch(
@@ -57,6 +56,29 @@ const FileContainer: React.FC<FileContainerProps> = ({
       return response.data;
     } catch (error) {
       console.error('Error renaming file:', error);
+    }
+  };
+
+  //FILE FAVORITING HANDLER, favorites the file given fileId
+  const handleFavoriteFile = async (fileId: string, owner: string) => {
+    
+    const ownerUsername = await getUsernameById(owner);
+    console.log(ownerUsername, username)
+    if (ownerUsername !== username) {
+      alert('You do not have permission to favorite this file.');
+      return;
+    }
+    try {
+      const response = await axios.patch(
+        `http://localhost:5001/api/file/favorite/${fileId}`,
+        {},
+        { withCredentials: true },
+      );
+
+      refreshFiles(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Error favoriting file:', error);
     }
   };
 
@@ -101,6 +123,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
           fileType={file.fileType}
           handleDeleteFile={handleDeleteFile}
           handleRenameFile={handleRenameFile}
+          handleFavoriteFile={() => handleFavoriteFile(file.id, file.owner)}
         />
       ))}
     </div>

@@ -96,6 +96,70 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/files/favorites/:ownerId
+ * Route to get favorited files owned by a certain user (ownerId).
+ * This is protected by authorize
+ */
+
+folderRouter.get('/favorites/:ownerId', authorize, async (req, res) => {
+  try {
+    const { ownerId } = req.params;
+
+    // ******** CHECK THIS OUT If we only want to let users get their own files
+    if ((req as any).user.userId !== ownerId) {
+      return res.status(403).json({
+        message: 'Forbidden: You can only access your own favorited files.',
+      });
+    }
+
+    const favoritedFiles = await FolderModel.getAllByOwnerAndColumn(
+      ownerId,
+      'isFavorited',
+      true,
+    );
+    return res.json(favoritedFiles);
+  } catch (error) {
+    console.error('Error getting files by owner:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+/**
+ * PATCH /api/files/favorite/:fileId
+ * Route to favorite a file
+ */
+folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
+  //TODO: make sure front end handles the that only owner can favorite a file
+  try {
+    const userId = (req as any).user.userId;
+    const { folderId } = req.params;
+    const folder = await FolderModel.getById(folderId);
+
+    if (!folder) {
+      return res.status(404).json({ message: 'Folder not found' });
+    }
+
+    if (userId != folder.owner) {
+      return res.status(403).json({
+        message: 'Unauthorized: User cannot favorite folders they do not own',
+      });
+    }
+
+    const folderMetadata = await FolderModel.updateFolderMetadata(folderId, {
+      isFavorited: !folder.isFavorited,
+    });
+
+    return res.status(200).json({
+      message: 'Folder favorited successfully',
+      folder: folderMetadata,
+    });
+  } catch (error) {
+    console.error('Folder favorite error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 folderRouter.delete('/delete/:folderId', authorize, async (req, res) => {
   try {
     const { folderId } = req.params;

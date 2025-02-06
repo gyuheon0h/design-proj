@@ -24,8 +24,11 @@ import {
   downloadFile,
 } from '../miscellHelpers/helperRequests';
 import RenameFileDialog from './RenameFileDialog';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import {colors} from '../Styles'
 
-interface File {
+interface FileComponentProps {
   id: string;
   name: string;
   owner: string;
@@ -38,6 +41,7 @@ interface File {
   isFavorited: boolean;
   handleDeleteFile: (fileId: string) => void;
   handleRenameFile: (fileId: string, newFileName: string) => void;
+  handleFavoriteFile: (fileId: string) => void;
 }
 
 const getFileIcon = (fileType: string) => {
@@ -63,7 +67,7 @@ const getFileIcon = (fileType: string) => {
   }
 };
 
-const FileComponent = (props: File) => {
+const FileComponent = (props: FileComponentProps) => {
   const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -101,6 +105,10 @@ const FileComponent = (props: File) => {
 
   const handleRenameFile = (newFileName: string) => {
     props.handleRenameFile(props.id, newFileName);
+  };
+
+  const handleFavoriteFile = () => {
+    props.handleFavoriteFile(props.id);
   };
 
   const lastModifiedDate = new Date(props.lastModifiedAt);
@@ -184,6 +192,16 @@ const FileComponent = (props: File) => {
             </Typography>
           </Tooltip>
         </Box>
+
+        {/* Favorites Toggle Button */}
+        <IconButton
+          onClick={handleFavoriteFile}
+          sx={{
+            color: props.isFavorited ? '#FF6347' : colors.darkBlue,
+          }}
+        >
+          {props.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+        </IconButton>
 
         <IconButton onClick={handleOptionsClick}>
           <MoreHorizIcon />

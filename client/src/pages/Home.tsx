@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
-import { FolderProp } from '../components/Folder';
+import { FolderProps } from '../components/Folder';
 import FileContainer from '../components/FileContainer';
 import Divider from '@mui/material/Divider';
 import axios from 'axios';
@@ -10,10 +10,12 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { typography } from '../Styles';
 import CreateButton from '../components/CreateButton';
+import { useUser } from '../context/UserContext';
 
 const Home = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const userContext = useUser();
 
   const folderPath = location.pathname
     .replace('/home', '')
@@ -23,7 +25,7 @@ const Home = () => {
     ? folderPath[folderPath.length - 1]
     : null;
 
-  const [folders, setFolders] = useState<FolderProp[]>([]);
+  const [folders, setFolders] = useState<FolderProps[]>([]);
   const [files, setFiles] = useState([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
   const itemsPerPage = 5;
@@ -71,7 +73,7 @@ const Home = () => {
     }
   };
 
-  const handleFolderClick = (folder: FolderProp) => {
+  const handleFolderClick = (folder: FolderProps) => {
     navigate(`/home/${[...folderPath, folder.id].join('/')}`);
   };
 
@@ -150,6 +152,7 @@ const Home = () => {
             currentFolderId={currentFolderId}
             refreshFolders={fetchData}
             itemsPerPage={itemsPerPage}
+            username={userContext?.username || ''}
           />
         </div>
 
@@ -161,6 +164,7 @@ const Home = () => {
             files={files}
             currentFolderId={currentFolderId}
             refreshFiles={fetchData}
+            username={userContext?.username || ''}
           />
         </div>
       </Box>
