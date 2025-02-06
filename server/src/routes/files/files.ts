@@ -167,7 +167,7 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
   try {
     const { fileName } = req.body;
     if (!fileName) {
-      return res.status(400).json({ message: 'No new file name provided' }); //TODO: FE must not allow users to rename with original name
+      return res.status(400).json({ message: 'No new file name provided' });
     }
 
     const userId = (req as any).user.userId;
@@ -180,7 +180,7 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
 
     const fileMetadata = await FileModel.updateFileMetadata(fileId, {
       name: fileName,
-      lastModifiedBy: userId,
+      lastModifiedBy: userId, //TODO: may need to get userName thru userId
       lastModifiedAt: new Date(),
     });
 
