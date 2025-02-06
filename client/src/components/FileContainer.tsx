@@ -15,6 +15,7 @@ interface File {
   parentFolder: string | null;
   gcsKey: string;
   fileType: string;
+  isFavorited: boolean;
 }
 
 interface FileContainerProps {
@@ -29,7 +30,11 @@ const FileContainer: React.FC<FileContainerProps> = ({
   refreshFiles,
 }) => {
   const [open, setOpen] = useState(false);
-
+  const [filesState, setFilesState] = useState<File[]>(files.map(file => ({
+    ...file,
+    isFavorited: file.isFavorited ?? false, // Default to false if undefined
+  })));
+  
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
@@ -71,6 +76,14 @@ const FileContainer: React.FC<FileContainerProps> = ({
     } catch (error) {
       console.error('Error deleting file:', error);
     }
+  };
+
+  const toggleFavoriteFile = (fileId: string) => {
+    setFilesState((prevFiles) =>
+      prevFiles.map((file) =>
+        file.id === fileId ? { ...file, isFavorited: !file.isFavorited } : file
+      )
+    );
   };
 
   return (
@@ -131,7 +144,8 @@ const FileContainer: React.FC<FileContainerProps> = ({
           gcsKey={file.gcsKey}
           fileType={file.fileType}
           handleDeleteFile={handleDeleteFile}
-        />
+          isFavorited={file.isFavorited}
+          toggleFavoriteFile={() => toggleFavoriteFile(file.id)}        />
       ))}
 
       {/* Dialog */}

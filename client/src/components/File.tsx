@@ -23,6 +23,8 @@ import {
   getUsernameById,
   downloadFile,
 } from '../miscellHelpers/helperRequests';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 
 interface File {
   id: string;
@@ -35,6 +37,8 @@ interface File {
   gcsKey: string;
   fileType: string;
   handleDeleteFile: (fileId: string) => void;
+  toggleFavoriteFile: (file: File) => void;
+  isFavorited: boolean;
 }
 
 const getFileIcon = (fileType: string) => {
@@ -169,6 +173,20 @@ const FileComponent = (props: File) => {
           </Typography>
         </Tooltip>
       </Box>
+
+      {/* Favorites Toggle Button */}
+      <IconButton
+        onClick={(event) => {
+          event.stopPropagation();
+          props.toggleFavoriteFile(props);
+          console.log("Toggled favorite: ", props.id, props.isFavorited);
+        }}
+        sx={{
+          color: props.isFavorited ? '#FF6347' : '#5d4037',  
+        }}
+      >
+        {props.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+      </IconButton>
 
       <IconButton onClick={handleOptionsClick}>
         <MoreHorizIcon />
