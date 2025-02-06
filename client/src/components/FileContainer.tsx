@@ -30,11 +30,13 @@ const FileContainer: React.FC<FileContainerProps> = ({
   refreshFiles,
 }) => {
   const [open, setOpen] = useState(false);
-  const [filesState, setFilesState] = useState<File[]>(files.map(file => ({
-    ...file,
-    isFavorited: file.isFavorited ?? false, // Default to false if undefined
-  })));
-  
+  const [filesState, setFilesState] = useState<File[]>(
+    files.map((file) => ({
+      ...file,
+      isFavorited: file.isFavorited ?? false, // Default to false if undefined
+    })),
+  );
+
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
@@ -81,8 +83,8 @@ const FileContainer: React.FC<FileContainerProps> = ({
   const toggleFavoriteFile = (fileId: string) => {
     setFilesState((prevFiles) =>
       prevFiles.map((file) =>
-        file.id === fileId ? { ...file, isFavorited: !file.isFavorited } : file
-      )
+        file.id === fileId ? { ...file, isFavorited: !file.isFavorited } : file,
+      ),
     );
   };
 
@@ -131,7 +133,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
       </div>
 
       {/* File List */}
-      {files.map((file) => (
+      {filesState.map((file) => (
         <FileComponent
           key={file.id}
           id={file.id}
@@ -145,7 +147,8 @@ const FileContainer: React.FC<FileContainerProps> = ({
           fileType={file.fileType}
           handleDeleteFile={handleDeleteFile}
           isFavorited={file.isFavorited}
-          toggleFavoriteFile={() => toggleFavoriteFile(file.id)}        />
+          toggleFavoriteFile={() => toggleFavoriteFile(file.id)}
+        />
       ))}
 
       {/* Dialog */}

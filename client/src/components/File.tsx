@@ -179,10 +179,10 @@ const FileComponent = (props: File) => {
         onClick={(event) => {
           event.stopPropagation();
           props.toggleFavoriteFile(props);
-          console.log("Toggled favorite: ", props.id, props.isFavorited);
+          console.log('Toggled favorite: ', props.id, props.isFavorited);
         }}
         sx={{
-          color: props.isFavorited ? '#FF6347' : '#5d4037',  
+          color: props.isFavorited ? '#FF6347' : '#5d4037',
         }}
       >
         {props.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
