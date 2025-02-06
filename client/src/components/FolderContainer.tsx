@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@mui/material';
 import Folder, { FolderProp } from './Folder';
-import FolderDialog from '../pages/CreateFolderDialog';
+import FolderDialog from './CreateFolderDialog';
 import { colors, typography } from '../Styles';
 import axios from 'axios';
 

@@ -23,11 +23,12 @@ import {
   getUsernameById,
   downloadFile,
 } from '../miscellHelpers/helperRequests';
+import RenameFileDialog from './RenameFileDialog'; // Import the dialog
 
 interface File {
   id: string;
   name: string;
-  owner: string; // THIS IS UUID
+  owner: string;
   createdAt: Date;
   lastModifiedBy: string | null;
   lastModifiedAt: Date;
@@ -35,6 +36,7 @@ interface File {
   gcsKey: string;
   fileType: string;
   handleDeleteFile: (fileId: string) => void;
+  handleRenameFile: (fileId: string, newFileName: string) => void; // Add this prop
 }
 
 const getFileIcon = (fileType: string) => {
@@ -62,6 +64,9 @@ const getFileIcon = (fileType: string) => {
 
 const FileComponent = (props: File) => {
   const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
   useEffect(() => {
     const fetchOwnerUserName = async () => {
       if (props.owner) {
@@ -76,9 +81,8 @@ const FileComponent = (props: File) => {
     };
 
     fetchOwnerUserName();
-  }, [props.owner]); // Runs effect when `props.owner` changes need to do this bc react tsx needs to render synchronously
+  }, [props.owner]);
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -89,138 +93,158 @@ const FileComponent = (props: File) => {
     setAnchorEl(null);
   };
 
+  const handleRenameClick = () => {
+    setIsRenameDialogOpen(true);
+    handleOptionsClose();
+  };
+
+  const handleRenameFile = (newFileName: string) => {
+    props.handleRenameFile(props.id, newFileName); // Call the parent handler
+  };
+
   const lastModifiedDate = new Date(props.lastModifiedAt);
   const formattedLastModifiedDate = !isNaN(lastModifiedDate.getTime())
     ? lastModifiedDate.toLocaleDateString()
     : 'Unknown';
 
   return (
-    <Card
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        padding: '10px',
-        margin: '10px 0',
-        boxShadow: '2px 2px 5px rgba(0,0,0,0.2)',
-        backgroundColor: '#f5f5f5',
-        transition: 'background-color 0.3s',
-        '&:hover': {
-          backgroundColor: '#e0e0e0',
-        },
-      }}
-    >
-      {getFileIcon(props.fileType)}
-
-      <Box
+    <div>
+      <Card
         sx={{
           display: 'flex',
           alignItems: 'center',
-          flexGrow: 1,
-          overflow: 'hidden',
-          justifyContent: 'space-around',
-        }}
-      >
-        <Tooltip title={props.name} arrow>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontWeight: 'bold',
-              maxWidth: '200px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {props.name}
-          </Typography>
-        </Tooltip>
-
-        <Tooltip title={ownerUserName} arrow>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              maxWidth: '150px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Owner: {ownerUserName}
-          </Typography>
-        </Tooltip>
-
-        <Tooltip
-          title={`Last Modified: ${formattedLastModifiedDate} by ${props.lastModifiedBy || ownerUserName}`}
-          arrow
-        >
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              maxWidth: '200px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Last Modified: {formattedLastModifiedDate} by{' '}
-            {props.lastModifiedBy || ownerUserName}
-          </Typography>
-        </Tooltip>
-      </Box>
-
-      <IconButton onClick={handleOptionsClick}>
-        <MoreHorizIcon />
-      </IconButton>
-
-      <Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleOptionsClose}
-        PaperProps={{
-          sx: {
-            width: '150px',
+          padding: '10px',
+          margin: '10px 0',
+          boxShadow: '2px 2px 5px rgba(0,0,0,0.2)',
+          backgroundColor: '#f5f5f5',
+          transition: 'background-color 0.3s',
+          '&:hover': {
+            backgroundColor: '#e0e0e0',
           },
         }}
       >
-        <MenuItem onClick={handleOptionsClose}>
-          <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
-        </MenuItem>
+        {getFileIcon(props.fileType)}
 
-        <Divider sx={{ my: 0.2 }} />
-
-        <MenuItem onClick={handleOptionsClose}>
-          <DriveFileRenameOutlineIcon
-            sx={{ fontSize: '20px', marginRight: '9px' }}
-          />{' '}
-          Rename
-        </MenuItem>
-
-        <Divider sx={{ my: 0.2 }} />
-
-        <MenuItem
-          onClick={() => {
-            props.handleDeleteFile(props.id);
-            handleOptionsClose();
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            flexGrow: 1,
+            overflow: 'hidden',
+            justifyContent: 'space-around',
           }}
         >
-          <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Delete
-        </MenuItem>
+          <Tooltip title={props.name} arrow>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                fontWeight: 'bold',
+                maxWidth: '200px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {props.name}
+            </Typography>
+          </Tooltip>
 
-        <Divider sx={{ my: 0.2 }} />
+          <Tooltip title={ownerUserName} arrow>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                maxWidth: '150px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Owner: {ownerUserName}
+            </Typography>
+          </Tooltip>
 
-        <MenuItem
-          onClick={() => {
-            downloadFile(props.id, props.name);
-            handleOptionsClose();
+          <Tooltip
+            title={`Last Modified: ${formattedLastModifiedDate} by ${props.lastModifiedBy || ownerUserName}`}
+            arrow
+          >
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                maxWidth: '200px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Last Modified: {formattedLastModifiedDate} by{' '}
+              {props.lastModifiedBy || ownerUserName}
+            </Typography>
+          </Tooltip>
+        </Box>
+
+        <IconButton onClick={handleOptionsClick}>
+          <MoreHorizIcon />
+        </IconButton>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleOptionsClose}
+          PaperProps={{
+            sx: {
+              width: '150px',
+            },
           }}
         >
-          <InsertDriveFileIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-          Download
-        </MenuItem>
-      </Menu>
-    </Card>
+          <MenuItem onClick={handleOptionsClose}>
+            <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
+          </MenuItem>
+
+          <Divider sx={{ my: 0.2 }} />
+
+          <MenuItem onClick={handleRenameClick}>
+            <DriveFileRenameOutlineIcon
+              sx={{ fontSize: '20px', marginRight: '9px' }}
+            />{' '}
+            Rename
+          </MenuItem>
+
+          <Divider sx={{ my: 0.2 }} />
+
+          <MenuItem
+            onClick={() => {
+              props.handleDeleteFile(props.id);
+              handleOptionsClose();
+            }}
+          >
+            <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Delete
+          </MenuItem>
+
+          <Divider sx={{ my: 0.2 }} />
+
+          <MenuItem
+            onClick={() => {
+              downloadFile(props.id, props.name);
+              handleOptionsClose();
+            }}
+          >
+            <InsertDriveFileIcon
+              sx={{ fontSize: '20px', marginRight: '9px' }}
+            />{' '}
+            Download
+          </MenuItem>
+        </Menu>
+      </Card>
+
+      <RenameFileDialog
+        open={isRenameDialogOpen}
+        fileName={props.name}
+        onClose={() => setIsRenameDialogOpen(false)}
+        onFileRename={handleRenameFile}
+      />
+    </div>
   );
 };
 

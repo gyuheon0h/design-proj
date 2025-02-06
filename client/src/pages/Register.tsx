@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -14,6 +14,7 @@ import {
 import axios from 'axios';
 import SHA256 from 'crypto-js/sha256';
 import { colors } from '../Styles';
+import CloseIcon from '@mui/icons-material/Close';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -196,6 +197,9 @@ const Register = () => {
             }}
           >
             Register
+          </Button>
+          <Button component={Link} to="/">
+            Or Sign In
           </Button>
         </Box>
       </Paper>
