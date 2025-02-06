@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import FileComponent from './File';
 import axios from 'axios';
+import { getUsernameById } from '../miscellHelpers/helperRequests';
 
 interface File {
   id: string;
@@ -18,6 +19,7 @@ interface File {
 interface FileContainerProps {
   files: File[];
   currentFolderId: string | null;
+  username: string; // logged in user
   refreshFiles: (folderId: string | null) => void;
 }
 
@@ -25,6 +27,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
   files,
   currentFolderId,
   refreshFiles,
+  username,
 }) => {
   const handleDeleteFile = async (fileId: string) => {
     try {
@@ -57,7 +60,14 @@ const FileContainer: React.FC<FileContainerProps> = ({
   };
 
   //FILE FAVORITING HANDLER, favorites the file given fileId
-  const handleFavoriteFile = async (fileId: string) => {
+  const handleFavoriteFile = async (fileId: string, owner: string) => {
+    
+    const ownerUsername = await getUsernameById(owner);
+    console.log(ownerUsername, username)
+    if (ownerUsername !== username) {
+      alert('You do not have permission to favorite this file.');
+      return;
+    }
     try {
       const response = await axios.patch(
         `http://localhost:5001/api/file/favorite/${fileId}`,
@@ -113,7 +123,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
           fileType={file.fileType}
           handleDeleteFile={handleDeleteFile}
           handleRenameFile={handleRenameFile}
-          handleFavoriteFile={handleFavoriteFile}
+          handleFavoriteFile={() => handleFavoriteFile(file.id, file.owner)}
         />
       ))}
     </div>

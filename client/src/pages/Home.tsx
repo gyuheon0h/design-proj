@@ -164,6 +164,7 @@ const Home = () => {
             files={files}
             currentFolderId={currentFolderId}
             refreshFiles={fetchData}
+            username={userContext?.username || ''}
           />
         </div>
       </Box>
