@@ -45,11 +45,11 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     }
   };
 
-  //FOLDER FAVORITING HANDLER
+  //FOLDER FAVORITING HANDLER, favorites the folder given folderId
   const handleFavoriteFolder = async (folderId: string) => {
     try {
       const response = await axios.patch(
-        `http://localhost:5001/api/file/favorite/${folderId}`,
+        `http://localhost:5001/api/folder/favorite/${folderId}`,
         { withCredentials: true },
       );
 
