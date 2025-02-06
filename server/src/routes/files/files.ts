@@ -197,13 +197,9 @@ fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
  * Route to favorite/unfavorite a file
  */
 
-//FOR SOME REASON, COOKIE IS NOT BEING PASSED SO ITS NOT BEING AUTHROIZED
-// fileRouter.patch('/favorite/:fileId', authorize, async (req, res) => {
-
-// IF U REMOVE THE AUTH MIDDLEWARE, FAVORITING WORKS
-fileRouter.patch('/favorite/:fileId', async (req, res) => {
-  //TODO: make sure front end handles the that only owner can favorite a file
+fileRouter.patch('/favorite/:fileId', authorize, async (req, res) => {
   try {
+    const userId = (req as any).user.userId;
     const { fileId } = req.params;
     const file = await FileModel.getById(fileId);
 

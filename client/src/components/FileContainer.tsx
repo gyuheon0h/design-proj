@@ -64,6 +64,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
     try {
       const response = await axios.patch(
         `http://localhost:5001/api/file/favorite/${fileId}`,
+        {},
         { withCredentials: true },
       );
 
