@@ -47,7 +47,7 @@ const Folder = (props: FolderProps) => {
   };
 
   const handleFolderClick = () => {
-    if (isRenameDialogOpen) return; // ✅ Prevents folder opening when renaming
+    if (isRenameDialogOpen) return; 
     props.onClick(props);
   };
 
@@ -63,9 +63,9 @@ const Folder = (props: FolderProps) => {
   };
 
   const handleRenameFolder = (newFolderName: string) => {
-    if (!newFolderName.trim()) return; // ✅ Prevents empty names
+    if (!newFolderName.trim()) return;
     props.handleRenameFolder(props.id, newFolderName);
-    setIsRenameDialogOpen(false); // ✅ Close rename dialog after renaming
+    setIsRenameDialogOpen(false); 
   };
 
   return (
