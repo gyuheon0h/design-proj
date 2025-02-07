@@ -10,7 +10,7 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors } from '../Styles';
-import RenameFileDialog from './RenameFileDialog';
+import RenameFileDialog from './RenameDialog';
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -39,7 +39,10 @@ const Folder = (props: FolderProps) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleOptionsClose = (event: {}, reason?: "backdropClick" | "escapeKeyDown") => {
+  const handleOptionsClose = (
+    event: {},
+    reason?: 'backdropClick' | 'escapeKeyDown',
+  ) => {
     if (event && 'stopPropagation' in event) {
       (event as React.MouseEvent).stopPropagation();
     }
@@ -47,7 +50,7 @@ const Folder = (props: FolderProps) => {
   };
 
   const handleFolderClick = () => {
-    if (isRenameDialogOpen) return; 
+    if (isRenameDialogOpen) return;
     props.onClick(props);
   };
 
@@ -65,7 +68,7 @@ const Folder = (props: FolderProps) => {
   const handleRenameFolder = (newFolderName: string) => {
     if (!newFolderName.trim()) return;
     props.handleRenameFolder(props.id, newFolderName);
-    setIsRenameDialogOpen(false); 
+    setIsRenameDialogOpen(false);
   };
 
   return (
@@ -168,7 +171,8 @@ const Folder = (props: FolderProps) => {
                 handleOptionsClose(e);
               }}
             >
-              <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Restore
+              <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+              Restore
             </MenuItem>
           ) : (
             <>
@@ -180,7 +184,9 @@ const Folder = (props: FolderProps) => {
               <Divider sx={{ my: 0.2 }} />
 
               <MenuItem onClick={handleRenameClick}>
-                <DriveFileRenameOutlineIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
+                <DriveFileRenameOutlineIcon
+                  sx={{ fontSize: '20px', marginRight: '9px' }}
+                />
                 Rename
               </MenuItem>
 
@@ -193,7 +199,8 @@ const Folder = (props: FolderProps) => {
                   handleOptionsClose(e);
                 }}
               >
-                <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Delete
+                <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+                Delete
               </MenuItem>
 
               <Divider sx={{ my: 0.2 }} />
@@ -212,7 +219,7 @@ const Folder = (props: FolderProps) => {
         open={isRenameDialogOpen}
         fileName={props.name}
         onClose={() => setIsRenameDialogOpen(false)}
-        onFileRename={handleRenameFolder}
+        onRename={handleRenameFolder}
       />
     </Box>
   );

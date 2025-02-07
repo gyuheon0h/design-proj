@@ -24,7 +24,7 @@ import {
   getUsernameById,
   downloadFile,
 } from '../miscellHelpers/helperRequests';
-import RenameFileDialog from './RenameFileDialog';
+import RenameFileDialog from './RenameDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors } from '../Styles';
@@ -48,7 +48,7 @@ interface FileComponentProps {
 }
 
 const getFileIcon = (fileType: string) => {
-  fileType=fileType.toLowerCase();
+  fileType = fileType.toLowerCase();
   console.log(fileType);
   switch (fileType) {
     case 'csv':
@@ -290,7 +290,7 @@ const FileComponent = (props: FileComponentProps) => {
         open={isRenameDialogOpen}
         fileName={props.name}
         onClose={() => setIsRenameDialogOpen(false)}
-        onFileRename={handleRenameFile}
+        onRename={handleRenameFile}
       />
     </div>
   );
