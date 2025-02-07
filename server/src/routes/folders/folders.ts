@@ -102,28 +102,28 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
  * This is protected by authorize
  */
 
-folderRouter.get('/favorites/:ownerId', authorize, async (req, res) => {
-  try {
-    const { ownerId } = req.params;
+folderRouter.get(
+  '/favorites',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const userId = req.user.userId;
 
-    // ******** CHECK THIS OUT If we only want to let users get their own files
-    if ((req as any).user.userId !== ownerId) {
-      return res.status(403).json({
-        message: 'Forbidden: You can only access your own favorited files.',
-      });
+      const favoritedFiles = await FolderModel.getAllByOwnerAndColumn(
+        userId,
+        'isFavorited',
+        true,
+      );
+      return res.json(favoritedFiles);
+    } catch (error) {
+      console.error('Error getting files by owner:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
     }
-
-    const favoritedFiles = await FolderModel.getAllByOwnerAndColumn(
-      ownerId,
-      'isFavorited',
-      true,
-    );
-    return res.json(favoritedFiles);
-  } catch (error) {
-    console.error('Error getting files by owner:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+  },
+);
 
 /**
  * PATCH /api/files/favorite/:fileId
