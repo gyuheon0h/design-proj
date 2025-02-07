@@ -118,7 +118,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     }
   };
 
-  // ✅ FIXED: Moved `handleRenameFolder` inside `FolderContainer`
   const handleRenameFolder = async (folderId: string, newFolderName: string) => {
     try {
       const response = await axios.patch(
