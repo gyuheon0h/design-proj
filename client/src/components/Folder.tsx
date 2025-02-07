@@ -10,6 +10,7 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors } from '../Styles';
+import RenameFileDialog from './RenameDialog';
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -25,10 +26,12 @@ export interface FolderProps {
   handleDeleteFolder: (folderId: string) => Promise<void>;
   handleFavoriteFolder: (folderId: string) => void;
   handleRestoreFolder: (folderId: string) => void;
+  handleRenameFolder: (folderId: string, newFolderName: string) => void;
 }
 
 const Folder = (props: FolderProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const open = Boolean(anchorEl);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -36,12 +39,18 @@ const Folder = (props: FolderProps) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleOptionsClose = (event: React.MouseEvent) => {
-    event.stopPropagation();
+  const handleOptionsClose = (
+    event: {},
+    reason?: 'backdropClick' | 'escapeKeyDown',
+  ) => {
+    if (event && 'stopPropagation' in event) {
+      (event as React.MouseEvent).stopPropagation();
+    }
     setAnchorEl(null);
   };
 
   const handleFolderClick = () => {
+    if (isRenameDialogOpen) return;
     props.onClick(props);
   };
 
@@ -50,7 +59,17 @@ const Folder = (props: FolderProps) => {
     props.handleFavoriteFolder(props.id);
   };
 
-  console.log(props);
+  const handleRenameClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setIsRenameDialogOpen(true);
+    setAnchorEl(null);
+  };
+
+  const handleRenameFolder = (newFolderName: string) => {
+    if (!newFolderName.trim()) return;
+    props.handleRenameFolder(props.id, newFolderName);
+    setIsRenameDialogOpen(false);
+  };
 
   return (
     <Box
@@ -70,7 +89,7 @@ const Folder = (props: FolderProps) => {
         },
       }}
     >
-      {/* Folder Tab (Back Piece) */}
+      {/* Folder Tab */}
       <Box
         className="folder-tab"
         sx={{
@@ -116,6 +135,7 @@ const Folder = (props: FolderProps) => {
           {props.name}
         </Typography>
 
+        {/* Favorite Button */}
         <IconButton
           onClick={handleFavoriteFolder}
           sx={{
@@ -142,139 +162,65 @@ const Folder = (props: FolderProps) => {
         </IconButton>
 
         {/* Dropdown Menu */}
-        <Menu
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleOptionsClose}
-          PaperProps={{
-            sx: {
-              width: '150px',
-            },
-          }}
-        >
+        <Menu anchorEl={anchorEl} open={open} onClose={handleOptionsClose}>
           {props.page === 'trash' ? (
-            <>
-              <MenuItem
-                onClick={(e) => {
-                  console.log('Restoring file...');
-                  props.handleRestoreFolder(props.id);
-                  handleOptionsClose(e);
-                }}
-              >
-                <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-                Restore
-              </MenuItem>
-            </>
+            <MenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                props.handleRestoreFolder(props.id);
+                handleOptionsClose(e);
+              }}
+            >
+              <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+              Restore
+            </MenuItem>
           ) : (
             <>
-              <MenuItem
-                onClick={handleOptionsClose}
-                sx={{
-                  color: colors.darkBlue,
-                  paddingRight: '16px',
-                  '&:hover': {
-                    backgroundColor: '#e0f2ff',
-                  },
-                  '&.Mui-selected': {
-                    backgroundColor: '#dce9ff',
-                    borderColor: colors.darkBlue,
-                  },
-                }}
-              >
-                <SendIcon
-                  sx={{
-                    color: colors.darkBlue,
-                    fontSize: '20px',
-                    marginRight: '9px',
-                  }}
-                />
+              <MenuItem onClick={(e) => e.stopPropagation()}>
+                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
                 Share
               </MenuItem>
 
-              <Divider sx={{ my: 0.2, color: colors.darkBlue }} />
+              <Divider sx={{ my: 0.2 }} />
 
-              <MenuItem
-                onClick={handleOptionsClose}
-                sx={{
-                  color: colors.darkBlue,
-                  paddingRight: '16px',
-                  '&:hover': {
-                    backgroundColor: '#e0f2ff',
-                  },
-                  '&.Mui-selected': {
-                    backgroundColor: '#dce9ff',
-                    borderColor: colors.darkBlue,
-                  },
-                }}
-              >
+              <MenuItem onClick={handleRenameClick}>
                 <DriveFileRenameOutlineIcon
-                  sx={{
-                    color: colors.darkBlue,
-                    fontSize: '20px',
-                    marginRight: '9px',
-                  }}
+                  sx={{ fontSize: '20px', marginRight: '9px' }}
                 />
                 Rename
               </MenuItem>
 
-              <Divider sx={{ my: 0.2, color: colors.darkBlue }} />
+              <Divider sx={{ my: 0.2 }} />
 
               <MenuItem
                 onClick={(e) => {
-                  handleOptionsClose(e);
+                  e.stopPropagation();
                   props.handleDeleteFolder(props.id);
-                }}
-                sx={{
-                  color: colors.darkBlue,
-                  paddingRight: '16px',
-                  '&:hover': {
-                    backgroundColor: '#e0f2ff',
-                  },
-                  '&.Mui-selected': {
-                    backgroundColor: '#dce9ff',
-                    borderColor: colors.darkBlue,
-                  },
+                  handleOptionsClose(e);
                 }}
               >
-                <DeleteIcon
-                  sx={{
-                    color: colors.darkBlue,
-                    fontSize: '20px',
-                    marginRight: '9px',
-                  }}
-                />
+                <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
                 Delete
               </MenuItem>
 
-              <Divider sx={{ my: 0.2, color: colors.darkBlue }} />
+              <Divider sx={{ my: 0.2 }} />
 
-              <MenuItem
-                onClick={handleOptionsClose}
-                sx={{
-                  color: colors.darkBlue,
-                  paddingRight: '16px',
-                  '&:hover': {
-                    backgroundColor: '#e0f2ff',
-                  },
-                  '&.Mui-selected': {
-                    backgroundColor: '#dce9ff',
-                    borderColor: colors.darkBlue,
-                  },
-                }}
-              >
-                <UploadIcon
-                  sx={{
-                    color: colors.darkBlue,
-                    fontSize: '20px',
-                    marginRight: '9px',
-                  }}
-                />
+              <MenuItem onClick={(e) => e.stopPropagation()}>
+                <UploadIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
                 Upload
               </MenuItem>
             </>
           )}
         </Menu>
       </Box>
+
+      {/* Rename Folder Dialog */}
+      <RenameFileDialog
+        open={isRenameDialogOpen}
+        fileName={props.name}
+        onClose={() => setIsRenameDialogOpen(false)}
+        onRename={handleRenameFolder}
+      />
     </Box>
   );
 };

@@ -9,44 +9,28 @@ import {
   Box,
 } from '@mui/material';
 
-interface RenameFileDialogProps {
+interface RenameDialogProps {
   open: boolean;
   fileName: string;
   onClose: () => void;
-  onFileRename: (fileName: string) => void;
+  onRename: (fileName: string) => void;
 }
 
-function parseFileName(fileName: string) {
-  const lastDot = fileName.lastIndexOf('.');
-  if (lastDot === -1) {
-    return {
-      baseName: fileName,
-      extension: '',
-    };
-  }
-  return {
-    baseName: fileName.slice(0, lastDot),
-    extension: fileName.slice(lastDot),
-  };
-}
-
-const RenameFileDialog: React.FC<RenameFileDialogProps> = ({
+const RenameFileDialog: React.FC<RenameDialogProps> = ({
   open,
   fileName,
   onClose,
-  onFileRename,
+  onRename,
 }) => {
-  const { baseName: initialBaseName, extension } = parseFileName(fileName);
-  const [baseName, setBaseName] = useState(initialBaseName);
+  const [newFileName, setNewFileName] = useState(fileName);
 
   useEffect(() => {
-    const { baseName: parsedBaseName } = parseFileName(fileName);
-    setBaseName(parsedBaseName);
+    setNewFileName(fileName);
   }, [fileName]);
 
   const handleRename = () => {
-    if (baseName.trim()) {
-      onFileRename(baseName + extension);
+    if (newFileName.trim()) {
+      onRename(newFileName);
       onClose();
     }
   };
@@ -58,16 +42,13 @@ const RenameFileDialog: React.FC<RenameFileDialogProps> = ({
         <TextField
           autoFocus
           margin="dense"
-          label={initialBaseName}
+          label={newFileName}
           type="text"
           fullWidth
           variant="outlined"
-          value={baseName}
-          onChange={(e) => setBaseName(e.target.value)}
+          value={newFileName}
+          onChange={(e) => setNewFileName(e.target.value)}
         />
-        <Box mt={2} component="span">
-          Extension: {extension}
-        </Box>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="primary">
@@ -77,7 +58,7 @@ const RenameFileDialog: React.FC<RenameFileDialogProps> = ({
           onClick={handleRename}
           color="primary"
           variant="contained"
-          disabled={baseName.trim() === initialBaseName.trim()}
+          disabled={newFileName.trim() === fileName.trim()}
         >
           Rename
         </Button>
