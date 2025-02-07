@@ -48,6 +48,8 @@ interface FileComponentProps {
 }
 
 const getFileIcon = (fileType: string) => {
+  fileType=fileType.toLowerCase();
+  console.log(fileType);
   switch (fileType) {
     case 'csv':
       return <TableChartIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
@@ -60,6 +62,10 @@ const getFileIcon = (fileType: string) => {
         />
       );
     case 'photo':
+      return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+    case 'image/jpg':
+      return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+    case 'png':
       return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
     case 'mp3':
       return <MusicNoteIcon sx={{ fontSize: 30, marginRight: '10px' }} />;

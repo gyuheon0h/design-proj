@@ -72,11 +72,10 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
       refreshFolders(currentFolderId);
       return response.data;
     } catch (error) {
-      console.error('Error deleting file:', error);
+      console.error('Error deleting folder:', error);
     }
   };
 
-  //FOLDER FAVORITING HANDLER, favorites the folder given folderId
   const handleFavoriteFolder = async (folderId: string, owner: string) => {
     const ownerUsername = await getUsernameById(owner);
 
@@ -100,7 +99,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 
   const handleRestoreFolder = async (folderId: string, owner: string) => {
     const ownerUsername = await getUsernameById(owner);
-    console.log(ownerUsername, username);
+
     if (ownerUsername !== username) {
       alert('You do not have permission to restore this folder.');
       return;
@@ -111,10 +110,27 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         {},
         { withCredentials: true },
       );
+
       refreshFolders(currentFolderId);
       return response.data;
     } catch (error) {
       console.error('Error restoring folder:', error);
+    }
+  };
+
+  // ✅ FIXED: Moved `handleRenameFolder` inside `FolderContainer`
+  const handleRenameFolder = async (folderId: string, newFolderName: string) => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:5001/api/folder/rename/${folderId}`,
+        { folderName: newFolderName },
+        { withCredentials: true }
+      );
+
+      refreshFolders(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Error renaming folder:', error);
     }
   };
 
@@ -173,6 +189,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
               fileChildren={folder.fileChildren}
               isFavorited={folder.isFavorited}
               onClick={() => onFolderClick(folder)}
+              handleRenameFolder={handleRenameFolder} // ✅ Now properly passed
               handleDeleteFolder={handleDeleteFolder}
               handleFavoriteFolder={() =>
                 handleFavoriteFolder(folder.id, folder.owner)

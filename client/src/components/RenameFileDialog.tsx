@@ -36,17 +36,15 @@ const RenameFileDialog: React.FC<RenameFileDialogProps> = ({
   onClose,
   onFileRename,
 }) => {
-  const { baseName: initialBaseName, extension } = parseFileName(fileName);
-  const [baseName, setBaseName] = useState(initialBaseName);
+  const [baseName, setBaseName] = useState(fileName);
 
   useEffect(() => {
-    const { baseName: parsedBaseName } = parseFileName(fileName);
-    setBaseName(parsedBaseName);
+    setBaseName(fileName);
   }, [fileName]);
 
   const handleRename = () => {
     if (baseName.trim()) {
-      onFileRename(baseName + extension);
+      onFileRename(baseName);
       onClose();
     }
   };
@@ -58,26 +56,21 @@ const RenameFileDialog: React.FC<RenameFileDialogProps> = ({
         <TextField
           autoFocus
           margin="dense"
-          label={initialBaseName}
+          label="New name"
           type="text"
           fullWidth
           variant="outlined"
           value={baseName}
           onChange={(e) => setBaseName(e.target.value)}
         />
-        <Box mt={2} component="span">
-          Extension: {extension}
-        </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
-          Cancel
-        </Button>
+        <Button onClick={onClose} color="primary">Cancel</Button>
         <Button
           onClick={handleRename}
           color="primary"
           variant="contained"
-          disabled={baseName.trim() === initialBaseName.trim()}
+          disabled={baseName.trim() === fileName.trim()}
         >
           Rename
         </Button>

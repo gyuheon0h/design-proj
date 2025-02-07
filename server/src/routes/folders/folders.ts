@@ -206,3 +206,37 @@ folderRouter.patch('/restore/:folderId', authorize, async (req, res) => {
 });
 
 export default folderRouter;
+
+folderRouter.patch('/rename/:folderId', authorize, async (req, res) => {
+  try {
+    const { folderId } = req.params;
+    const { folderName } = req.body;
+
+    if (!folderName) {
+      return res.status(400).json({ message: 'No new folder name provided' });
+    }
+
+    const userId = (req as any).user.userId;
+    const folder = await FolderModel.getById(folderId);
+
+    if (!folder) {
+      return res.status(404).json({ message: 'Folder not found' });
+    }
+
+    if (userId !== folder.owner) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    const updatedFolder = await FolderModel.updateFolderMetadata(folderId, {
+      name: folderName,
+    });
+
+    return res.status(200).json({
+      message: 'Folder renamed successfully',
+      folder: updatedFolder,
+    });
+  } catch (error) {
+    console.error('Folder rename error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
