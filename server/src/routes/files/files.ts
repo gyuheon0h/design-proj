@@ -259,4 +259,32 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
   }
 });
 
+fileRouter.get('/trash', authorize, async (req: AuthenticatedRequest, res) => {
+  try {
+    const userId = (req as any).user.userId;
+    const deletdFiles = await FileModel.getAllByOwnerAndDeleted(userId);
+    return res.json(deletdFiles);
+  } catch (error) {
+    console.error('Error getting deleted files:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+fileRouter.patch('/restore/:fileId', authorize, async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const file = await FileModel.getByIdAll(fileId);
+
+    if (!file) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    await FileModel.restore(fileId);
+    return res.json({ message: 'File restored successfully' });
+  } catch (error) {
+    console.error('Error restoring file:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 export default fileRouter;

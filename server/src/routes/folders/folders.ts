@@ -177,4 +177,32 @@ folderRouter.delete('/delete/:folderId', authorize, async (req, res) => {
   }
 });
 
+folderRouter.get('/trash', authorize, async (req, res) => {
+  try {
+    const userId = (req as any).user.userId;
+    const deletedFolders = await FolderModel.getAllByOwnerAndDeleted(userId);
+    return res.json(deletedFolders);
+  } catch (error) {
+    console.error('Error getting deleted folders:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+folderRouter.patch('/restore/:folderId', authorize, async (req, res) => {
+  try {
+    const { folderId } = req.params;
+    const folder = await FolderModel.getByIdAll(folderId);
+
+    if (!folder) {
+      return res.status(404).json({ message: 'Folder not found' });
+    }
+
+    await FolderModel.restore(folderId);
+    return res.json({ message: 'Folder restored successfully' });
+  } catch (error) {
+    console.error('Error restoring folder:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 export default folderRouter;

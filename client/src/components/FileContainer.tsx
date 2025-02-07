@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import FileComponent from './File';
 import axios from 'axios';
 import { getUsernameById } from '../miscellHelpers/helperRequests';
@@ -17,6 +17,7 @@ interface File {
 }
 
 interface FileContainerProps {
+  page: 'home' | 'shared' | 'favorites' | 'trash';
   files: File[];
   currentFolderId: string | null;
   username: string; // logged in user
@@ -24,6 +25,7 @@ interface FileContainerProps {
 }
 
 const FileContainer: React.FC<FileContainerProps> = ({
+  page,
   files,
   currentFolderId,
   refreshFiles,
@@ -61,11 +63,14 @@ const FileContainer: React.FC<FileContainerProps> = ({
 
   //FILE FAVORITING HANDLER, favorites the file given fileId
   const handleFavoriteFile = async (fileId: string, owner: string) => {
-    
     const ownerUsername = await getUsernameById(owner);
-    console.log(ownerUsername, username)
+    console.log(ownerUsername, username);
     if (ownerUsername !== username) {
       alert('You do not have permission to favorite this file.');
+      return;
+    }
+    if (page === 'trash') {
+      alert('You cannot favorite a file in the trash.');
       return;
     }
     try {
@@ -79,6 +84,26 @@ const FileContainer: React.FC<FileContainerProps> = ({
       return response.data;
     } catch (error) {
       console.error('Error favoriting file:', error);
+    }
+  };
+
+  const handleRestoreFile = async (fileId: string, owner: string) => {
+    const ownerUsername = await getUsernameById(owner);
+    console.log(ownerUsername, username);
+    if (ownerUsername !== username) {
+      alert('You do not have permission to restore this file.');
+      return;
+    }
+    try {
+      const response = await axios.patch(
+        `http://localhost:5001/api/file/restore/${fileId}`,
+        {},
+        { withCredentials: true },
+      );
+      refreshFiles(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Error restoring file:', error);
     }
   };
 
@@ -110,6 +135,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
       {/* File List */}
       {files.map((file) => (
         <FileComponent
+          page={page}
           key={file.id}
           id={file.id}
           name={file.name}
@@ -123,6 +149,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
           fileType={file.fileType}
           handleDeleteFile={handleDeleteFile}
           handleRenameFile={handleRenameFile}
+          handleRestoreFile={() => handleRestoreFile(file.id, file.owner)}
           handleFavoriteFile={() => handleFavoriteFile(file.id, file.owner)}
         />
       ))}

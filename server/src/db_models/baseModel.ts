@@ -25,6 +25,15 @@ class BaseModel<T> {
     return (result.rows[0] as T) || null;
   }
 
+  // Get a record by ID (including soft-deleted ones)
+  async getByIdAll(id: string): Promise<T | null> {
+    const result = await pool.query(
+      `SELECT * FROM "${this.table}" WHERE "id" = $1`,
+      [id],
+    );
+    return (result.rows[0] as T) || null;
+  }
+
   // Get records by column (excluding soft-deleted ones)
   async getAllByColumn<K extends keyof T>(
     column: K,
@@ -122,6 +131,14 @@ class BaseModel<T> {
       [value],
     );
     return result.rowCount ?? 0;
+  }
+
+  async getAllByOwnerAndDeleted(ownerId: string): Promise<T[]> {
+    const result = await pool.query(
+      `SELECT * FROM "${this.table}" WHERE "owner" = $1 AND "deletedAt" IS NOT NULL`,
+      [ownerId],
+    );
+    return result.rows as T[];
   }
 }
 

@@ -147,6 +147,7 @@ const Home = () => {
       <Box sx={{ flexGrow: 1, overflowY: 'auto', padding: '20px' }}>
         <div style={{ marginLeft: '10px' }}>
           <FolderContainer
+            page="home"
             folders={folders}
             onFolderClick={handleFolderClick}
             currentFolderId={currentFolderId}
@@ -161,6 +162,7 @@ const Home = () => {
         {/* Files Section */}
         <div style={{ marginLeft: '10px' }}>
           <FileContainer
+            page={'home'}
             files={files}
             currentFolderId={currentFolderId}
             refreshFiles={fetchData}

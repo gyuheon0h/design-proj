@@ -6,6 +6,7 @@ import axios from 'axios';
 import { getUsernameById } from '../miscellHelpers/helperRequests';
 
 interface FolderContainerProps {
+  page: 'home' | 'shared' | 'favorites' | 'trash';
   folders: FolderProps[];
   onFolderClick: (folder: FolderProps) => void;
   currentFolderId: string | null;
@@ -15,6 +16,7 @@ interface FolderContainerProps {
 }
 
 const FolderContainer: React.FC<FolderContainerProps> = ({
+  page,
   folders,
   onFolderClick,
   currentFolderId,
@@ -76,7 +78,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 
   //FOLDER FAVORITING HANDLER, favorites the folder given folderId
   const handleFavoriteFolder = async (folderId: string, owner: string) => {
-
     const ownerUsername = await getUsernameById(owner);
 
     if (ownerUsername !== username) {
@@ -94,6 +95,26 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
       return response.data;
     } catch (error) {
       console.error('Error favoriting folder:', error);
+    }
+  };
+
+  const handleRestoreFolder = async (folderId: string, owner: string) => {
+    const ownerUsername = await getUsernameById(owner);
+    console.log(ownerUsername, username);
+    if (ownerUsername !== username) {
+      alert('You do not have permission to restore this folder.');
+      return;
+    }
+    try {
+      const response = await axios.patch(
+        `http://localhost:5001/api/folder/restore/${folderId}`,
+        {},
+        { withCredentials: true },
+      );
+      refreshFolders(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Error restoring folder:', error);
     }
   };
 
@@ -141,6 +162,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         >
           {visibleFolders.map((folder) => (
             <Folder
+              page={page}
               key={folder.id}
               id={folder.id}
               name={folder.name}
@@ -152,8 +174,13 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
               isFavorited={folder.isFavorited}
               onClick={() => onFolderClick(folder)}
               handleDeleteFolder={handleDeleteFolder}
-              handleFavoriteFolder={() => handleFavoriteFolder(folder.id, folder.owner)}
-              />
+              handleFavoriteFolder={() =>
+                handleFavoriteFolder(folder.id, folder.owner)
+              }
+              handleRestoreFolder={() =>
+                handleRestoreFolder(folder.id, folder.owner)
+              }
+            />
           ))}
         </Box>
 

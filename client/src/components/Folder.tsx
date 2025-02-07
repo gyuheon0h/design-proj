@@ -3,6 +3,7 @@ import SendIcon from '@mui/icons-material/Send';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
 import UploadIcon from '@mui/icons-material/Upload';
+import RestoreIcon from '@mui/icons-material/Restore';
 import Divider from '@mui/material/Divider';
 import { Box, Typography, IconButton, Menu, MenuItem } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
@@ -11,6 +12,7 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors } from '../Styles';
 
 export interface FolderProps {
+  page: 'home' | 'shared' | 'favorites' | 'trash';
   id: string;
   name: string;
   owner: string;
@@ -22,6 +24,7 @@ export interface FolderProps {
   onClick: (folder: FolderProps) => void;
   handleDeleteFolder: (folderId: string) => Promise<void>;
   handleFavoriteFolder: (folderId: string) => void;
+  handleRestoreFolder: (folderId: string) => void;
 }
 
 const Folder = (props: FolderProps) => {
@@ -46,6 +49,8 @@ const Folder = (props: FolderProps) => {
     event.stopPropagation();
     props.handleFavoriteFolder(props.id);
   };
+
+  console.log(props);
 
   return (
     <Box
@@ -147,110 +152,127 @@ const Folder = (props: FolderProps) => {
             },
           }}
         >
-          <MenuItem
-            onClick={handleOptionsClose}
-            sx={{
-              color: colors.darkBlue,
-              paddingRight: '16px',
-              '&:hover': {
-                backgroundColor: '#e0f2ff',
-              },
-              '&.Mui-selected': {
-                backgroundColor: '#dce9ff',
-                borderColor: colors.darkBlue,
-              },
-            }}
-          >
-            <SendIcon
-              sx={{
-                color: colors.darkBlue,
-                fontSize: '20px',
-                marginRight: '9px',
-              }}
-            />
-            Share
-          </MenuItem>
+          {props.page === 'trash' ? (
+            <>
+              <MenuItem
+                onClick={(e) => {
+                  console.log('Restoring file...');
+                  props.handleRestoreFolder(props.id);
+                  handleOptionsClose(e);
+                }}
+              >
+                <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+                Restore
+              </MenuItem>
+            </>
+          ) : (
+            <>
+              <MenuItem
+                onClick={handleOptionsClose}
+                sx={{
+                  color: colors.darkBlue,
+                  paddingRight: '16px',
+                  '&:hover': {
+                    backgroundColor: '#e0f2ff',
+                  },
+                  '&.Mui-selected': {
+                    backgroundColor: '#dce9ff',
+                    borderColor: colors.darkBlue,
+                  },
+                }}
+              >
+                <SendIcon
+                  sx={{
+                    color: colors.darkBlue,
+                    fontSize: '20px',
+                    marginRight: '9px',
+                  }}
+                />
+                Share
+              </MenuItem>
 
-          <Divider sx={{ my: 0.2, color: colors.darkBlue }} />
+              <Divider sx={{ my: 0.2, color: colors.darkBlue }} />
 
-          <MenuItem
-            onClick={handleOptionsClose}
-            sx={{
-              color: colors.darkBlue,
-              paddingRight: '16px',
-              '&:hover': {
-                backgroundColor: '#e0f2ff',
-              },
-              '&.Mui-selected': {
-                backgroundColor: '#dce9ff',
-                borderColor: colors.darkBlue,
-              },
-            }}
-          >
-            <DriveFileRenameOutlineIcon
-              sx={{
-                color: colors.darkBlue,
-                fontSize: '20px',
-                marginRight: '9px',
-              }}
-            />
-            Rename
-          </MenuItem>
+              <MenuItem
+                onClick={handleOptionsClose}
+                sx={{
+                  color: colors.darkBlue,
+                  paddingRight: '16px',
+                  '&:hover': {
+                    backgroundColor: '#e0f2ff',
+                  },
+                  '&.Mui-selected': {
+                    backgroundColor: '#dce9ff',
+                    borderColor: colors.darkBlue,
+                  },
+                }}
+              >
+                <DriveFileRenameOutlineIcon
+                  sx={{
+                    color: colors.darkBlue,
+                    fontSize: '20px',
+                    marginRight: '9px',
+                  }}
+                />
+                Rename
+              </MenuItem>
 
-          <Divider sx={{ my: 0.2, color: colors.darkBlue }} />
+              <Divider sx={{ my: 0.2, color: colors.darkBlue }} />
 
-          <MenuItem
-            onClick={(e) => {
-              handleOptionsClose(e);
-              props.handleDeleteFolder(props.id);
-            }}
-            sx={{
-              color: colors.darkBlue,
-              paddingRight: '16px',
-              '&:hover': {
-                backgroundColor: '#e0f2ff',
-              },
-              '&.Mui-selected': {
-                backgroundColor: '#dce9ff',
-                borderColor: colors.darkBlue,
-              },
-            }}
-          >
-            <DeleteIcon
-              sx={{
-                color: colors.darkBlue,
-                fontSize: '20px',
-                marginRight: '9px',
-              }}
-            />
-            Delete
-          </MenuItem>
+              <MenuItem
+                onClick={(e) => {
+                  handleOptionsClose(e);
+                  props.handleDeleteFolder(props.id);
+                }}
+                sx={{
+                  color: colors.darkBlue,
+                  paddingRight: '16px',
+                  '&:hover': {
+                    backgroundColor: '#e0f2ff',
+                  },
+                  '&.Mui-selected': {
+                    backgroundColor: '#dce9ff',
+                    borderColor: colors.darkBlue,
+                  },
+                }}
+              >
+                <DeleteIcon
+                  sx={{
+                    color: colors.darkBlue,
+                    fontSize: '20px',
+                    marginRight: '9px',
+                  }}
+                />
+                Delete
+              </MenuItem>
 
-          <Divider sx={{ my: 0.2, color: colors.darkBlue }} />
+              <Divider sx={{ my: 0.2, color: colors.darkBlue }} />
 
-          <MenuItem
-            onClick={handleOptionsClose}
-            sx={{
-              color: colors.darkBlue,
-              paddingRight: '16px',
-              '&:hover': {
-                backgroundColor: '#e0f2ff',
-              },
-              '&.Mui-selected': {
-                backgroundColor: '#dce9ff',
-                borderColor: colors.darkBlue,
-              },
-            }}
-          >
-            <UploadIcon
-              sx={{
-                color: colors.darkBlue,
-                fontSize: '20px',
-                marginRight: '9px',
-              }}
-            />
-            Upload
-          </MenuItem>
+              <MenuItem
+                onClick={handleOptionsClose}
+                sx={{
+                  color: colors.darkBlue,
+                  paddingRight: '16px',
+                  '&:hover': {
+                    backgroundColor: '#e0f2ff',
+                  },
+                  '&.Mui-selected': {
+                    backgroundColor: '#dce9ff',
+                    borderColor: colors.darkBlue,
+                  },
+                }}
+              >
+                <UploadIcon
+                  sx={{
+                    color: colors.darkBlue,
+                    fontSize: '20px',
+                    marginRight: '9px',
+                  }}
+                />
+                Upload
+              </MenuItem>
+            </>
+          )}
         </Menu>
       </Box>
     </Box>
