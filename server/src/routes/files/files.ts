@@ -66,7 +66,11 @@ fileRouter.post(
         folderId || null,
       );
 
-      return res.json(files);
+      const sortedFiles = files.sort((a, b) => {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+
+      return res.json(sortedFiles);
     } catch (error) {
       console.error('Error getting files by folder:', error);
       return res.status(500).json({ error: 'Internal Server Error' });

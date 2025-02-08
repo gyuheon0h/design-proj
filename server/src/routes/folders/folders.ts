@@ -26,7 +26,12 @@ folderRouter.post(
         folderId || null,
       );
 
-      return res.json(subfolders);
+      // sort in descending order
+      const sortedSubfolders = subfolders.sort((a, b) => {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+
+      return res.json(sortedSubfolders);
     } catch (error) {
       console.error('Error getting subfolders:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
@@ -130,7 +135,6 @@ folderRouter.get(
  * Route to favorite a file
  */
 folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
-  //TODO: make sure front end handles the that only owner can favorite a file
   try {
     const userId = (req as any).user.userId;
     const { folderId } = req.params;
