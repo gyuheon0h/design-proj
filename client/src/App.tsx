@@ -1,12 +1,12 @@
 import './App.css';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import Login from './pages/Login';
-import Home from './pages/Home';
-import Shared from './pages/Shared';
-import Register from './pages/Register';
+import Login from './pages/LoginPage';
+import Home from './pages/HomePage';
+import Shared from './pages/SharedPage';
+import Register from './pages/RegisterPage';
 import NavigationDrawer from './components/Drawer';
-import Favorites from './pages/Favorites';
-import Trash from './pages/Trash';
+import Favorites from './pages/FavoritesPage';
+import Trash from './pages/TrashPage';
 
 function App() {
   const location = useLocation();
