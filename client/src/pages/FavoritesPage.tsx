@@ -167,7 +167,7 @@ const Favorites = () => {
             currentFolderId={currentFolderId}
             refreshFolders={fetchData}
             itemsPerPage={itemsPerPage}
-            username={userContext?.username || ''} page={'favorites'}          />
+            username={userContext?.username || ''} page={'home'}          />
         </div>
 
         <Divider style={{ margin: '20px 0' }} />
@@ -178,7 +178,7 @@ const Favorites = () => {
             files={files}
             currentFolderId={currentFolderId}
             refreshFiles={fetchData}
-            username={userContext?.username || ''} page={'favorites'}          />
+            username={userContext?.username || ''} page={'home'}          />
         </div>
       </Box>
     </Box>
