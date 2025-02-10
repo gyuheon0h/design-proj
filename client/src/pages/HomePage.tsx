@@ -30,6 +30,11 @@ const Home = () => {
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
   const itemsPerPage = 5;
 
+  // for filtering
+  const [fileTypeFilter, setFileTypeFilter] = useState<string | null>(null);
+  const [createdAtFilter, setCreatedAtFilter] = useState<string | null>(null);
+  const [modifiedAtFilter, setModifiedAtFilter] = useState<string | null>(null);
+
   useEffect(() => {
     fetchData(currentFolderId);
     fetchFolderNames(folderPath);
@@ -37,15 +42,24 @@ const Home = () => {
   }, [currentFolderId]);
 
   const fetchData = async (folderId: string | null) => {
+    const queryParams = new URLSearchParams();
+    if (folderId) queryParams.append('folderId', folderId);
+    if (fileTypeFilter) queryParams.append('fileType', fileTypeFilter);
+    if (createdAtFilter) queryParams.append('createdAt', createdAtFilter);
+    if (modifiedAtFilter)
+      queryParams.append('lastModifiedAt', modifiedAtFilter);
+
     try {
       const [foldersRes, filesRes] = await Promise.all([
         axios.post(
-          'http://localhost:5001/api/folder/parent',
+          // 'http://localhost:5001/api/folder/parent',
+          `http://localhost:5001/api/folder/parent?${queryParams.toString()}`,
           { folderId },
           { withCredentials: true },
         ),
         axios.post(
-          'http://localhost:5001/api/file/folder',
+          // 'http://localhost:5001/api/file/folder',
+          `http://localhost:5001/api/file/folder?${queryParams.toString()}`,
           { folderId },
           { withCredentials: true },
         ),
