@@ -32,6 +32,21 @@ class PermissionModel extends BaseModel<Permission> {
     }
   }
 
+  /**
+   * Get a permission by fileId and userId (excluding soft-deleted).
+   */
+  async getPermissionByFileAndUser(
+    fileId: string,
+    userId: string,
+  ): Promise<Permission | null> {
+    try {
+      return await this.getOneByMultipleColumns({ fileId, userId }, false);
+    } catch (error) {
+      console.error('Error getting permission by fileId/userId:', error);
+      throw error;
+    }
+  }
+
   // Get permission rows where fileId is a File based on userId
   async getFilesByUserId(userId: string): Promise<Permission[]> {
     try {

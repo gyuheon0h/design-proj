@@ -167,16 +167,158 @@ folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
   }
 });
 
+/**
+ * GETS all permissions pertaining to the userId
+ */
 folderRouter.get(
   '/shared',
   authorize,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = (req as any).user.userId;
-      const sharedWithUser = await PermissionModel.getFoldersByUserId(userId);
+      const currentUserId = (req as any).user.userId;
+      if (!currentUserId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const sharedWithUser =
+        await PermissionModel.getFilesByUserId(currentUserId);
       return res.json(sharedWithUser);
     } catch (error) {
       console.error('Error getting deleted files:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
+/**
+ * GETS all permissions pertaining to the fileId
+ */
+folderRouter.get(
+  '/:folderId/permissions',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const currentUserId = (req as any).user.userId;
+      if (!currentUserId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const { fileId: folderId } = req.params;
+      const sharedWith = await PermissionModel.getPermissionsByFileId(folderId);
+      return res.json(sharedWith);
+    } catch (error) {
+      console.error('Error getting deleted files:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
+/**
+ * PUT /api/folders/:folderId/permissions/:userId
+ * Updates or creates a permission (cannot change to 'owner' if not already owner)
+ */
+folderRouter.put(
+  '/:folderId/permissions/:userId',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const currentUserId = (req as any).user.userId;
+      if (!currentUserId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const { fileId: folderId, userId } = req.params;
+      const { role } = req.body;
+
+      // fetch folder
+      const folder = await FolderModel.getById(folderId);
+      if (!folder) return res.status(404).json({ error: 'File not found.' });
+
+      // check owner
+      if (folder.owner !== currentUserId) {
+        return res.status(403).json({ error: 'Not allowed.' });
+      }
+
+      // try to find existing permission
+      const existingPerm = await PermissionModel.getPermissionByFileAndUser(
+        folderId,
+        userId,
+      );
+
+      if (existingPerm) {
+        // update
+        const updated = await PermissionModel.updatePermission(
+          existingPerm.id,
+          {
+            role,
+          },
+        );
+        return updated
+          ? res.json(updated)
+          : res.status(500).json({ error: 'Could not update permission.' });
+      } else {
+        // create
+        const created = await PermissionModel.createPermission({
+          fileId: folderId,
+          userId,
+          role,
+        });
+        return res.status(201).json(created);
+      }
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
+/**
+ * DELETE /api/folder/:folderId/permissions/:userId
+ * Removes the permission for a particular user on a file (i.e., unshare).
+ */
+folderRouter.delete(
+  '/:folderId/permissions/:userId',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const currentUserId = req.user?.userId;
+      if (!currentUserId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const { fileId: folderId, userId } = req.params;
+
+      // fetch file
+      const folder = await FolderModel.getById(folderId);
+      if (!folder) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+
+      // check owner
+      if (folder.owner !== currentUserId) {
+        return res
+          .status(403)
+          .json({ error: 'You do not have permission to modify this file.' });
+      }
+
+      // try to find existing permission with (fileId, userId)
+      const existingPerm = await PermissionModel.getPermissionByFileAndUser(
+        folderId,
+        userId,
+      );
+
+      if (!existingPerm) {
+        return res.status(404).json({
+          error: 'No permission entry found for this user/file pair.',
+        });
+      }
+
+      // hard delete from permission
+      await PermissionModel.hardDeletePermission(existingPerm.id);
+
+      return res.sendStatus(204);
+    } catch (error) {
+      console.error('Error removing permission:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   },
