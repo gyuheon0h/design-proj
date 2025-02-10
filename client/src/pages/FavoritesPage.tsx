@@ -10,6 +10,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { typography } from '../Styles';
 import { useUser } from '../context/UserContext';
+import CreateButton from '../components/CreateButton';
 
 interface FavoritesProps {
   searchQuery: string; 
@@ -206,6 +207,12 @@ const Favorites: React.FC<FavoritesProps> = ({ searchQuery: externalSearchQuery 
           />
         </div>
       </Box>
+      {currentFolderId && (
+        <CreateButton
+          currentFolderId={currentFolderId}
+          refresh={fetchData}
+        ></CreateButton>
+      )}
     </Box>
   );
 };
