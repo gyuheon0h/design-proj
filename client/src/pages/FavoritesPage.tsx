@@ -10,6 +10,7 @@ import axios from 'axios';
 import FileContainer from '../components/FileContainer';
 import FolderContainer from '../components/FolderContainer';
 import { useUser } from '../context/UserContext';
+import CreateButton from '../components/CreateButton';
 
 const Favorites = () => {
   const location = useLocation();
@@ -167,7 +168,9 @@ const Favorites = () => {
             currentFolderId={currentFolderId}
             refreshFolders={fetchData}
             itemsPerPage={itemsPerPage}
-            username={userContext?.username || ''} page={'home'}          />
+            username={userContext?.username || ''}
+            page={'home'}
+          />
         </div>
 
         <Divider style={{ margin: '20px 0' }} />
@@ -178,9 +181,17 @@ const Favorites = () => {
             files={files}
             currentFolderId={currentFolderId}
             refreshFiles={fetchData}
-            username={userContext?.username || ''} page={'home'}          />
+            username={userContext?.username || ''}
+            page={'home'}
+          />
         </div>
       </Box>
+      {currentFolderId && (
+        <CreateButton
+          currentFolderId={currentFolderId}
+          refresh={fetchData}
+        ></CreateButton>
+      )}
     </Box>
   );
 };

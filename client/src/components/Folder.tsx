@@ -137,7 +137,13 @@ const Folder = (props: FolderProps) => {
 
         {/* Favorite Button */}
         <IconButton
-          onClick={handleFavoriteFolder}
+          onClick={(e) => {
+            if (props.page === 'trash') {
+              alert('Restore the folder to update it!');
+            } else {
+              handleFavoriteFolder(e);
+            }
+          }}
           sx={{
             position: 'absolute',
             top: '5px',
@@ -175,23 +181,19 @@ const Folder = (props: FolderProps) => {
               Restore
             </MenuItem>
           ) : (
-            <>
+            [
               <MenuItem onClick={(e) => e.stopPropagation()}>
                 <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
                 Share
-              </MenuItem>
-
-              <Divider sx={{ my: 0.2 }} />
-
+              </MenuItem>,
+              <Divider sx={{ my: 0.2 }} />,
               <MenuItem onClick={handleRenameClick}>
                 <DriveFileRenameOutlineIcon
                   sx={{ fontSize: '20px', marginRight: '9px' }}
                 />
                 Rename
-              </MenuItem>
-
-              <Divider sx={{ my: 0.2 }} />
-
+              </MenuItem>,
+              <Divider sx={{ my: 0.2 }} />,
               <MenuItem
                 onClick={(e) => {
                   e.stopPropagation();
@@ -201,15 +203,13 @@ const Folder = (props: FolderProps) => {
               >
                 <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
                 Delete
-              </MenuItem>
-
-              <Divider sx={{ my: 0.2 }} />
-
+              </MenuItem>,
+              <Divider sx={{ my: 0.2 }} />,
               <MenuItem onClick={(e) => e.stopPropagation()}>
                 <UploadIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
                 Upload
-              </MenuItem>
-            </>
+              </MenuItem>,
+            ]
           )}
         </Menu>
       </Box>
