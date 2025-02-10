@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -6,24 +6,30 @@ import SearchIcon from '@mui/icons-material/Search';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import EventIcon from '@mui/icons-material/Event';
 import Filter from './Filter';
-import {colors} from '../Styles';
+import { colors } from '../Styles';
 
 interface SearchBarProps {
   location: string;
+  onSearch: (query: string) => void;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ location }) => {
+const SearchBar: React.FC<SearchBarProps> = ({ location, onSearch }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const query = event.target.value;
+    setSearchTerm(query);
+    onSearch(query); // Pass the search query to parent components
+  };
+
   return (
     <Box
       sx={{
-        position: 'sticky',
-        top: 0,
-        backgroundColor: 'white',
-        zIndex: 1000,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         width: '100%',
+        mt: 2,
       }}
     >
       {/* Search Bar */}
@@ -31,6 +37,8 @@ const SearchBar: React.FC<SearchBarProps> = ({ location }) => {
         fullWidth
         variant="outlined"
         placeholder={`Search in ${location}`}
+        value={searchTerm}
+        onChange={handleSearchChange}
         sx={{
           maxWidth: 680,
           backgroundColor: '#f0f2f5',

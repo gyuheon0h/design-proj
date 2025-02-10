@@ -1,8 +1,4 @@
-import Divider from '@mui/material/Divider';
 import SearchBar from '../components/SearchBar';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import { typography } from '../Styles';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { FolderProps } from '../components/Folder';
@@ -10,11 +6,27 @@ import axios from 'axios';
 import FileContainer from '../components/FileContainer';
 import FolderContainer from '../components/FolderContainer';
 import { useUser } from '../context/UserContext';
+import Divider from '@mui/material/Divider';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import { typography } from '../Styles';
 
-const Shared = () => {
+interface SharedProps {
+  searchQuery: string;
+}
+
+const Shared: React.FC<SharedProps> = ({
+  searchQuery: externalSearchQuery,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const userContext = useUser();
+
+  // Local state for search query
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+
+  // Use external search query if provided, otherwise use local search query
+  const searchQuery = externalSearchQuery || localSearchQuery;
 
   const folderPath = location.pathname
     .replace('/shared', '')
@@ -96,6 +108,11 @@ const Shared = () => {
     navigate(`/shared/${folderPath.slice(0, index + 1).join('/')}`);
   };
 
+  // Handle search input
+  const handleSearch = (query: string) => {
+    setLocalSearchQuery(query);
+  };
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Sticky Header Section with Title, Breadcrumb, and Search Bar */}
@@ -122,15 +139,14 @@ const Shared = () => {
             color: '#161C94',
             marginLeft: '10px',
             paddingTop: '25px',
-            paddingBottom: '30px',
+            paddingBottom: '15px',
           }}
         >
           Shared with you:
         </Typography>
 
         {/* Search Bar */}
-        <SearchBar location="Shared" />
-
+        <SearchBar location="Shared With Me" onSearch={handleSearch} />
         {/* Breadcrumb Navigation */}
         <Box
           sx={{
@@ -169,6 +185,7 @@ const Shared = () => {
             itemsPerPage={itemsPerPage}
             username={userContext?.username || ''}
             page={'shared'}
+            searchQuery={searchQuery}
           />
         </div>
 
@@ -177,11 +194,12 @@ const Shared = () => {
         {/* Files Section */}
         <div style={{ marginLeft: '10px' }}>
           <FileContainer
-            files={files}
+            page="shared"
+            files={files} // No filtering here, same as Home/Favorites
+            username={userContext?.username || ''}
             currentFolderId={currentFolderId}
             refreshFiles={fetchData}
-            username={userContext?.username || ''}
-            page={'shared'}
+            searchQuery={searchQuery}
           />
         </div>
       </Box>
