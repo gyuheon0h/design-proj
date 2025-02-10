@@ -1,5 +1,3 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -17,11 +15,13 @@ interface SharedProps {
   searchQuery: string;
 }
 
-const Shared: React.FC<SharedProps> = ({ searchQuery: externalSearchQuery }) => {
+const Shared: React.FC<SharedProps> = ({
+  searchQuery: externalSearchQuery,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const userContext = useUser();
-        
+
   // Local state for search query
   const [localSearchQuery, setLocalSearchQuery] = useState('');
 
@@ -107,7 +107,7 @@ const Shared: React.FC<SharedProps> = ({ searchQuery: externalSearchQuery }) => 
   const handleBreadcrumbClick = (index: number) => {
     navigate(`/shared/${folderPath.slice(0, index + 1).join('/')}`);
   };
-  
+
   // Handle search input
   const handleSearch = (query: string) => {
     setLocalSearchQuery(query);
@@ -145,12 +145,8 @@ const Shared: React.FC<SharedProps> = ({ searchQuery: externalSearchQuery }) => 
           Shared with you:
         </Typography>
 
-
         {/* Search Bar */}
-          <SearchBar 
-            location="Shared With Me" 
-            onSearch={handleSearch} 
-          />
+        <SearchBar location="Shared With Me" onSearch={handleSearch} />
         {/* Breadcrumb Navigation */}
         <Box
           sx={{
@@ -200,14 +196,9 @@ const Shared: React.FC<SharedProps> = ({ searchQuery: externalSearchQuery }) => 
           <FileContainer
             page="shared"
             files={files} // No filtering here, same as Home/Favorites
-            currentFolderId={null}
-            refreshFiles={fetchSharedData}
             username={userContext?.username || ''}
-            files={files}
             currentFolderId={currentFolderId}
             refreshFiles={fetchData}
-            username={userContext?.username || ''}
-            page={'shared'}
             searchQuery={searchQuery}
           />
         </div>

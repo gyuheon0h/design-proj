@@ -14,7 +14,7 @@ function App() {
   const shouldShowDrawer =
     location.pathname !== '/' && location.pathname !== '/register';
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(''); //TODO: what is this searchQuery doing here
 
   return (
     <div style={{ display: 'flex', overflowY: 'scroll' }}>
@@ -27,7 +27,10 @@ function App() {
             path="/favorites/*?"
             element={<Favorites searchQuery={searchQuery} />}
           />
-          <Route path="/shared" element={<Shared searchQuery={searchQuery} />} />
+          <Route
+            path="/shared"
+            element={<Shared searchQuery={searchQuery} />}
+          />
           <Route path="/trash" element={<Trash searchQuery={searchQuery} />} />
           <Route path="/register" element={<Register />} />
         </Routes>
