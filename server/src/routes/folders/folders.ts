@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authorize } from '../../middleware/authorize';
 import FolderModel from '../../db_models/FolderModel';
 import { AuthenticatedRequest } from '../../middleware/authorize';
+import PermissionModel from '../../db_models/PermissionModel';
 
 const folderRouter = Router();
 
@@ -28,7 +29,9 @@ folderRouter.post(
 
       // sort in descending order
       const sortedSubfolders = subfolders.sort((a, b) => {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
       });
 
       return res.json(sortedSubfolders);
@@ -164,6 +167,21 @@ folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
   }
 });
 
+folderRouter.get(
+  '/shared',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = (req as any).user.userId;
+      const sharedWithUser = await PermissionModel.getFoldersByUserId(userId);
+      return res.json(sharedWithUser);
+    } catch (error) {
+      console.error('Error getting deleted files:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
 folderRouter.delete('/delete/:folderId', authorize, async (req, res) => {
   try {
     const { folderId } = req.params;
@@ -209,8 +227,6 @@ folderRouter.patch('/restore/:folderId', authorize, async (req, res) => {
   }
 });
 
-export default folderRouter;
-
 folderRouter.patch('/rename/:folderId', authorize, async (req, res) => {
   try {
     const { folderId } = req.params;
@@ -244,3 +260,5 @@ folderRouter.patch('/rename/:folderId', authorize, async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+export default folderRouter;

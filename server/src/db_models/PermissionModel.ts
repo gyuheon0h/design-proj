@@ -32,6 +32,38 @@ class PermissionModel extends BaseModel<Permission> {
     }
   }
 
+  // Get permission rows where fileId is a File based on userId
+  async getFilesByUserId(userId: string): Promise<Permission[]> {
+    try {
+      return await this.getAllByJoin(
+        'File',
+        '"Permission"."fileId" = "File"."id"',
+        'userId',
+        userId,
+        true,
+      );
+    } catch (error) {
+      console.error('Error retrieving file permissions by userId:', error);
+      throw error;
+    }
+  }
+
+  // Get permission rows where folderId is a Folder based on userId
+  async getFoldersByUserId(userId: string): Promise<Permission[]> {
+    try {
+      return await this.getAllByJoin(
+        'Folder',
+        '"Permission"."fileId" = "Folder"."id"',
+        'userId',
+        userId,
+        true,
+      );
+    } catch (error) {
+      console.error('Error retrieving folder permissions by userId:', error);
+      throw error;
+    }
+  }
+
   // Create a new permission
   async createPermission(data: Partial<Permission>): Promise<Permission> {
     try {
@@ -43,7 +75,10 @@ class PermissionModel extends BaseModel<Permission> {
   }
 
   // Update an existing permission
-  async updatePermission(id: string, data: Partial<Permission>): Promise<Permission | null> {
+  async updatePermission(
+    id: string,
+    data: Partial<Permission>,
+  ): Promise<Permission | null> {
     try {
       return await this.update(id, data);
     } catch (error) {

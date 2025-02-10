@@ -4,6 +4,7 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import StorageService from '../../storage';
 import FileModel from '../../db_models/FileModel';
+import PermissionModel from '../../db_models/PermissionModel';
 
 const fileRouter = Router();
 const upload = multer(); // Using memory storage to keep things minimal (TODO: implement streaming)
@@ -67,7 +68,9 @@ fileRouter.post(
       );
 
       const sortedFiles = files.sort((a, b) => {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
       });
 
       return res.json(sortedFiles);
@@ -259,6 +262,17 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
     });
   } catch (error) {
     console.error('File rename error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+fileRouter.get('/shared', authorize, async (req: AuthenticatedRequest, res) => {
+  try {
+    const userId = (req as any).user.userId;
+    const sharedWithUser = await PermissionModel.getFilesByUserId(userId);
+    return res.json(sharedWithUser);
+  } catch (error) {
+    console.error('Error getting deleted files:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
