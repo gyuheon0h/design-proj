@@ -248,21 +248,21 @@ const FileComponent = (props: FileComponentProps) => {
               Restore
             </MenuItem>
           ) : (
-            <>
+            [
               <MenuItem onClick={handleOptionsClose}>
                 <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
-              </MenuItem>
+              </MenuItem>,
 
-              <Divider sx={{ my: 0.2 }} />
+              <Divider sx={{ my: 0.2 }} />,
 
               <MenuItem onClick={handleRenameClick}>
                 <DriveFileRenameOutlineIcon
                   sx={{ fontSize: '20px', marginRight: '9px' }}
                 />{' '}
                 Rename
-              </MenuItem>
+              </MenuItem>,
 
-              <Divider sx={{ my: 0.2 }} />
+              <Divider sx={{ my: 0.2 }} />,
 
               <MenuItem
                 onClick={() => {
@@ -272,9 +272,9 @@ const FileComponent = (props: FileComponentProps) => {
               >
                 <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
                 Delete
-              </MenuItem>
+              </MenuItem>,
 
-              <Divider sx={{ my: 0.2 }} />
+              <Divider sx={{ my: 0.2 }} />,
 
               <MenuItem
                 onClick={() => {
@@ -286,8 +286,8 @@ const FileComponent = (props: FileComponentProps) => {
                   sx={{ fontSize: '20px', marginRight: '9px' }}
                 />{' '}
                 Download
-              </MenuItem>
-            </>
+              </MenuItem>,
+            ]
           )}
         </Menu>
       </Card>
