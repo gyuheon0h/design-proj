@@ -369,7 +369,7 @@ fileRouter.put(
 
 /**
  * DELETE /api/files/:fileId/permissions/:userId
- * Removes the permission for a particular user on a file (i.e., unshare).
+ * Removes the permission for a particular user on a file
  */
 fileRouter.delete(
   '/:fileId/permissions/:userId',
