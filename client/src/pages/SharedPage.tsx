@@ -125,7 +125,7 @@ const Shared = () => {
             paddingBottom: '30px',
           }}
         >
-          Your Favorites:
+          Shared with you:
         </Typography>
 
         {/* Search Bar */}
@@ -168,7 +168,7 @@ const Shared = () => {
             refreshFolders={fetchData}
             itemsPerPage={itemsPerPage}
             username={userContext?.username || ''}
-            page={'home'}
+            page={'shared'}
           />
         </div>
 
@@ -181,7 +181,7 @@ const Shared = () => {
             currentFolderId={currentFolderId}
             refreshFiles={fetchData}
             username={userContext?.username || ''}
-            page={'home'}
+            page={'shared'}
           />
         </div>
       </Box>
