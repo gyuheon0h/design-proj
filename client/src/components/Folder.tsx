@@ -137,7 +137,13 @@ const Folder = (props: FolderProps) => {
 
         {/* Favorite Button */}
         <IconButton
-          onClick={handleFavoriteFolder}
+          onClick={(e) => {
+            if (props.page === 'trash') {
+              alert('Restore the folder to update it!');
+            } else {
+              handleFavoriteFolder(e);
+            }
+          }}
           sx={{
             position: 'absolute',
             top: '5px',

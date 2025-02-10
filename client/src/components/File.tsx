@@ -208,7 +208,13 @@ const FileComponent = (props: FileComponentProps) => {
 
         {/* Favorites Toggle Button */}
         <IconButton
-          onClick={handleFavoriteFile}
+          onClick={(e) => {
+            if (props.page === 'trash') {
+              alert('Restore the folder to update it!');
+            } else {
+              handleFavoriteFile();
+            }
+          }}
           sx={{
             color: props.isFavorited ? '#FF6347' : colors.darkBlue,
           }}
