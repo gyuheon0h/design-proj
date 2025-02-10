@@ -12,10 +12,20 @@ import { typography } from '../Styles';
 import CreateButton from '../components/CreateButton';
 import { useUser } from '../context/UserContext';
 
-const Home = () => {
+interface HomeProps {
+  searchQuery: string; 
+}
+
+const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const userContext = useUser();
+
+  // Local state for search query to allow manual search as well
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+
+  // Use external search query if provided, otherwise use local search query
+  const searchQuery = externalSearchQuery || localSearchQuery;
 
   const folderPath = location.pathname
     .replace('/home', '')
@@ -42,12 +52,12 @@ const Home = () => {
         axios.post(
           'http://localhost:5001/api/folder/parent',
           { folderId },
-          { withCredentials: true },
+          { withCredentials: true }
         ),
         axios.post(
           'http://localhost:5001/api/file/folder',
           { folderId },
-          { withCredentials: true },
+          { withCredentials: true }
         ),
       ]);
       setFolders(foldersRes.data);
@@ -60,7 +70,7 @@ const Home = () => {
   const fetchFolderNames = async (folderIds: string[]) => {
     try {
       const nameRequests = folderIds.map((id) =>
-        axios.get(`http://localhost:5001/api/folder/foldername/${id}`),
+        axios.get(`http://localhost:5001/api/folder/foldername/${id}`)
       );
       const nameResponses = await Promise.all(nameRequests);
       const newFolderNames: { [key: string]: string } = {};
@@ -79,6 +89,11 @@ const Home = () => {
 
   const handleBreadcrumbClick = (index: number) => {
     navigate(`/home/${folderPath.slice(0, index + 1).join('/')}`);
+  };
+
+  // Handle local search input
+  const handleSearch = (query: string) => {
+    setLocalSearchQuery(query);
   };
 
   return (
@@ -107,14 +122,19 @@ const Home = () => {
             color: '#161C94',
             marginLeft: '10px',
             paddingTop: '25px',
-            paddingBottom: '30px',
+            paddingBottom: '15px',
           }}
         >
           Your File Storage:
         </Typography>
 
-        {/* Search Bar */}
-        <SearchBar location="Storage" />
+        {/* SearchBar added here */}
+        <Box sx={{ marginLeft: '10px'}}>
+          <SearchBar 
+            location="Owl Share" 
+            onSearch={handleSearch} 
+          />
+        </Box>
 
         {/* Breadcrumb Navigation */}
         <Box
@@ -134,6 +154,7 @@ const Home = () => {
                 color: '#161C94',
                 fontWeight: 'bold',
                 marginLeft: '10px',
+                paddingTop: '10px'
               }}
             >
               {index === 0 ? 'Home' : folderNames[crumb] || ''}
@@ -144,7 +165,7 @@ const Home = () => {
       </Box>
 
       {/* Scrollable Content */}
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', padding: '20px' }}>
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', padding: '20px', paddingTop: '0px' }}>
         <div style={{ marginLeft: '10px' }}>
           <FolderContainer
             page="home"
@@ -154,6 +175,7 @@ const Home = () => {
             refreshFolders={fetchData}
             itemsPerPage={itemsPerPage}
             username={userContext?.username || ''}
+            searchQuery={searchQuery} 
           />
         </div>
 
@@ -162,18 +184,16 @@ const Home = () => {
         {/* Files Section */}
         <div style={{ marginLeft: '10px' }}>
           <FileContainer
-            page={'home'}
+            page="home"
             files={files}
             currentFolderId={currentFolderId}
             refreshFiles={fetchData}
             username={userContext?.username || ''}
+            searchQuery={searchQuery} 
           />
         </div>
       </Box>
-      <CreateButton
-        currentFolderId={currentFolderId}
-        refresh={fetchData}
-      ></CreateButton>
+      <CreateButton currentFolderId={currentFolderId} refresh={fetchData} />
     </Box>
   );
 };
