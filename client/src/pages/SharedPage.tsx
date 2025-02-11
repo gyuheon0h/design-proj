@@ -146,7 +146,9 @@ const Shared: React.FC<SharedProps> = ({
         </Typography>
 
         {/* Search Bar */}
-        <SearchBar location="Shared With Me" onSearch={handleSearch} />
+        <Box sx={{ marginLeft: '10px' }}>
+          <SearchBar location="Shared With Me" onSearch={handleSearch} />
+        </Box>
         {/* Breadcrumb Navigation */}
         <Box
           sx={{
