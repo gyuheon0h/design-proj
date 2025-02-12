@@ -25,13 +25,13 @@ interface SettingsDialogProps {
 const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
   const { username: contextUsername, setUsername: updateContextUsername } = useUser();
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
     username: '',
     currentPassword: '',
     newPassword: ''
   });
-  
+
   const [errors, setErrors] = useState({
     username: false,
     currentPassword: false
@@ -97,11 +97,11 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
     if (await verifyPassword(formData.currentPassword)) {
       try {
         const updateData: { username?: string; newPassword?: string } = {};
-        
+
         if (formData.username !== contextUsername) {
           updateData.username = formData.username;
         }
-        
+
         if (formData.newPassword) {
           updateData.newPassword = SHA256(formData.newPassword).toString();
         }
