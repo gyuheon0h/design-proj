@@ -3,7 +3,7 @@ import { Box, Button, Slider } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import Folder, { FolderProps } from './Folder';
 import axios from 'axios';
-import { getUsernameById } from '../miscellHelpers/helperRequests';
+import { getUsernameById } from '../helper/helperRequests';
 
 interface FolderContainerProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -32,8 +32,8 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 
   useEffect(() => {
     // Filter folders based on search query
-    const updatedFilteredFolders = folders.filter(folder =>
-      folder.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const updatedFilteredFolders = folders.filter((folder) =>
+      folder.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     setFilteredFolders(updatedFilteredFolders);
@@ -42,7 +42,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 
   useEffect(() => {
     setVisibleFolders(
-      filteredFolders.slice(activeStartIndex, activeStartIndex + itemsPerPage)
+      filteredFolders.slice(activeStartIndex, activeStartIndex + itemsPerPage),
     );
   }, [filteredFolders, activeStartIndex, itemsPerPage]);
 
@@ -51,7 +51,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const updateVisibleFolders = (newStartIndex: number) => {
     setActiveStartIndex(newStartIndex);
     setVisibleFolders(
-      filteredFolders.slice(newStartIndex, newStartIndex + itemsPerPage)
+      filteredFolders.slice(newStartIndex, newStartIndex + itemsPerPage),
     );
   };
 
@@ -75,9 +75,12 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 
   const handleDeleteFolder = async (folderId: string) => {
     try {
-      await axios.delete(`http://localhost:5001/api/folder/delete/${folderId}`, {
-        withCredentials: true,
-      });
+      await axios.delete(
+        `http://localhost:5001/api/folder/delete/${folderId}`,
+        {
+          withCredentials: true,
+        },
+      );
       refreshFolders(currentFolderId);
     } catch (error) {
       console.error('Error deleting folder:', error);
@@ -91,9 +94,13 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
       return;
     }
     try {
-      await axios.patch(`http://localhost:5001/api/folder/favorite/${folderId}`, {}, {
-        withCredentials: true,
-      });
+      await axios.patch(
+        `http://localhost:5001/api/folder/favorite/${folderId}`,
+        {},
+        {
+          withCredentials: true,
+        },
+      );
       refreshFolders(currentFolderId);
     } catch (error) {
       console.error('Error favoriting folder:', error);
@@ -107,21 +114,28 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
       return;
     }
     try {
-      await axios.patch(`http://localhost:5001/api/folder/restore/${folderId}`, {}, {
-        withCredentials: true,
-      });
+      await axios.patch(
+        `http://localhost:5001/api/folder/restore/${folderId}`,
+        {},
+        {
+          withCredentials: true,
+        },
+      );
       refreshFolders(currentFolderId);
     } catch (error) {
       console.error('Error restoring folder:', error);
     }
   };
 
-  const handleRenameFolder = async (folderId: string, newFolderName: string) => {
+  const handleRenameFolder = async (
+    folderId: string,
+    newFolderName: string,
+  ) => {
     try {
       await axios.patch(
         `http://localhost:5001/api/folder/rename/${folderId}`,
         { folderName: newFolderName },
-        { withCredentials: true }
+        { withCredentials: true },
       );
       refreshFolders(currentFolderId);
     } catch (error) {
@@ -131,12 +145,32 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 
   return (
     <Box className="folder-container" sx={{ width: '100%' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '15px',
+        }}
+      >
         <h2>Folders</h2>
       </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', px: 2, mb: 2 }}>
-        <Button className="left-button" onClick={handleBack} disabled={activeStartIndex === 0}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          px: 2,
+          mb: 2,
+        }}
+      >
+        <Button
+          className="left-button"
+          onClick={handleBack}
+          disabled={activeStartIndex === 0}
+        >
           <KeyboardArrowLeft />
         </Button>
 
@@ -151,7 +185,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
             mx: 4,
           }}
         >
-          {visibleFolders.map(folder => (
+          {visibleFolders.map((folder) => (
             <Folder
               page={page}
               key={folder.id}
@@ -166,13 +200,21 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
               onClick={() => onFolderClick(folder)}
               handleRenameFolder={handleRenameFolder}
               handleDeleteFolder={handleDeleteFolder}
-              handleFavoriteFolder={() => handleFavoriteFolder(folder.id, folder.owner)}
-              handleRestoreFolder={() => handleRestoreFolder(folder.id, folder.owner)}
+              handleFavoriteFolder={() =>
+                handleFavoriteFolder(folder.id, folder.owner)
+              }
+              handleRestoreFolder={() =>
+                handleRestoreFolder(folder.id, folder.owner)
+              }
             />
           ))}
         </Box>
 
-        <Button className="right-button" onClick={handleNext} disabled={activeStartIndex + itemsPerPage >= filteredFolders.length}>
+        <Button
+          className="right-button"
+          onClick={handleNext}
+          disabled={activeStartIndex + itemsPerPage >= filteredFolders.length}
+        >
           <KeyboardArrowRight />
         </Button>
       </Box>

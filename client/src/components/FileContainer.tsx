@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import FileComponent from './File';
 import axios from 'axios';
-import { getUsernameById } from '../miscellHelpers/helperRequests';
+import { getUsernameById } from '../helper/helperRequests';
 
 interface File {
   id: string;
@@ -37,8 +37,8 @@ const FileContainer: React.FC<FileContainerProps> = ({
 
   useEffect(() => {
     // Filter files based on search query
-    const updatedFilteredFiles = files.filter(file =>
-      file.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const updatedFilteredFiles = files.filter((file) =>
+      file.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     setFilteredFiles(updatedFilteredFiles);
@@ -61,7 +61,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
       await axios.patch(
         `http://localhost:5001/api/file/rename/${fileId}`,
         { fileName },
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       refreshFiles(currentFolderId);
@@ -85,7 +85,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
       await axios.patch(
         `http://localhost:5001/api/file/favorite/${fileId}`,
         {},
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       refreshFiles(currentFolderId);
@@ -105,7 +105,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
       await axios.patch(
         `http://localhost:5001/api/file/restore/${fileId}`,
         {},
-        { withCredentials: true }
+        { withCredentials: true },
       );
       refreshFiles(currentFolderId);
     } catch (error) {
@@ -128,7 +128,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
       </div>
 
       {/* File List */}
-      {filteredFiles.map(file => (
+      {filteredFiles.map((file) => (
         <FileComponent
           page={page}
           key={file.id}
