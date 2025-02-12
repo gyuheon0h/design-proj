@@ -11,6 +11,7 @@ import FileContainer from '../components/FileContainer';
 import FolderContainer from '../components/FolderContainer';
 import { useUser } from '../context/UserContext';
 import CreateButton from '../components/CreateButton';
+import { FileComponentProps } from '../components/File';
 
 const Favorites = () => {
   const location = useLocation();
@@ -26,8 +27,16 @@ const Favorites = () => {
     : null;
 
   const [folders, setFolders] = useState<FolderProps[]>([]);
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState<FileComponentProps[]>([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
+
+  // for filtering
+  const [fileTypeFilter, setFileTypeFilter] = useState<string | null>(null);
+  const [createdAtFilter, setCreatedAtFilter] = useState<string | null>(null);
+  const [modifiedAtFilter, setModifiedAtFilter] = useState<string | null>(null);
+  const [filteredFolders, setFilteredFolders] = useState<FolderProps[]>([]);
+  const [filteredFiles, setFilteredFiles] = useState<FileComponentProps[]>([]);
+
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -35,6 +44,80 @@ const Favorites = () => {
     fetchFolderNames(folderPath);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFolderId]);
+
+  // for filtering
+  useEffect(() => {
+    // Filter folders and files based on the selected filters
+
+    const filteredFiles = files.filter((file) => {
+      /* FILE TYPE */
+      const fileType =
+        '.' + file.fileType.substring(file.fileType.indexOf('/') + 1);
+      console.log(
+        'fileTypeFilter: ',
+        fileTypeFilter,
+        '; file.fileType: ',
+        fileType,
+      );
+      const matchesFileType = fileTypeFilter
+        ? fileType === fileTypeFilter
+        : true;
+
+      /* CREATED AT */
+      const now = new Date();
+      let createdStartDate: Date | null = null;
+      if (createdAtFilter === 'Today') {
+        createdStartDate = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+        );
+      } else if (createdAtFilter === 'Last Week') {
+        createdStartDate = new Date();
+        createdStartDate.setDate(now.getDate() - 7);
+      } else if (createdAtFilter === 'Last Month') {
+        createdStartDate = new Date();
+        createdStartDate.setMonth(now.getMonth() - 1);
+      }
+      const fileCreatedAt = new Date(file.createdAt);
+      const matchesCreatedAt = createdStartDate
+        ? fileCreatedAt >= createdStartDate
+        : true;
+
+      /* MODIFIED AT */
+      let startDate: Date | null = null;
+
+      if (modifiedAtFilter === 'Today') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Midnight today
+      } else if (modifiedAtFilter === 'Last Week') {
+        startDate = new Date();
+        startDate.setDate(now.getDate() - 7);
+      } else if (modifiedAtFilter === 'Last Month') {
+        startDate = new Date();
+        startDate.setMonth(now.getMonth() - 1);
+      }
+
+      // Convert lastModifiedAt to Date and check if it falls in the range
+      const fileModifiedAt = new Date(file.lastModifiedAt);
+      const matchesModifiedAt = startDate ? fileModifiedAt >= startDate : true;
+
+      return matchesFileType && matchesCreatedAt && matchesModifiedAt;
+    });
+
+    setFilteredFolders(filteredFolders);
+    setFilteredFiles(filteredFiles);
+  }, [folders, files, fileTypeFilter, createdAtFilter, modifiedAtFilter]);
+
+  // for filtering
+  useEffect(() => {
+    console.log('Current Filters:', {
+      fileTypeFilter,
+      createdAtFilter,
+      modifiedAtFilter,
+    });
+
+    fetchData(currentFolderId);
+  }, [fileTypeFilter, createdAtFilter, modifiedAtFilter, currentFolderId]);
 
   const fetchData = async (folderId: string | null) => {
     try {
@@ -130,7 +213,12 @@ const Favorites = () => {
         </Typography>
 
         {/* Search Bar */}
-        <SearchBar location="Favorites" />
+        <SearchBar
+          location="Favorites"
+          setFileTypeFilter={setFileTypeFilter}
+          setCreatedAtFilter={setCreatedAtFilter}
+          setModifiedAtFilter={setModifiedAtFilter}
+        />
 
         {/* Breadcrumb Navigation */}
         <Box
@@ -178,7 +266,7 @@ const Favorites = () => {
         {/* Files Section */}
         <div style={{ marginLeft: '10px' }}>
           <FileContainer
-            files={files}
+            files={filteredFiles}
             currentFolderId={currentFolderId}
             refreshFiles={fetchData}
             username={userContext?.username || ''}
