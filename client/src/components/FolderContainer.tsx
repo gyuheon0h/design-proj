@@ -1,46 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Slider } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
-import Folder, { FolderProp } from './Folder';
-import FolderDialog from './CreateFolderDialog';
-import { colors, typography } from '../Styles';
+import Folder, { FolderProps } from './Folder';
 import axios from 'axios';
+import { getUsernameById } from '../miscellHelpers/helperRequests';
 
 interface FolderContainerProps {
-  folders: FolderProp[];
-  onFolderClick: (folder: FolderProp) => void;
+  page: 'home' | 'shared' | 'favorites' | 'trash';
+  folders: FolderProps[];
+  onFolderClick: (folder: FolderProps) => void;
   currentFolderId: string | null;
   refreshFolders: (folderId: string | null) => void;
   itemsPerPage: number;
+  username: string;
+  searchQuery: string; // New prop for search input
 }
 
 const FolderContainer: React.FC<FolderContainerProps> = ({
+  page,
   folders,
   onFolderClick,
   currentFolderId,
   refreshFolders,
   itemsPerPage,
+  username,
+  searchQuery, // Receive search query
 }) => {
   const [activeStartIndex, setActiveStartIndex] = useState(0);
-  const [visibleFolders, setVisibleFolders] = useState<FolderProp[]>([]);
+  const [filteredFolders, setFilteredFolders] = useState<FolderProps[]>([]);
+  const [visibleFolders, setVisibleFolders] = useState<FolderProps[]>([]);
+
+  useEffect(() => {
+    // Filter folders based on search query
+    const updatedFilteredFolders = folders.filter(folder =>
+      folder.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    setFilteredFolders(updatedFilteredFolders);
+    setActiveStartIndex(0); // Reset pagination when search query changes
+  }, [folders, searchQuery]);
 
   useEffect(() => {
     setVisibleFolders(
-      folders.slice(activeStartIndex, activeStartIndex + itemsPerPage),
+      filteredFolders.slice(activeStartIndex, activeStartIndex + itemsPerPage)
     );
-  }, [folders, itemsPerPage, activeStartIndex]);
+  }, [filteredFolders, activeStartIndex, itemsPerPage]);
 
-  const sliderMax = Math.max(folders.length - itemsPerPage, 0);
+  const sliderMax = Math.max(filteredFolders.length - itemsPerPage, 0);
 
   const updateVisibleFolders = (newStartIndex: number) => {
     setActiveStartIndex(newStartIndex);
     setVisibleFolders(
-      folders.slice(newStartIndex, newStartIndex + itemsPerPage),
+      filteredFolders.slice(newStartIndex, newStartIndex + itemsPerPage)
     );
   };
 
   const handleNext = () => {
-    if (activeStartIndex + itemsPerPage < folders.length) {
+    if (activeStartIndex + itemsPerPage < filteredFolders.length) {
       updateVisibleFolders(activeStartIndex + 1);
     }
   };
@@ -59,48 +75,68 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 
   const handleDeleteFolder = async (folderId: string) => {
     try {
-      const response = await axios.delete(
-        `http://localhost:5001/api/folder/delete/${folderId}`,
-        {
-          withCredentials: true,
-        },
-      );
-
+      await axios.delete(`http://localhost:5001/api/folder/delete/${folderId}`, {
+        withCredentials: true,
+      });
       refreshFolders(currentFolderId);
-      return response.data;
     } catch (error) {
-      console.error('Error deleting file:', error);
+      console.error('Error deleting folder:', error);
+    }
+  };
+
+  const handleFavoriteFolder = async (folderId: string, owner: string) => {
+    const ownerUsername = await getUsernameById(owner);
+    if (ownerUsername !== username) {
+      alert('You do not have permission to favorite this folder.');
+      return;
+    }
+    try {
+      await axios.patch(`http://localhost:5001/api/folder/favorite/${folderId}`, {}, {
+        withCredentials: true,
+      });
+      refreshFolders(currentFolderId);
+    } catch (error) {
+      console.error('Error favoriting folder:', error);
+    }
+  };
+
+  const handleRestoreFolder = async (folderId: string, owner: string) => {
+    const ownerUsername = await getUsernameById(owner);
+    if (ownerUsername !== username) {
+      alert('You do not have permission to restore this folder.');
+      return;
+    }
+    try {
+      await axios.patch(`http://localhost:5001/api/folder/restore/${folderId}`, {}, {
+        withCredentials: true,
+      });
+      refreshFolders(currentFolderId);
+    } catch (error) {
+      console.error('Error restoring folder:', error);
+    }
+  };
+
+  const handleRenameFolder = async (folderId: string, newFolderName: string) => {
+    try {
+      await axios.patch(
+        `http://localhost:5001/api/folder/rename/${folderId}`,
+        { folderName: newFolderName },
+        { withCredentials: true }
+      );
+      refreshFolders(currentFolderId);
+    } catch (error) {
+      console.error('Error renaming folder:', error);
     }
   };
 
   return (
     <Box className="folder-container" sx={{ width: '100%' }}>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '15px',
-        }}
-      >
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
         <h2>Folders</h2>
       </Box>
 
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%',
-          px: 2,
-          mb: 2,
-        }}
-      >
-        <Button
-          className="left-button"
-          onClick={handleBack}
-          disabled={activeStartIndex === 0}
-        >
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', px: 2, mb: 2 }}>
+        <Button className="left-button" onClick={handleBack} disabled={activeStartIndex === 0}>
           <KeyboardArrowLeft />
         </Button>
 
@@ -115,8 +151,9 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
             mx: 4,
           }}
         >
-          {visibleFolders.map((folder) => (
+          {visibleFolders.map(folder => (
             <Folder
+              page={page}
               key={folder.id}
               id={folder.id}
               name={folder.name}
@@ -127,16 +164,15 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
               fileChildren={folder.fileChildren}
               isFavorited={folder.isFavorited}
               onClick={() => onFolderClick(folder)}
-              onFolderDelete={handleDeleteFolder}
+              handleRenameFolder={handleRenameFolder}
+              handleDeleteFolder={handleDeleteFolder}
+              handleFavoriteFolder={() => handleFavoriteFolder(folder.id, folder.owner)}
+              handleRestoreFolder={() => handleRestoreFolder(folder.id, folder.owner)}
             />
           ))}
         </Box>
 
-        <Button
-          className="right-button"
-          onClick={handleNext}
-          disabled={activeStartIndex + itemsPerPage >= folders.length}
-        >
+        <Button className="right-button" onClick={handleNext} disabled={activeStartIndex + itemsPerPage >= filteredFolders.length}>
           <KeyboardArrowRight />
         </Button>
       </Box>

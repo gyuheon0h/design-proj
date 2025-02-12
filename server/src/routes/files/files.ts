@@ -66,9 +66,42 @@ fileRouter.post(
         folderId || null,
       );
 
-      return res.json(files);
+      const sortedFiles = files.sort((a, b) => {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+
+      return res.json(sortedFiles);
     } catch (error) {
       console.error('Error getting files by folder:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
+/**
+ * GET /api/files/favorites/
+ * Route to get favorited files owned by a certain user (ownerId).
+ * This is protected by authorize
+ */
+
+fileRouter.get(
+  '/favorites',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const userId = req.user.userId;
+
+      const favoritedFiles = await FileModel.getAllByOwnerAndColumn(
+        userId,
+        'isFavorited',
+        true,
+      );
+      return res.json(favoritedFiles);
+    } catch (error) {
+      console.error('Error getting files by owner:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   },
@@ -110,6 +143,7 @@ fileRouter.post(
         parentFolder: parentFolder || null, // Allow null for root files
         gcsKey: gcsFilePath,
         fileType: mimetype,
+        isFavorited: false,
       });
 
       return res
@@ -160,6 +194,41 @@ fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
 });
 
 /**
+ * PATCH /api/files/favorite/:fileId
+ * Route to favorite/unfavorite a file
+ */
+
+fileRouter.patch('/favorite/:fileId', authorize, async (req, res) => {
+  try {
+    const userId = (req as any).user.userId;
+    const { fileId } = req.params;
+    const file = await FileModel.getById(fileId);
+
+    if (!file) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    if (userId != file.owner) {
+      return res.status(403).json({
+        message: 'Unauthorized: User cannot favorite files they do not own',
+      });
+    }
+
+    const fileMetadata = await FileModel.updateFileMetadata(fileId, {
+      isFavorited: !file.isFavorited,
+    });
+
+    return res.status(200).json({
+      message: 'File favorited successfully',
+      file: fileMetadata,
+    });
+  } catch (error) {
+    console.error('File favorite error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+/**
  * PATCH /api/files/rename/:fileId
  * Route to rename a file (also updates lastModifiedBy and lastModifiedAt)
  */
@@ -190,6 +259,34 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
     });
   } catch (error) {
     console.error('File rename error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+fileRouter.get('/trash', authorize, async (req: AuthenticatedRequest, res) => {
+  try {
+    const userId = (req as any).user.userId;
+    const deletdFiles = await FileModel.getAllByOwnerAndDeleted(userId);
+    return res.json(deletdFiles);
+  } catch (error) {
+    console.error('Error getting deleted files:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+fileRouter.patch('/restore/:fileId', authorize, async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const file = await FileModel.getByIdAll(fileId);
+
+    if (!file) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    await FileModel.restore(fileId);
+    return res.json({ message: 'File restored successfully' });
+  } catch (error) {
+    console.error('Error restoring file:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });

@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
+import RestoreIcon from '@mui/icons-material/Restore';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
@@ -23,9 +24,13 @@ import {
   getUsernameById,
   downloadFile,
 } from '../miscellHelpers/helperRequests';
-import RenameFileDialog from './RenameFileDialog';
+import RenameFileDialog from './RenameDialog';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import { colors } from '../Styles';
 
-interface File {
+interface FileComponentProps {
+  page: 'home' | 'shared' | 'favorites' | 'trash';
   id: string;
   name: string;
   owner: string;
@@ -36,11 +41,15 @@ interface File {
   gcsKey: string;
   fileType: string;
   isFavorited: boolean;
+  handleRestoreFile: (fileId: string) => void;
   handleDeleteFile: (fileId: string) => void;
   handleRenameFile: (fileId: string, newFileName: string) => void;
+  handleFavoriteFile: (fileId: string) => void;
 }
 
 const getFileIcon = (fileType: string) => {
+  fileType = fileType.toLowerCase();
+  console.log(fileType);
   switch (fileType) {
     case 'csv':
       return <TableChartIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
@@ -54,6 +63,10 @@ const getFileIcon = (fileType: string) => {
       );
     case 'photo':
       return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+    case 'image/jpg':
+      return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+    case 'png':
+      return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
     case 'mp3':
       return <MusicNoteIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
     case 'mp4':
@@ -63,7 +76,7 @@ const getFileIcon = (fileType: string) => {
   }
 };
 
-const FileComponent = (props: File) => {
+const FileComponent = (props: FileComponentProps) => {
   const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -101,6 +114,14 @@ const FileComponent = (props: File) => {
 
   const handleRenameFile = (newFileName: string) => {
     props.handleRenameFile(props.id, newFileName);
+  };
+
+  const handleFavoriteFile = () => {
+    props.handleFavoriteFile(props.id);
+  };
+
+  const handleRestoreFile = () => {
+    props.handleRestoreFile(props.id);
   };
 
   const lastModifiedDate = new Date(props.lastModifiedAt);
@@ -185,6 +206,22 @@ const FileComponent = (props: File) => {
           </Tooltip>
         </Box>
 
+        {/* Favorites Toggle Button */}
+        <IconButton
+          onClick={(e) => {
+            if (props.page === 'trash') {
+              alert('Restore the folder to update it!');
+            } else {
+              handleFavoriteFile();
+            }
+          }}
+          sx={{
+            color: props.isFavorited ? '#FF6347' : colors.darkBlue,
+          }}
+        >
+          {props.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+        </IconButton>
+
         <IconButton onClick={handleOptionsClick}>
           <MoreHorizIcon />
         </IconButton>
@@ -199,43 +236,59 @@ const FileComponent = (props: File) => {
             },
           }}
         >
-          <MenuItem onClick={handleOptionsClose}>
-            <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
-          </MenuItem>
+          {props.page === 'trash' ? (
+            <MenuItem
+              onClick={() => {
+                console.log('Restoring file...');
+                handleRestoreFile();
+                handleOptionsClose();
+              }}
+            >
+              <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+              Restore
+            </MenuItem>
+          ) : (
+            [
+              <MenuItem onClick={handleOptionsClose}>
+                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
+              </MenuItem>,
 
-          <Divider sx={{ my: 0.2 }} />
+              <Divider sx={{ my: 0.2 }} />,
 
-          <MenuItem onClick={handleRenameClick}>
-            <DriveFileRenameOutlineIcon
-              sx={{ fontSize: '20px', marginRight: '9px' }}
-            />{' '}
-            Rename
-          </MenuItem>
+              <MenuItem onClick={handleRenameClick}>
+                <DriveFileRenameOutlineIcon
+                  sx={{ fontSize: '20px', marginRight: '9px' }}
+                />{' '}
+                Rename
+              </MenuItem>,
 
-          <Divider sx={{ my: 0.2 }} />
+              <Divider sx={{ my: 0.2 }} />,
 
-          <MenuItem
-            onClick={() => {
-              props.handleDeleteFile(props.id);
-              handleOptionsClose();
-            }}
-          >
-            <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Delete
-          </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  props.handleDeleteFile(props.id);
+                  handleOptionsClose();
+                }}
+              >
+                <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+                Delete
+              </MenuItem>,
 
-          <Divider sx={{ my: 0.2 }} />
+              <Divider sx={{ my: 0.2 }} />,
 
-          <MenuItem
-            onClick={() => {
-              downloadFile(props.id, props.name);
-              handleOptionsClose();
-            }}
-          >
-            <InsertDriveFileIcon
-              sx={{ fontSize: '20px', marginRight: '9px' }}
-            />{' '}
-            Download
-          </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  downloadFile(props.id, props.name);
+                  handleOptionsClose();
+                }}
+              >
+                <InsertDriveFileIcon
+                  sx={{ fontSize: '20px', marginRight: '9px' }}
+                />{' '}
+                Download
+              </MenuItem>,
+            ]
+          )}
         </Menu>
       </Card>
 
@@ -243,7 +296,7 @@ const FileComponent = (props: File) => {
         open={isRenameDialogOpen}
         fileName={props.name}
         onClose={() => setIsRenameDialogOpen(false)}
-        onFileRename={handleRenameFile}
+        onRename={handleRenameFile}
       />
     </div>
   );

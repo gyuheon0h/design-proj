@@ -26,7 +26,12 @@ folderRouter.post(
         folderId || null,
       );
 
-      return res.json(subfolders);
+      // sort in descending order
+      const sortedSubfolders = subfolders.sort((a, b) => {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+
+      return res.json(sortedSubfolders);
     } catch (error) {
       console.error('Error getting subfolders:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
@@ -96,6 +101,69 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/files/favorites/:ownerId
+ * Route to get favorited files owned by a certain user (ownerId).
+ * This is protected by authorize
+ */
+
+folderRouter.get(
+  '/favorites',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const userId = req.user.userId;
+
+      const favoritedFiles = await FolderModel.getAllByOwnerAndColumn(
+        userId,
+        'isFavorited',
+        true,
+      );
+      return res.json(favoritedFiles);
+    } catch (error) {
+      console.error('Error getting files by owner:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
+/**
+ * PATCH /api/files/favorite/:fileId
+ * Route to favorite a file
+ */
+folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
+  try {
+    const userId = (req as any).user.userId;
+    const { folderId } = req.params;
+    const folder = await FolderModel.getById(folderId);
+
+    if (!folder) {
+      return res.status(404).json({ message: 'Folder not found' });
+    }
+
+    if (userId != folder.owner) {
+      return res.status(403).json({
+        message: 'Unauthorized: User cannot favorite folders they do not own',
+      });
+    }
+
+    const folderMetadata = await FolderModel.updateFolderMetadata(folderId, {
+      isFavorited: !folder.isFavorited,
+    });
+
+    return res.status(200).json({
+      message: 'Folder favorited successfully',
+      folder: folderMetadata,
+    });
+  } catch (error) {
+    console.error('Folder favorite error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 folderRouter.delete('/delete/:folderId', authorize, async (req, res) => {
   try {
     const { folderId } = req.params;
@@ -113,4 +181,66 @@ folderRouter.delete('/delete/:folderId', authorize, async (req, res) => {
   }
 });
 
+folderRouter.get('/trash', authorize, async (req, res) => {
+  try {
+    const userId = (req as any).user.userId;
+    const deletedFolders = await FolderModel.getAllByOwnerAndDeleted(userId);
+    return res.json(deletedFolders);
+  } catch (error) {
+    console.error('Error getting deleted folders:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+folderRouter.patch('/restore/:folderId', authorize, async (req, res) => {
+  try {
+    const { folderId } = req.params;
+    const folder = await FolderModel.getByIdAll(folderId);
+
+    if (!folder) {
+      return res.status(404).json({ message: 'Folder not found' });
+    }
+
+    await FolderModel.restore(folderId);
+    return res.json({ message: 'Folder restored successfully' });
+  } catch (error) {
+    console.error('Error restoring folder:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 export default folderRouter;
+
+folderRouter.patch('/rename/:folderId', authorize, async (req, res) => {
+  try {
+    const { folderId } = req.params;
+    const { folderName } = req.body;
+
+    if (!folderName) {
+      return res.status(400).json({ message: 'No new folder name provided' });
+    }
+
+    const userId = (req as any).user.userId;
+    const folder = await FolderModel.getById(folderId);
+
+    if (!folder) {
+      return res.status(404).json({ message: 'Folder not found' });
+    }
+
+    if (userId !== folder.owner) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    const updatedFolder = await FolderModel.updateFolderMetadata(folderId, {
+      name: folderName,
+    });
+
+    return res.status(200).json({
+      message: 'Folder renamed successfully',
+      folder: updatedFolder,
+    });
+  } catch (error) {
+    console.error('Folder rename error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});

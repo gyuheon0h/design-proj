@@ -1,29 +1,42 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
-import { FolderProp } from '../components/Folder';
-import FileContainer from '../components/FileContainer';
-import Divider from '@mui/material/Divider';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { FolderProps } from '../components/Folder';
 import axios from 'axios';
+import FileContainer from '../components/FileContainer';
 import FolderContainer from '../components/FolderContainer';
+import { useUser } from '../context/UserContext';
+import Divider from '@mui/material/Divider';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { typography } from '../Styles';
-import CreateButton from '../components/CreateButton';
 
-const Home = () => {
+interface SharedProps {
+  searchQuery: string;
+}
+
+const Shared: React.FC<SharedProps> = ({
+  searchQuery: externalSearchQuery,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const userContext = useUser();
+
+  // Local state for search query
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+
+  // Use external search query if provided, otherwise use local search query
+  const searchQuery = externalSearchQuery || localSearchQuery;
 
   const folderPath = location.pathname
-    .replace('/home', '')
+    .replace('/shared', '')
     .split('/')
     .filter(Boolean);
   const currentFolderId = folderPath.length
     ? folderPath[folderPath.length - 1]
     : null;
 
-  const [folders, setFolders] = useState<FolderProp[]>([]);
+  const [folders, setFolders] = useState<FolderProps[]>([]);
   const [files, setFiles] = useState([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
   const itemsPerPage = 5;
@@ -36,18 +49,34 @@ const Home = () => {
 
   const fetchData = async (folderId: string | null) => {
     try {
-      const [foldersRes, filesRes] = await Promise.all([
-        axios.post(
-          'http://localhost:5001/api/folder/parent',
-          { folderId },
-          { withCredentials: true },
-        ),
-        axios.post(
-          'http://localhost:5001/api/file/folder',
-          { folderId },
-          { withCredentials: true },
-        ),
-      ]);
+      let foldersRes, filesRes;
+
+      if (!folderId) {
+        console.log('in shared page');
+        [foldersRes, filesRes] = await Promise.all([
+          axios.get('http://localhost:5001/api/folder/shared', {
+            withCredentials: true,
+          }),
+          axios.get('http://localhost:5001/api/file/shared', {
+            withCredentials: true,
+          }),
+        ]);
+      } else {
+        console.log('in nested shared page');
+        [foldersRes, filesRes] = await Promise.all([
+          axios.post(
+            'http://localhost:5001/api/folder/parent',
+            { folderId },
+            { withCredentials: true },
+          ),
+          axios.post(
+            'http://localhost:5001/api/file/folder',
+            { folderId },
+            { withCredentials: true },
+          ),
+        ]);
+      }
+
       setFolders(foldersRes.data);
       setFiles(filesRes.data);
     } catch (error) {
@@ -71,12 +100,17 @@ const Home = () => {
     }
   };
 
-  const handleFolderClick = (folder: FolderProp) => {
-    navigate(`/home/${[...folderPath, folder.id].join('/')}`);
+  const handleFolderClick = (folder: FolderProps) => {
+    navigate(`/shared/${[...folderPath, folder.id].join('/')}`);
   };
 
   const handleBreadcrumbClick = (index: number) => {
-    navigate(`/home/${folderPath.slice(0, index + 1).join('/')}`);
+    navigate(`/shared/${folderPath.slice(0, index + 1).join('/')}`);
+  };
+
+  // Handle search input
+  const handleSearch = (query: string) => {
+    setLocalSearchQuery(query);
   };
 
   return (
@@ -105,15 +139,16 @@ const Home = () => {
             color: '#161C94',
             marginLeft: '10px',
             paddingTop: '25px',
-            paddingBottom: '30px',
+            paddingBottom: '15px',
           }}
         >
-          Your File Storage:
+          Shared with you:
         </Typography>
 
         {/* Search Bar */}
-        <SearchBar location="Storage" />
-
+        <Box sx={{ marginLeft: '10px' }}>
+          <SearchBar location="Shared With Me" onSearch={handleSearch} />
+        </Box>
         {/* Breadcrumb Navigation */}
         <Box
           sx={{
@@ -123,7 +158,7 @@ const Home = () => {
             fontSize: '14px',
           }}
         >
-          {['Home', ...folderPath].map((crumb, index) => (
+          {['Shared', ...folderPath].map((crumb, index) => (
             <span
               key={index}
               onClick={() => handleBreadcrumbClick(index - 1)}
@@ -134,7 +169,7 @@ const Home = () => {
                 marginLeft: '10px',
               }}
             >
-              {index === 0 ? 'Home' : folderNames[crumb] || ''}
+              {index === 0 ? 'Shared' : folderNames[crumb] || ''}
               {index < folderPath.length ? ' / ' : ''}
             </span>
           ))}
@@ -150,6 +185,9 @@ const Home = () => {
             currentFolderId={currentFolderId}
             refreshFolders={fetchData}
             itemsPerPage={itemsPerPage}
+            username={userContext?.username || ''}
+            page={'shared'}
+            searchQuery={searchQuery}
           />
         </div>
 
@@ -158,18 +196,17 @@ const Home = () => {
         {/* Files Section */}
         <div style={{ marginLeft: '10px' }}>
           <FileContainer
-            files={files}
+            page="shared"
+            files={files} // No filtering here, same as Home/Favorites
+            username={userContext?.username || ''}
             currentFolderId={currentFolderId}
             refreshFiles={fetchData}
+            searchQuery={searchQuery}
           />
         </div>
       </Box>
-      <CreateButton
-        currentFolderId={currentFolderId}
-        refresh={fetchData}
-      ></CreateButton>
     </Box>
   );
 };
 
-export default Home;
+export default Shared;
