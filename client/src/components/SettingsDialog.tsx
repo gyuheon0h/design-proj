@@ -154,9 +154,11 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
             method: 'DELETE',
             credentials: 'include',
           });
-
           if (response.ok) {
             navigate('/');
+          }else{
+            console.error('Error deleting account:');
+            navigate('/'); 
           }
         } catch (error) {
           console.error('Error deleting account:', error);
