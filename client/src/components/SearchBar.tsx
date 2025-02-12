@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -7,6 +7,7 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import EventIcon from '@mui/icons-material/Event';
 import Filter from './Filter';
 import { colors } from '../Styles';
+import Typography from '@mui/material/Typography';
 
 interface SearchBarProps {
   location: string;
@@ -21,12 +22,29 @@ const SearchBar: React.FC<SearchBarProps> = ({
   setCreatedAtFilter,
   setModifiedAtFilter,
 }) => {
+  // State to track selected filter values
+  const [selectedFilters, setSelectedFilters] = useState({
+    fileType: '',
+    createdAt: '',
+    modifiedAt: '',
+  });
+
   // handle filtering
   const handleFilterChange = (label: string, value: string) => {
-    if (label === 'Type') setFileTypeFilter(value);
-    if (label === 'Created') setCreatedAtFilter(value);
-    if (label === 'Modified') setModifiedAtFilter(value);
+    if (label === 'Type') {
+      setFileTypeFilter(value);
+      setSelectedFilters((prev) => ({ ...prev, fileType: value }));
+    }
+    if (label === 'Created') {
+      setCreatedAtFilter(value);
+      setSelectedFilters((prev) => ({ ...prev, createdAt: value }));
+    }
+    if (label === 'Modified') {
+      setModifiedAtFilter(value);
+      setSelectedFilters((prev) => ({ ...prev, modifiedAt: value }));
+    }
   };
+
   return (
     <Box
       sx={{
@@ -72,24 +90,74 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
       {/* Filters Section */}
       <Box sx={{ display: 'flex', gap: '10px' }}>
-        <Filter
-          label={'Type'}
-          icon={<InsertDriveFileIcon />}
-          options={['.txt', '.png', '.jpeg']}
-          onFilterChange={handleFilterChange}
-        />
-        <Filter
-          label={'Modified'}
-          icon={<EventIcon />}
-          options={['Today', 'Last week', 'Last month']}
-          onFilterChange={handleFilterChange}
-        />
-        <Filter
-          label={'Created'}
-          icon={<EventIcon />}
-          options={['Today', 'Last week', 'Last month']}
-          onFilterChange={handleFilterChange}
-        />
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <Filter
+            label="Type"
+            icon={<InsertDriveFileIcon />}
+            options={['.txt', '.png', '.jpeg', '.pdf']}
+            onFilterChange={handleFilterChange}
+          />
+          {selectedFilters.fileType && (
+            <Typography
+              variant="body2"
+              sx={{ color: colors.darkGrey, marginTop: '4px' }}
+            >
+              {selectedFilters.fileType}
+            </Typography>
+          )}
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <Filter
+            label="Modified"
+            icon={<EventIcon />}
+            options={['Today', 'Last week', 'Last month']}
+            onFilterChange={handleFilterChange}
+          />
+          {selectedFilters.modifiedAt && (
+            <Typography
+              variant="body2"
+              sx={{ color: colors.darkGrey, marginTop: '4px' }}
+            >
+              {selectedFilters.modifiedAt}
+            </Typography>
+          )}
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <Filter
+            label="Created"
+            icon={<EventIcon />}
+            options={['Today', 'Last week', 'Last month']}
+            onFilterChange={handleFilterChange}
+          />
+          {selectedFilters.createdAt && (
+            <Typography
+              variant="body2"
+              sx={{ color: colors.darkGrey, marginTop: '4px' }}
+            >
+              {selectedFilters.createdAt}
+            </Typography>
+          )}
+        </Box>
       </Box>
     </Box>
   );
