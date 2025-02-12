@@ -1,18 +1,28 @@
-import Divider from '@mui/material/Divider';
+import { useState, useEffect } from 'react';
 import SearchBar from '../components/SearchBar';
+import FileContainer from '../components/FileContainer';
+import FolderContainer from '../components/FolderContainer';
+import Divider from '@mui/material/Divider';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { typography } from '../Styles';
-import { useEffect, useState } from 'react';
-import { FolderProps } from '../components/Folder';
 import axios from 'axios';
-import FolderContainer from '../components/FolderContainer';
-import FileContainer from '../components/FileContainer';
+import { typography } from '../Styles';
 import { useUser } from '../context/UserContext';
 import { FileComponentProps } from '../components/File';
+import { FolderProps } from '../components/Folder';
 
-const Trash = () => {
+interface TrashProps {
+  searchQuery: string;
+}
+
+const Trash: React.FC<TrashProps> = ({ searchQuery: externalSearchQuery }) => {
   const userContext = useUser();
+
+  // Local state for search query
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+
+  // Use external search query if provided, otherwise use local search query
+  const searchQuery = externalSearchQuery || localSearchQuery;
 
   const [folders, setFolders] = useState<FolderProps[]>([]);
   const [files, setFiles] = useState<FileComponentProps[]>([]);
@@ -114,14 +124,15 @@ const Trash = () => {
       console.error('Error fetching data:', error);
     }
   };
-  useEffect(() => {
-    fetchData();
-  }, []);
 
-  console.log(folders, files);
+  // Handle search input
+  const handleSearch = (query: string) => {
+    setLocalSearchQuery(query);
+  };
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Sticky Header Section with Title and Search Bar */}
+      {/* Sticky Header Section with Title, Search Bar */}
       <Box
         sx={{
           position: 'sticky',
@@ -145,55 +156,58 @@ const Trash = () => {
             color: '#161C94',
             marginLeft: '10px',
             paddingTop: '25px',
-            paddingBottom: '30px',
+            paddingBottom: '15px',
           }}
         >
           Trash Bin:
         </Typography>
 
-        {/* Search Bar */}
-        <SearchBar
-          location="Trash"
-          setFileTypeFilter={setFileTypeFilter}
-          setCreatedAtFilter={setCreatedAtFilter}
-          setModifiedAtFilter={setModifiedAtFilter}
-        />
+        {/* SearchBar added here */}
+        <Box sx={{ marginLeft: '10px' }}>
+          <SearchBar
+            location="Trash Bin"
+            onSearch={handleSearch}
+            setFileTypeFilter={setFileTypeFilter}
+            setCreatedAtFilter={setCreatedAtFilter}
+            setModifiedAtFilter={setModifiedAtFilter}
+          />
+        </Box>
       </Box>
 
       {/* Scrollable Content */}
       <Box sx={{ flexGrow: 1, overflowY: 'auto', padding: '20px' }}>
         {/* Folders Section */}
-        <Box sx={{ marginLeft: '10px' }}>
-          <div style={{ marginLeft: '10px' }}>
-            <FolderContainer
-              page={'trash'}
-              folders={folders}
-              onFolderClick={() => {
-                alert('You cannot view folders in the trash bin.');
-              }}
-              currentFolderId={null}
-              refreshFolders={fetchData}
-              itemsPerPage={5}
-              username={userContext?.username || ''}
-            />
-          </div>
+        <div style={{ marginLeft: '10px' }}>
+          <FolderContainer
+            page="trash"
+            folders={folders}
+            onFolderClick={() => {
+              alert('You cannot view folders in the trash bin.');
+            }}
+            currentFolderId={null}
+            refreshFolders={fetchData}
+            itemsPerPage={5}
+            username={userContext?.username || ''}
+            searchQuery={searchQuery}
+          />
+        </div>
 
-          <Divider style={{ margin: '20px 0' }} />
+        <Divider style={{ margin: '20px 0' }} />
 
-          {/* Files Section */}
-          <div style={{ marginLeft: '10px' }}>
-            <FileContainer
-              page={'trash'}
-              files={filteredFiles}
-              currentFolderId={null}
-              refreshFiles={fetchData}
-              username={userContext?.username || ''}
-            />
-          </div>
-        </Box>
-
-        <Divider sx={{ margin: '20px 0' }} />
+        {/* Files Section */}
+        <div style={{ marginLeft: '10px' }}>
+          <FileContainer
+            page="trash"
+            files={filteredFiles}
+            currentFolderId={null}
+            refreshFiles={fetchData}
+            username={userContext?.username || ''}
+            searchQuery={searchQuery}
+          />
+        </div>
       </Box>
+
+      <Divider sx={{ margin: '20px 0' }} />
     </Box>
   );
 };

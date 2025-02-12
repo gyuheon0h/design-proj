@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography';
 
 interface SearchBarProps {
   location: string;
+  onSearch: (query: string) => void;
   setFileTypeFilter: (value: string) => void;
   setCreatedAtFilter: (value: string) => void;
   setModifiedAtFilter: (value: string) => void;
@@ -18,10 +19,19 @@ interface SearchBarProps {
 
 const SearchBar: React.FC<SearchBarProps> = ({
   location,
+  onSearch,
   setFileTypeFilter,
   setCreatedAtFilter,
   setModifiedAtFilter,
 }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const query = event.target.value;
+    setSearchTerm(query);
+    onSearch(query); // Pass the search query to parent components
+  };
+
   // State to track selected filter values
   const [selectedFilters, setSelectedFilters] = useState({
     fileType: '',
@@ -48,14 +58,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
   return (
     <Box
       sx={{
-        position: 'sticky',
-        top: 0,
-        backgroundColor: 'white',
-        zIndex: 1000,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         width: '100%',
+        mt: 2,
       }}
     >
       {/* Search Bar */}
@@ -63,6 +70,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
         fullWidth
         variant="outlined"
         placeholder={`Search in ${location}`}
+        value={searchTerm}
+        onChange={handleSearchChange}
         sx={{
           maxWidth: 680,
           backgroundColor: '#f0f2f5',

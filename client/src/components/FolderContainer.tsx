@@ -3,7 +3,7 @@ import { Box, Button, Slider } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import Folder, { FolderProps } from './Folder';
 import axios from 'axios';
-import { getUsernameById } from '../miscellHelpers/helperRequests';
+import { getUsernameById } from '../helper/helperRequests';
 
 interface FolderContainerProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -12,7 +12,8 @@ interface FolderContainerProps {
   currentFolderId: string | null;
   refreshFolders: (folderId: string | null) => void;
   itemsPerPage: number;
-  username: string; // logged in user
+  username: string;
+  searchQuery: string; // New prop for search input
 }
 
 const FolderContainer: React.FC<FolderContainerProps> = ({
@@ -23,27 +24,39 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   refreshFolders,
   itemsPerPage,
   username,
+  searchQuery, // Receive search query
 }) => {
   const [activeStartIndex, setActiveStartIndex] = useState(0);
+  const [filteredFolders, setFilteredFolders] = useState<FolderProps[]>([]);
   const [visibleFolders, setVisibleFolders] = useState<FolderProps[]>([]);
 
   useEffect(() => {
-    setVisibleFolders(
-      folders.slice(activeStartIndex, activeStartIndex + itemsPerPage),
+    // Filter folders based on search query
+    const updatedFilteredFolders = folders.filter((folder) =>
+      folder.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [folders, itemsPerPage, activeStartIndex]);
 
-  const sliderMax = Math.max(folders.length - itemsPerPage, 0);
+    setFilteredFolders(updatedFilteredFolders);
+    setActiveStartIndex(0); // Reset pagination when search query changes
+  }, [folders, searchQuery]);
+
+  useEffect(() => {
+    setVisibleFolders(
+      filteredFolders.slice(activeStartIndex, activeStartIndex + itemsPerPage),
+    );
+  }, [filteredFolders, activeStartIndex, itemsPerPage]);
+
+  const sliderMax = Math.max(filteredFolders.length - itemsPerPage, 0);
 
   const updateVisibleFolders = (newStartIndex: number) => {
     setActiveStartIndex(newStartIndex);
     setVisibleFolders(
-      folders.slice(newStartIndex, newStartIndex + itemsPerPage),
+      filteredFolders.slice(newStartIndex, newStartIndex + itemsPerPage),
     );
   };
 
   const handleNext = () => {
-    if (activeStartIndex + itemsPerPage < folders.length) {
+    if (activeStartIndex + itemsPerPage < filteredFolders.length) {
       updateVisibleFolders(activeStartIndex + 1);
     }
   };
@@ -62,15 +75,13 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 
   const handleDeleteFolder = async (folderId: string) => {
     try {
-      const response = await axios.delete(
+      await axios.delete(
         `http://localhost:5001/api/folder/delete/${folderId}`,
         {
           withCredentials: true,
         },
       );
-
       refreshFolders(currentFolderId);
-      return response.data;
     } catch (error) {
       console.error('Error deleting folder:', error);
     }
@@ -78,20 +89,19 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 
   const handleFavoriteFolder = async (folderId: string, owner: string) => {
     const ownerUsername = await getUsernameById(owner);
-
     if (ownerUsername !== username) {
       alert('You do not have permission to favorite this folder.');
       return;
     }
     try {
-      const response = await axios.patch(
+      await axios.patch(
         `http://localhost:5001/api/folder/favorite/${folderId}`,
         {},
-        { withCredentials: true },
+        {
+          withCredentials: true,
+        },
       );
-
       refreshFolders(currentFolderId);
-      return response.data;
     } catch (error) {
       console.error('Error favoriting folder:', error);
     }
@@ -99,35 +109,35 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 
   const handleRestoreFolder = async (folderId: string, owner: string) => {
     const ownerUsername = await getUsernameById(owner);
-
     if (ownerUsername !== username) {
       alert('You do not have permission to restore this folder.');
       return;
     }
     try {
-      const response = await axios.patch(
+      await axios.patch(
         `http://localhost:5001/api/folder/restore/${folderId}`,
         {},
-        { withCredentials: true },
+        {
+          withCredentials: true,
+        },
       );
-
       refreshFolders(currentFolderId);
-      return response.data;
     } catch (error) {
       console.error('Error restoring folder:', error);
     }
   };
 
-  const handleRenameFolder = async (folderId: string, newFolderName: string) => {
+  const handleRenameFolder = async (
+    folderId: string,
+    newFolderName: string,
+  ) => {
     try {
-      const response = await axios.patch(
+      await axios.patch(
         `http://localhost:5001/api/folder/rename/${folderId}`,
         { folderName: newFolderName },
-        { withCredentials: true }
+        { withCredentials: true },
       );
-
       refreshFolders(currentFolderId);
-      return response.data;
     } catch (error) {
       console.error('Error renaming folder:', error);
     }
@@ -188,7 +198,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
               fileChildren={folder.fileChildren}
               isFavorited={folder.isFavorited}
               onClick={() => onFolderClick(folder)}
-              handleRenameFolder={handleRenameFolder} 
+              handleRenameFolder={handleRenameFolder}
               handleDeleteFolder={handleDeleteFolder}
               handleFavoriteFolder={() =>
                 handleFavoriteFolder(folder.id, folder.owner)
@@ -203,7 +213,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         <Button
           className="right-button"
           onClick={handleNext}
-          disabled={activeStartIndex + itemsPerPage >= folders.length}
+          disabled={activeStartIndex + itemsPerPage >= filteredFolders.length}
         >
           <KeyboardArrowRight />
         </Button>

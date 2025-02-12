@@ -72,6 +72,25 @@ const StorageService = {
       throw error;
     }
   },
+
+  /**
+   * Delete a file from GCS.
+   * @param filePath - The path of the file in the bucket.
+   */
+  deleteFile: async (filePath: string): Promise<void> => {
+    try {
+      const file = bucket.file(filePath);
+      await file.delete();
+      console.log(`File deleted: ${filePath}`);
+    } catch (error: any) {
+      if (error.code === 404) {
+        console.warn(`File not found: ${filePath}`);
+      } else {
+        console.error(`Error deleting file ${filePath}:`, error);
+        throw error;
+      }
+    }
+  },
 };
 
 export default StorageService;

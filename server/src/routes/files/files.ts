@@ -4,6 +4,7 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import StorageService from '../../storage';
 import FileModel from '../../db_models/FileModel';
+import PermissionModel from '../../db_models/PermissionModel';
 
 const fileRouter = Router();
 const upload = multer(); // Using memory storage to keep things minimal (TODO: implement streaming)
@@ -67,7 +68,9 @@ fileRouter.post(
       );
 
       const sortedFiles = files.sort((a, b) => {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
       });
 
       return res.json(sortedFiles);
@@ -174,6 +177,25 @@ fileRouter.get('/download/:fileId', authorize, async (req, res) => {
   }
 });
 
+// fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
+//   try {
+//     const { fileId } = req.params;
+//     const file = await FileModel.getById(fileId);
+
+//     if (!file) {
+//       return res.status(404).json({ message: 'File not found' });
+//     }
+//     // TODO: think about good way to soft/hard delete from gcsKey. Should we have async process to
+//     // hard delete files that have been soft deleted for a long time?
+//     // await StorageService.deleteFile(file.gcsKey);
+//     await FileModel.softDelete(fileId);
+//     return res.json({ message: 'File deleted successfully' });
+//   } catch (error) {
+//     console.error('Error deleting file:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
 fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
   try {
     const { fileId } = req.params;
@@ -182,16 +204,20 @@ fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
     if (!file) {
       return res.status(404).json({ message: 'File not found' });
     }
-    // TODO: think about good way to soft/hard delete from gcsKey. Should we have async process to
-    // hard delete files that have been soft deleted for a long time?
-    // await StorageService.deleteFile(file.gcsKey);
-    await FileModel.softDelete(fileId);
+
+    // Delete file from GCS
+    await StorageService.deleteFile(file.gcsKey);
+
+    // Delete from database
+    await FileModel.deleteFile(fileId);
+
     return res.json({ message: 'File deleted successfully' });
   } catch (error) {
     console.error('Error deleting file:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 /**
  * PATCH /api/files/favorite/:fileId
@@ -262,6 +288,159 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+/**
+ * GETS all permissions pertaining to the userId
+ */
+fileRouter.get('/shared', authorize, async (req: AuthenticatedRequest, res) => {
+  try {
+    const currentUserId = (req as any).user.userId;
+    if (!currentUserId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const sharedWithUser =
+      await PermissionModel.getFilesByUserId(currentUserId);
+    return res.json(sharedWithUser);
+  } catch (error) {
+    console.error('Error getting deleted files:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+/**
+ * GETS all permissions pertaining to the fileId
+ */
+fileRouter.get(
+  '/:fileId/permissions',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const currentUserId = (req as any).user.userId;
+      if (!currentUserId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const { fileId } = req.params;
+      const sharedWith = await PermissionModel.getPermissionsByFileId(fileId);
+      return res.json(sharedWith);
+    } catch (error) {
+      console.error('Error getting deleted files:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
+/**
+ * PUT /api/files/:fileId/permissions/:userId
+ * Updates or creates a permission (cannot change to 'owner' if not already owner)
+ */
+fileRouter.put(
+  '/:fileId/permissions/:userId',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const currentUserId = (req as any).user.userId;
+      if (!currentUserId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const { fileId, userId } = req.params;
+      const { role } = req.body;
+
+      // fetch file
+      const file = await FileModel.getById(fileId);
+      if (!file) return res.status(404).json({ error: 'File not found.' });
+
+      // check owner
+      if (file.owner !== currentUserId) {
+        return res.status(403).json({ error: 'Not allowed.' });
+      }
+
+      // try to find existing permission
+      const existingPerm = await PermissionModel.getPermissionByFileAndUser(
+        fileId,
+        userId,
+      );
+
+      if (existingPerm) {
+        // update
+        const updated = await PermissionModel.updatePermission(
+          existingPerm.id,
+          {
+            role,
+          },
+        );
+        return updated
+          ? res.json(updated)
+          : res.status(500).json({ error: 'Could not update permission.' });
+      } else {
+        // create
+        const created = await PermissionModel.createPermission({
+          fileId,
+          userId,
+          role,
+        });
+        return res.status(201).json(created);
+      }
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
+/**
+ * DELETE /api/files/:fileId/permissions/:userId
+ * Removes the permission for a particular user on a file
+ */
+fileRouter.delete(
+  '/:fileId/permissions/:userId',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const currentUserId = req.user?.userId;
+      if (!currentUserId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const { fileId, userId } = req.params;
+
+      // fetch file
+      const file = await FileModel.getById(fileId);
+      if (!file) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+
+      // check owner
+      if (file.owner !== currentUserId) {
+        return res
+          .status(403)
+          .json({ error: 'You do not have permission to modify this file.' });
+      }
+
+      // try to find existing permission with (fileId, userId)
+      const existingPerm = await PermissionModel.getPermissionByFileAndUser(
+        fileId,
+        userId,
+      );
+
+      if (!existingPerm) {
+        return res.status(404).json({
+          error: 'No permission entry found for this user/file pair.',
+        });
+      }
+
+      // hard delete from permission
+      await PermissionModel.hardDeletePermission(existingPerm.id);
+
+      return res.sendStatus(204);
+    } catch (error) {
+      console.error('Error removing permission:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
 
 fileRouter.get('/trash', authorize, async (req: AuthenticatedRequest, res) => {
   try {
