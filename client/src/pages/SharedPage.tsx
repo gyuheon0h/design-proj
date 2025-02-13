@@ -11,6 +11,7 @@ import Divider from '@mui/material/Divider';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { typography } from '../Styles';
+import { fetchFolderNames } from '../utils/helperRequests';
 
 interface SharedProps {
   searchQuery: string;
@@ -114,9 +115,23 @@ const Shared: React.FC<SharedProps> = ({
 
   useEffect(() => {
     fetchData(currentFolderId);
-    fetchFolderNames(folderPath);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFolderId]);
+
+  useEffect(() => {
+    const fetchNames = async () => {
+      const names = await fetchFolderNames(folderPath);
+
+      setFolderNames((prevNames) => {
+        const isDifferent = folderPath.some(
+          (id) => prevNames[id] !== names[id],
+        );
+        return isDifferent ? { ...prevNames, ...names } : prevNames;
+      });
+    };
+
+    fetchNames();
+  }, [folderPath]);
 
   // for filtering
   useEffect(() => {
@@ -169,22 +184,6 @@ const Shared: React.FC<SharedProps> = ({
       setFiles(filesRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
-    }
-  };
-
-  const fetchFolderNames = async (folderIds: string[]) => {
-    try {
-      const nameRequests = folderIds.map((id) =>
-        axios.get(`http://localhost:5001/api/folder/foldername/${id}`),
-      );
-      const nameResponses = await Promise.all(nameRequests);
-      const newFolderNames: { [key: string]: string } = {};
-      folderIds.forEach((id, index) => {
-        newFolderNames[id] = nameResponses[index].data;
-      });
-      setFolderNames((prevNames) => ({ ...prevNames, ...newFolderNames }));
-    } catch (error) {
-      console.error('Error fetching folder names:', error);
     }
   };
 

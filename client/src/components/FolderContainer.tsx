@@ -3,7 +3,7 @@ import { Box, Button, Slider } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import Folder, { FolderProps } from './Folder';
 import axios from 'axios';
-import { getUsernameById } from '../helper/helperRequests';
+import { getUsernameById } from '../utils/helperRequests';
 
 interface FolderContainerProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';

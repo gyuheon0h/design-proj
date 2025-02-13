@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import FileComponent from './File';
 import axios from 'axios';
-import { getUsernameById } from '../helper/helperRequests';
+import { getUsernameById } from '../utils/helperRequests';
 
 interface File {
   id: string;

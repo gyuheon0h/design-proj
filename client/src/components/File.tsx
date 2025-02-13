@@ -20,7 +20,7 @@ import ImageIcon from '@mui/icons-material/Image';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import MovieIcon from '@mui/icons-material/Movie';
 import TableChartIcon from '@mui/icons-material/TableChart';
-import { getUsernameById, downloadFile } from '../helper/helperRequests';
+import { getUsernameById, downloadFile } from '../utils/helperRequests';
 import RenameFileDialog from './RenameDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -75,6 +75,7 @@ const getFileIcon = (fileType: string) => {
 
 const FileComponent = (props: FileComponentProps) => {
   const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
+  const [modifiedByName, setModifiedByName] = useState<string>('Loading...');
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -93,6 +94,22 @@ const FileComponent = (props: FileComponentProps) => {
 
     fetchOwnerUserName();
   }, [props.owner]);
+
+  useEffect(() => {
+    const fetchModifiedByName = async () => {
+      if (props.lastModifiedBy) {
+        try {
+          const username = await getUsernameById(props.lastModifiedBy);
+          setModifiedByName(username || 'Unknown');
+        } catch (error) {
+          console.error('Error fetching username:', error);
+          setModifiedByName('Unknown');
+        }
+      }
+    };
+
+    fetchModifiedByName();
+  }, [props.lastModifiedBy]);
 
   const open = Boolean(anchorEl);
 
@@ -184,7 +201,7 @@ const FileComponent = (props: FileComponentProps) => {
           </Tooltip>
 
           <Tooltip
-            title={`Last Modified: ${formattedLastModifiedDate} by ${props.lastModifiedBy || ownerUserName}`}
+            title={`Last Modified: ${formattedLastModifiedDate} by ${modifiedByName || ownerUserName}`}
             arrow
           >
             <Typography
@@ -198,7 +215,7 @@ const FileComponent = (props: FileComponentProps) => {
               }}
             >
               Last Modified: {formattedLastModifiedDate} by{' '}
-              {props.lastModifiedBy || ownerUserName}
+              {modifiedByName || ownerUserName}
             </Typography>
           </Tooltip>
         </Box>

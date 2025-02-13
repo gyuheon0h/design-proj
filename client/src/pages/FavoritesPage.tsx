@@ -12,6 +12,7 @@ import { typography } from '../Styles';
 import { useUser } from '../context/UserContext';
 import CreateButton from '../components/CreateButton';
 import { FileComponentProps } from '../components/File';
+import { fetchFolderNames } from '../utils/helperRequests';
 
 interface FavoritesProps {
   searchQuery: string;
@@ -53,9 +54,23 @@ const Favorites: React.FC<FavoritesProps> = ({
 
   useEffect(() => {
     fetchData(currentFolderId);
-    fetchFolderNames(folderPath);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFolderId]);
+
+  useEffect(() => {
+    const fetchNames = async () => {
+      const names = await fetchFolderNames(folderPath);
+
+      setFolderNames((prevNames) => {
+        const isDifferent = folderPath.some(
+          (id) => prevNames[id] !== names[id],
+        );
+        return isDifferent ? { ...prevNames, ...names } : prevNames;
+      });
+    };
+
+    fetchNames();
+  }, [folderPath]); // Separate effect for folder names
 
   // for filtering
   useEffect(() => {
@@ -163,22 +178,6 @@ const Favorites: React.FC<FavoritesProps> = ({
       setFiles(filesRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
-    }
-  };
-
-  const fetchFolderNames = async (folderIds: string[]) => {
-    try {
-      const nameRequests = folderIds.map((id) =>
-        axios.get(`http://localhost:5001/api/folder/foldername/${id}`),
-      );
-      const nameResponses = await Promise.all(nameRequests);
-      const newFolderNames: { [key: string]: string } = {};
-      folderIds.forEach((id, index) => {
-        newFolderNames[id] = nameResponses[index].data;
-      });
-      setFolderNames((prevNames) => ({ ...prevNames, ...newFolderNames }));
-    } catch (error) {
-      console.error('Error fetching folder names:', error);
     }
   };
 

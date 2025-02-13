@@ -12,6 +12,7 @@ import { typography } from '../Styles';
 import CreateButton from '../components/CreateButton';
 import { useUser } from '../context/UserContext';
 import { FileComponentProps } from '../components/File';
+import { fetchFolderNames } from '../utils/helperRequests';
 
 interface HomeProps {
   searchQuery: string;
@@ -113,9 +114,23 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
 
   useEffect(() => {
     fetchData(currentFolderId);
-    fetchFolderNames(folderPath);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFolderId]);
+
+  useEffect(() => {
+    const fetchNames = async () => {
+      const names = await fetchFolderNames(folderPath);
+
+      setFolderNames((prevNames) => {
+        const isDifferent = folderPath.some(
+          (id) => prevNames[id] !== names[id],
+        );
+        return isDifferent ? { ...prevNames, ...names } : prevNames;
+      });
+    };
+
+    fetchNames();
+  }, [folderPath]); // Separate effect for folder names
 
   // for filtering
   useEffect(() => {
@@ -155,22 +170,6 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
       setFiles(filesRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
-    }
-  };
-
-  const fetchFolderNames = async (folderIds: string[]) => {
-    try {
-      const nameRequests = folderIds.map((id) =>
-        axios.get(`http://localhost:5001/api/folder/foldername/${id}`),
-      );
-      const nameResponses = await Promise.all(nameRequests);
-      const newFolderNames: { [key: string]: string } = {};
-      folderIds.forEach((id, index) => {
-        newFolderNames[id] = nameResponses[index].data;
-      });
-      setFolderNames((prevNames) => ({ ...prevNames, ...newFolderNames }));
-    } catch (error) {
-      console.error('Error fetching folder names:', error);
     }
   };
 
