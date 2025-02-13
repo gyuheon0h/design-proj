@@ -58,3 +58,24 @@ export async function fetchFolderNames(
     return {};
   }
 }
+
+export async function fetchUserNames(
+  userIds: string[],
+): Promise<{ [key: string]: string }> {
+  try {
+    const userRequests = userIds.map((id) =>
+      axios.get(`http://localhost:5001/api/user/`, { params: { id } }),
+    );
+    const userResponses = await Promise.all(userRequests);
+
+    const userNames: { [key: string]: string } = {};
+    userIds.forEach((id, index) => {
+      userNames[id] = userResponses[index].data?.user?.username || '';
+    });
+
+    return userNames;
+  } catch (error) {
+    console.error('Error fetching user names:', error);
+    return {};
+  }
+}
