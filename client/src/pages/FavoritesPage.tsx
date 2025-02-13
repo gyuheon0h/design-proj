@@ -11,12 +11,15 @@ import Typography from '@mui/material/Typography';
 import { typography } from '../Styles';
 import { useUser } from '../context/UserContext';
 import CreateButton from '../components/CreateButton';
+import { FileComponentProps } from '../components/File';
 
 interface FavoritesProps {
-  searchQuery: string; 
+  searchQuery: string;
 }
 
-const Favorites: React.FC<FavoritesProps> = ({ searchQuery: externalSearchQuery }) => {
+const Favorites: React.FC<FavoritesProps> = ({
+  searchQuery: externalSearchQuery,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const userContext = useUser();
@@ -36,8 +39,16 @@ const Favorites: React.FC<FavoritesProps> = ({ searchQuery: externalSearchQuery 
     : null;
 
   const [folders, setFolders] = useState<FolderProps[]>([]);
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState<FileComponentProps[]>([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
+
+  // for filtering
+  const [fileTypeFilter, setFileTypeFilter] = useState<string | null>(null);
+  const [createdAtFilter, setCreatedAtFilter] = useState<string | null>(null);
+  const [modifiedAtFilter, setModifiedAtFilter] = useState<string | null>(null);
+  const [filteredFolders, setFilteredFolders] = useState<FolderProps[]>([]);
+  const [filteredFiles, setFilteredFiles] = useState<FileComponentProps[]>([]);
+
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -45,6 +56,80 @@ const Favorites: React.FC<FavoritesProps> = ({ searchQuery: externalSearchQuery 
     fetchFolderNames(folderPath);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFolderId]);
+
+  // for filtering
+  useEffect(() => {
+    // Filter folders and files based on the selected filters
+
+    const filteredFiles = files.filter((file) => {
+      /* FILE TYPE */
+      const fileType =
+        '.' + file.fileType.substring(file.fileType.indexOf('/') + 1);
+      console.log(
+        'fileTypeFilter: ',
+        fileTypeFilter,
+        '; file.fileType: ',
+        fileType,
+      );
+      const matchesFileType = fileTypeFilter
+        ? fileType === fileTypeFilter
+        : true;
+
+      /* CREATED AT */
+      const now = new Date();
+      let createdStartDate: Date | null = null;
+      if (createdAtFilter === 'Today') {
+        createdStartDate = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+        );
+      } else if (createdAtFilter === 'Last Week') {
+        createdStartDate = new Date();
+        createdStartDate.setDate(now.getDate() - 7);
+      } else if (createdAtFilter === 'Last Month') {
+        createdStartDate = new Date();
+        createdStartDate.setMonth(now.getMonth() - 1);
+      }
+      const fileCreatedAt = new Date(file.createdAt);
+      const matchesCreatedAt = createdStartDate
+        ? fileCreatedAt >= createdStartDate
+        : true;
+
+      /* MODIFIED AT */
+      let startDate: Date | null = null;
+
+      if (modifiedAtFilter === 'Today') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Midnight today
+      } else if (modifiedAtFilter === 'Last Week') {
+        startDate = new Date();
+        startDate.setDate(now.getDate() - 7);
+      } else if (modifiedAtFilter === 'Last Month') {
+        startDate = new Date();
+        startDate.setMonth(now.getMonth() - 1);
+      }
+
+      // Convert lastModifiedAt to Date and check if it falls in the range
+      const fileModifiedAt = new Date(file.lastModifiedAt);
+      const matchesModifiedAt = startDate ? fileModifiedAt >= startDate : true;
+
+      return matchesFileType && matchesCreatedAt && matchesModifiedAt;
+    });
+
+    setFilteredFolders(filteredFolders);
+    setFilteredFiles(filteredFiles);
+  }, [folders, files, fileTypeFilter, createdAtFilter, modifiedAtFilter]);
+
+  // for filtering
+  useEffect(() => {
+    console.log('Current Filters:', {
+      fileTypeFilter,
+      createdAtFilter,
+      modifiedAtFilter,
+    });
+
+    fetchData(currentFolderId);
+  }, [fileTypeFilter, createdAtFilter, modifiedAtFilter, currentFolderId]);
 
   const fetchData = async (folderId: string | null) => {
     try {
@@ -64,12 +149,12 @@ const Favorites: React.FC<FavoritesProps> = ({ searchQuery: externalSearchQuery 
           axios.post(
             'http://localhost:5001/api/folder/parent',
             { folderId },
-            { withCredentials: true }
+            { withCredentials: true },
           ),
           axios.post(
             'http://localhost:5001/api/file/folder',
             { folderId },
-            { withCredentials: true }
+            { withCredentials: true },
           ),
         ]);
       }
@@ -84,7 +169,7 @@ const Favorites: React.FC<FavoritesProps> = ({ searchQuery: externalSearchQuery 
   const fetchFolderNames = async (folderIds: string[]) => {
     try {
       const nameRequests = folderIds.map((id) =>
-        axios.get(`http://localhost:5001/api/folder/foldername/${id}`)
+        axios.get(`http://localhost:5001/api/folder/foldername/${id}`),
       );
       const nameResponses = await Promise.all(nameRequests);
       const newFolderNames: { [key: string]: string } = {};
@@ -143,10 +228,13 @@ const Favorites: React.FC<FavoritesProps> = ({ searchQuery: externalSearchQuery 
         </Typography>
 
         {/* SearchBar added here */}
-        <Box sx={{ marginLeft: '10px'}}>
-          <SearchBar 
-            location="Favorites" 
-            onSearch={handleSearch} 
+        <Box sx={{ marginLeft: '10px' }}>
+          <SearchBar
+            location="Favorites"
+            onSearch={handleSearch}
+            setFileTypeFilter={setFileTypeFilter}
+            setCreatedAtFilter={setCreatedAtFilter}
+            setModifiedAtFilter={setModifiedAtFilter}
           />
         </Box>
 
@@ -168,7 +256,7 @@ const Favorites: React.FC<FavoritesProps> = ({ searchQuery: externalSearchQuery 
                 color: '#161C94',
                 fontWeight: 'bold',
                 marginLeft: '10px',
-                paddingTop: '10px'
+                paddingTop: '10px',
               }}
             >
               {index === 0 ? 'Favorites' : folderNames[crumb] || ''}
@@ -179,7 +267,14 @@ const Favorites: React.FC<FavoritesProps> = ({ searchQuery: externalSearchQuery 
       </Box>
 
       {/* Scrollable Content */}
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', padding: '20px', paddingTop: '0px' }}>
+      <Box
+        sx={{
+          flexGrow: 1,
+          overflowY: 'auto',
+          padding: '20px',
+          paddingTop: '0px',
+        }}
+      >
         <div style={{ marginLeft: '10px' }}>
           <FolderContainer
             page="favorites"
@@ -189,7 +284,7 @@ const Favorites: React.FC<FavoritesProps> = ({ searchQuery: externalSearchQuery 
             refreshFolders={fetchData}
             itemsPerPage={itemsPerPage}
             username={userContext?.username || ''}
-            searchQuery={searchQuery} 
+            searchQuery={searchQuery}
           />
         </div>
 
@@ -198,12 +293,12 @@ const Favorites: React.FC<FavoritesProps> = ({ searchQuery: externalSearchQuery 
         {/* Files Section */}
         <div style={{ marginLeft: '10px' }}>
           <FileContainer
-            page="favorites"
-            files={files}
+            files={filteredFiles}
             currentFolderId={currentFolderId}
             refreshFiles={fetchData}
             username={userContext?.username || ''}
-            searchQuery={searchQuery} 
+            searchQuery={searchQuery}
+            page={'favorites'}
           />
         </div>
       </Box>

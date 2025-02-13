@@ -26,7 +26,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors } from '../Styles';
 
-interface FileComponentProps {
+export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
   id: string;
   name: string;

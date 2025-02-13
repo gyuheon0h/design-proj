@@ -6,6 +6,7 @@ import axios from 'axios';
 import FileContainer from '../components/FileContainer';
 import FolderContainer from '../components/FolderContainer';
 import { useUser } from '../context/UserContext';
+import { FileComponentProps } from '../components/File';
 import Divider from '@mui/material/Divider';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -37,9 +38,96 @@ const Shared: React.FC<SharedProps> = ({
     : null;
 
   const [folders, setFolders] = useState<FolderProps[]>([]);
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState<FileComponentProps[]>([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
   const itemsPerPage = 5;
+
+  // for filtering
+  const [fileTypeFilter, setFileTypeFilter] = useState<string | null>(null);
+  const [createdAtFilter, setCreatedAtFilter] = useState<string | null>(null);
+  const [modifiedAtFilter, setModifiedAtFilter] = useState<string | null>(null);
+  const [filteredFolders, setFilteredFolders] = useState<FolderProps[]>([]);
+  const [filteredFiles, setFilteredFiles] = useState<FileComponentProps[]>([]);
+
+  // for filtering on frontend
+  useEffect(() => {
+    // Filter folders and files based on the selected filters
+
+    const filteredFiles = files.filter((file) => {
+      /* FILE TYPE */
+      const fileType =
+        '.' + file.fileType.substring(file.fileType.indexOf('/') + 1);
+      console.log(
+        'fileTypeFilter: ',
+        fileTypeFilter,
+        '; file.fileType: ',
+        fileType,
+      );
+      const matchesFileType = fileTypeFilter
+        ? fileType === fileTypeFilter
+        : true;
+
+      /* CREATED AT */
+      const now = new Date();
+      let createdStartDate: Date | null = null;
+      if (createdAtFilter === 'Today') {
+        createdStartDate = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+        );
+      } else if (createdAtFilter === 'Last Week') {
+        createdStartDate = new Date();
+        createdStartDate.setDate(now.getDate() - 7);
+      } else if (createdAtFilter === 'Last Month') {
+        createdStartDate = new Date();
+        createdStartDate.setMonth(now.getMonth() - 1);
+      }
+      const fileCreatedAt = new Date(file.createdAt);
+      const matchesCreatedAt = createdStartDate
+        ? fileCreatedAt >= createdStartDate
+        : true;
+
+      /* MODIFIED AT */
+      let startDate: Date | null = null;
+
+      if (modifiedAtFilter === 'Today') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Midnight today
+      } else if (modifiedAtFilter === 'Last Week') {
+        startDate = new Date();
+        startDate.setDate(now.getDate() - 7);
+      } else if (modifiedAtFilter === 'Last Month') {
+        startDate = new Date();
+        startDate.setMonth(now.getMonth() - 1);
+      }
+
+      // Convert lastModifiedAt to Date and check if it falls in the range
+      const fileModifiedAt = new Date(file.lastModifiedAt);
+      const matchesModifiedAt = startDate ? fileModifiedAt >= startDate : true;
+
+      return matchesFileType && matchesCreatedAt && matchesModifiedAt;
+    });
+
+    setFilteredFolders(filteredFolders);
+    setFilteredFiles(filteredFiles);
+  }, [folders, files, fileTypeFilter, createdAtFilter, modifiedAtFilter]);
+
+  useEffect(() => {
+    fetchData(currentFolderId);
+    fetchFolderNames(folderPath);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentFolderId]);
+
+  // for filtering
+  useEffect(() => {
+    console.log('Current Filters:', {
+      fileTypeFilter,
+      createdAtFilter,
+      modifiedAtFilter,
+    });
+
+    fetchData(currentFolderId);
+  }, [fileTypeFilter, createdAtFilter, modifiedAtFilter, currentFolderId]);
 
   useEffect(() => {
     fetchData(currentFolderId);
@@ -147,7 +235,13 @@ const Shared: React.FC<SharedProps> = ({
 
         {/* Search Bar */}
         <Box sx={{ marginLeft: '10px' }}>
-          <SearchBar location="Shared With Me" onSearch={handleSearch} />
+          <SearchBar
+            location="Shared With Me"
+            onSearch={handleSearch}
+            setFileTypeFilter={setFileTypeFilter}
+            setCreatedAtFilter={setCreatedAtFilter}
+            setModifiedAtFilter={setModifiedAtFilter}
+          />
         </Box>
         {/* Breadcrumb Navigation */}
         <Box
@@ -196,8 +290,8 @@ const Shared: React.FC<SharedProps> = ({
         {/* Files Section */}
         <div style={{ marginLeft: '10px' }}>
           <FileContainer
+            files={filteredFiles}
             page="shared"
-            files={files} // No filtering here, same as Home/Favorites
             username={userContext?.username || ''}
             currentFolderId={currentFolderId}
             refreshFiles={fetchData}

@@ -11,9 +11,10 @@ import Typography from '@mui/material/Typography';
 import { typography } from '../Styles';
 import CreateButton from '../components/CreateButton';
 import { useUser } from '../context/UserContext';
+import { FileComponentProps } from '../components/File';
 
 interface HomeProps {
-  searchQuery: string; 
+  searchQuery: string;
 }
 
 const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
@@ -36,9 +37,79 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
     : null;
 
   const [folders, setFolders] = useState<FolderProps[]>([]);
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState<FileComponentProps[]>([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
   const itemsPerPage = 5;
+
+  // for filtering
+  const [fileTypeFilter, setFileTypeFilter] = useState<string | null>(null);
+  const [createdAtFilter, setCreatedAtFilter] = useState<string | null>(null);
+  const [modifiedAtFilter, setModifiedAtFilter] = useState<string | null>(null);
+  const [filteredFolders, setFilteredFolders] = useState<FolderProps[]>([]);
+  const [filteredFiles, setFilteredFiles] = useState<FileComponentProps[]>([]);
+
+  // for filtering on frontend
+  useEffect(() => {
+    // Filter folders and files based on the selected filters
+
+    const filteredFiles = files.filter((file) => {
+      /* FILE TYPE */
+      const fileType =
+        '.' + file.fileType.substring(file.fileType.indexOf('/') + 1);
+      console.log(
+        'fileTypeFilter: ',
+        fileTypeFilter,
+        '; file.fileType: ',
+        fileType,
+      );
+      const matchesFileType = fileTypeFilter
+        ? fileType === fileTypeFilter
+        : true;
+
+      /* CREATED AT */
+      const now = new Date();
+      let createdStartDate: Date | null = null;
+      if (createdAtFilter === 'Today') {
+        createdStartDate = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+        );
+      } else if (createdAtFilter === 'Last Week') {
+        createdStartDate = new Date();
+        createdStartDate.setDate(now.getDate() - 7);
+      } else if (createdAtFilter === 'Last Month') {
+        createdStartDate = new Date();
+        createdStartDate.setMonth(now.getMonth() - 1);
+      }
+      const fileCreatedAt = new Date(file.createdAt);
+      const matchesCreatedAt = createdStartDate
+        ? fileCreatedAt >= createdStartDate
+        : true;
+
+      /* MODIFIED AT */
+      let startDate: Date | null = null;
+
+      if (modifiedAtFilter === 'Today') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Midnight today
+      } else if (modifiedAtFilter === 'Last Week') {
+        startDate = new Date();
+        startDate.setDate(now.getDate() - 7);
+      } else if (modifiedAtFilter === 'Last Month') {
+        startDate = new Date();
+        startDate.setMonth(now.getMonth() - 1);
+      }
+
+      // Convert lastModifiedAt to Date and check if it falls in the range
+      const fileModifiedAt = new Date(file.lastModifiedAt);
+      const matchesModifiedAt = startDate ? fileModifiedAt >= startDate : true;
+
+      return matchesFileType && matchesCreatedAt && matchesModifiedAt;
+    });
+
+    setFilteredFolders(filteredFolders);
+    setFilteredFiles(filteredFiles);
+  }, [folders, files, fileTypeFilter, createdAtFilter, modifiedAtFilter]);
 
   useEffect(() => {
     fetchData(currentFolderId);
@@ -46,18 +117,38 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFolderId]);
 
+  // for filtering
+  useEffect(() => {
+    console.log('Current Filters:', {
+      fileTypeFilter,
+      createdAtFilter,
+      modifiedAtFilter,
+    });
+
+    fetchData(currentFolderId);
+  }, [fileTypeFilter, createdAtFilter, modifiedAtFilter, currentFolderId]);
+
   const fetchData = async (folderId: string | null) => {
+    const queryParams = new URLSearchParams();
+    if (folderId) queryParams.append('folderId', folderId);
+    if (fileTypeFilter) queryParams.append('fileType', fileTypeFilter);
+    if (createdAtFilter) queryParams.append('createdAt', createdAtFilter);
+    if (modifiedAtFilter)
+      queryParams.append('lastModifiedAt', modifiedAtFilter);
+
     try {
       const [foldersRes, filesRes] = await Promise.all([
         axios.post(
-          'http://localhost:5001/api/folder/parent',
+          // 'http://localhost:5001/api/folder/parent',
+          `http://localhost:5001/api/folder/parent?${queryParams.toString()}`,
           { folderId },
-          { withCredentials: true }
+          { withCredentials: true },
         ),
         axios.post(
-          'http://localhost:5001/api/file/folder',
+          // 'http://localhost:5001/api/file/folder',
+          `http://localhost:5001/api/file/folder?${queryParams.toString()}`,
           { folderId },
-          { withCredentials: true }
+          { withCredentials: true },
         ),
       ]);
       setFolders(foldersRes.data);
@@ -70,7 +161,7 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
   const fetchFolderNames = async (folderIds: string[]) => {
     try {
       const nameRequests = folderIds.map((id) =>
-        axios.get(`http://localhost:5001/api/folder/foldername/${id}`)
+        axios.get(`http://localhost:5001/api/folder/foldername/${id}`),
       );
       const nameResponses = await Promise.all(nameRequests);
       const newFolderNames: { [key: string]: string } = {};
@@ -129,10 +220,13 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
         </Typography>
 
         {/* SearchBar added here */}
-        <Box sx={{ marginLeft: '10px'}}>
-          <SearchBar 
-            location="Owl Share" 
-            onSearch={handleSearch} 
+        <Box sx={{ marginLeft: '10px' }}>
+          <SearchBar
+            location="Owl Share"
+            onSearch={handleSearch}
+            setFileTypeFilter={setFileTypeFilter}
+            setCreatedAtFilter={setCreatedAtFilter}
+            setModifiedAtFilter={setModifiedAtFilter}
           />
         </Box>
 
@@ -154,7 +248,7 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
                 color: '#161C94',
                 fontWeight: 'bold',
                 marginLeft: '10px',
-                paddingTop: '10px'
+                paddingTop: '10px',
               }}
             >
               {index === 0 ? 'Home' : folderNames[crumb] || ''}
@@ -165,7 +259,14 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
       </Box>
 
       {/* Scrollable Content */}
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', padding: '20px', paddingTop: '0px' }}>
+      <Box
+        sx={{
+          flexGrow: 1,
+          overflowY: 'auto',
+          padding: '20px',
+          paddingTop: '0px',
+        }}
+      >
         <div style={{ marginLeft: '10px' }}>
           <FolderContainer
             page="home"
@@ -175,7 +276,7 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
             refreshFolders={fetchData}
             itemsPerPage={itemsPerPage}
             username={userContext?.username || ''}
-            searchQuery={searchQuery} 
+            searchQuery={searchQuery}
           />
         </div>
 
@@ -184,12 +285,12 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
         {/* Files Section */}
         <div style={{ marginLeft: '10px' }}>
           <FileContainer
-            page="home"
-            files={files}
+            page={'home'}
+            files={filteredFiles}
             currentFolderId={currentFolderId}
             refreshFiles={fetchData}
             username={userContext?.username || ''}
-            searchQuery={searchQuery} 
+            searchQuery={searchQuery}
           />
         </div>
       </Box>
