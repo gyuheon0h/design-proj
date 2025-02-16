@@ -13,6 +13,8 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
 import RestoreIcon from '@mui/icons-material/Restore';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
+import FolderZipIcon from '@mui/icons-material/FolderZip';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -46,28 +48,42 @@ export interface FileComponentProps {
 }
 
 const getFileIcon = (fileType: string) => {
-  fileType = fileType.toLowerCase();
-  console.log(fileType);
-  switch (fileType) {
-    case 'csv':
+  const mimeType = fileType.trim().toLowerCase();
+
+  switch (mimeType) {
+    case 'text/csv':
       return <TableChartIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'txt':
+    case 'text/plain':
       return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'pdf':
+    case 'application/pdf':
       return (
         <InsertDriveFileIcon
           sx={{ fontSize: 30, marginRight: '10px', color: 'red' }}
         />
       );
-    case 'photo':
-      return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+    case 'application/json':
+      return (
+        <EditNoteIcon
+          sx={{ fontSize: 30, marginRight: '10px', color: 'blue' }}
+        />
+      );
+    case 'application/zip':
+      return (
+        <FolderZipIcon
+          sx={{ fontSize: 30, marginRight: '10px', color: 'red' }}
+        />
+      );
+    case 'image/jpeg':
+    case 'image/png':
     case 'image/jpg':
+    case 'image/svg+xml':
       return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'png':
-      return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'mp3':
+    case 'audio/mpeg':
+    case 'audio/ogg':
+    case 'audio/mp3':
       return <MusicNoteIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'mp4':
+    case 'video/mp4':
+    case 'webm':
       return <MovieIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
     default:
       return <InsertDriveFileIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
