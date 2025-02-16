@@ -302,7 +302,7 @@ fileRouter.get('/shared', authorize, async (req: AuthenticatedRequest, res) => {
       await PermissionModel.getFilesByUserId(currentUserId);
     return res.json(sharedWithUser);
   } catch (error) {
-    console.error('Error getting deleted files:', error);
+    console.error('Error getting shared files:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
