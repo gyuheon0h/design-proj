@@ -203,11 +203,12 @@ folderRouter.get(
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      const { fileId: folderId } = req.params;
-      const sharedWith = await PermissionModel.getPermissionsByFileId(folderId);
+      const { folderId } = req.params;
+      const fileId = folderId;
+      const sharedWith = await PermissionModel.getPermissionsByFileId(fileId);
       return res.json(sharedWith);
     } catch (error) {
-      console.error('Error getting deleted files:', error);
+      console.error('Error getting permissions:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   },
@@ -227,9 +228,9 @@ folderRouter.put(
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      const { fileId: folderId, userId } = req.params;
+      const { folderId, userId } = req.params;
       const { role } = req.body;
-
+      const fileId = folderId;
       // fetch folder
       const folder = await FolderModel.getById(folderId);
       if (!folder) return res.status(404).json({ error: 'File not found.' });
@@ -241,7 +242,7 @@ folderRouter.put(
 
       // try to find existing permission
       const existingPerm = await PermissionModel.getPermissionByFileAndUser(
-        folderId,
+        fileId,
         userId,
       );
 
@@ -259,7 +260,7 @@ folderRouter.put(
       } else {
         // create
         const created = await PermissionModel.createPermission({
-          fileId: folderId,
+          fileId,
           userId,
           role,
         });
@@ -286,7 +287,8 @@ folderRouter.delete(
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      const { fileId: folderId, userId } = req.params;
+      const { folderId, userId } = req.params;
+      const fileId = folderId;
 
       // fetch file
       const folder = await FolderModel.getById(folderId);
@@ -303,7 +305,7 @@ folderRouter.delete(
 
       // try to find existing permission with (fileId, userId)
       const existingPerm = await PermissionModel.getPermissionByFileAndUser(
-        folderId,
+        fileId,
         userId,
       );
 

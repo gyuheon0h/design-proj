@@ -17,9 +17,9 @@ userRouter.get('/', async (req, res) => {
 userRouter.get('/all', async (req, res) => {
   try {
     const users = await UserModel.getAll();
-    return res.status(201).json({ users });
+    return res.status(201).json(users);
   } catch (error) {
-    console.error('Error getting user:', error);
+    console.error('Error getting all users:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });

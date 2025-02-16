@@ -218,7 +218,6 @@ fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
   }
 });
 
-
 /**
  * PATCH /api/files/favorite/:fileId
  * Route to favorite/unfavorite a file
@@ -325,7 +324,7 @@ fileRouter.get(
       const sharedWith = await PermissionModel.getPermissionsByFileId(fileId);
       return res.json(sharedWith);
     } catch (error) {
-      console.error('Error getting deleted files:', error);
+      console.error('Error getting permissions:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   },

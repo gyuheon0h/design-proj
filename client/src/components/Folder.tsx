@@ -11,6 +11,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors } from '../Styles';
 import RenameFileDialog from './RenameDialog';
+import PermissionDialog from './PermissionsDialog';
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -32,6 +33,7 @@ export interface FolderProps {
 const Folder = (props: FolderProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const open = Boolean(anchorEl);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -50,7 +52,7 @@ const Folder = (props: FolderProps) => {
   };
 
   const handleFolderClick = () => {
-    if (isRenameDialogOpen) return;
+    if (isRenameDialogOpen || isPermissionsDialogOpen) return;
     props.onClick(props);
   };
 
@@ -69,6 +71,12 @@ const Folder = (props: FolderProps) => {
     if (!newFolderName.trim()) return;
     props.handleRenameFolder(props.id, newFolderName);
     setIsRenameDialogOpen(false);
+  };
+
+  const handlePermissionsClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setIsPermissionsDialogOpen(true);
+    setAnchorEl(null);
   };
 
   return (
@@ -182,9 +190,8 @@ const Folder = (props: FolderProps) => {
             </MenuItem>
           ) : (
             [
-              <MenuItem onClick={(e) => e.stopPropagation()}>
-                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
-                Share
+              <MenuItem onClick={handlePermissionsClick}>
+                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
               </MenuItem>,
               <Divider sx={{ my: 0.2 }} />,
               <MenuItem onClick={handleRenameClick}>
@@ -220,6 +227,13 @@ const Folder = (props: FolderProps) => {
         fileName={props.name}
         onClose={() => setIsRenameDialogOpen(false)}
         onRename={handleRenameFolder}
+      />
+
+      <PermissionDialog
+        open={isPermissionsDialogOpen}
+        onClose={() => setIsPermissionsDialogOpen(false)}
+        fileId={null}
+        folderId={props.id}
       />
     </Box>
   );

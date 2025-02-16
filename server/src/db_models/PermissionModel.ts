@@ -5,6 +5,7 @@ interface Permission {
   fileId: string;
   userId: string;
   role: 'owner' | 'editor' | 'viewer';
+  deletedAt: Date | null;
 }
 
 class PermissionModel extends BaseModel<Permission> {

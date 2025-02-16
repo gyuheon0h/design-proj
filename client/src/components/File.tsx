@@ -22,6 +22,7 @@ import MovieIcon from '@mui/icons-material/Movie';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import { getUsernameById, downloadFile } from '../utils/helperRequests';
 import RenameFileDialog from './RenameDialog';
+import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors } from '../Styles';
@@ -77,6 +78,7 @@ const FileComponent = (props: FileComponentProps) => {
   const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
   const [modifiedByName, setModifiedByName] = useState<string>('Loading...');
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
@@ -123,6 +125,11 @@ const FileComponent = (props: FileComponentProps) => {
 
   const handleRenameClick = () => {
     setIsRenameDialogOpen(true);
+    handleOptionsClose();
+  };
+
+  const handlePermissionsClick = () => {
+    setIsPermissionsDialogOpen(true);
     handleOptionsClose();
   };
 
@@ -263,7 +270,7 @@ const FileComponent = (props: FileComponentProps) => {
             </MenuItem>
           ) : (
             [
-              <MenuItem onClick={handleOptionsClose}>
+              <MenuItem onClick={handlePermissionsClick}>
                 <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
               </MenuItem>,
 
@@ -311,6 +318,13 @@ const FileComponent = (props: FileComponentProps) => {
         fileName={props.name}
         onClose={() => setIsRenameDialogOpen(false)}
         onRename={handleRenameFile}
+      />
+
+      <PermissionDialog
+        open={isPermissionsDialogOpen}
+        onClose={() => setIsPermissionsDialogOpen(false)}
+        fileId={props.id}
+        folderId={null}
       />
     </div>
   );
