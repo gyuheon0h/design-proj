@@ -41,18 +41,24 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   // handle filtering
   const handleFilterChange = (label: string, value: string) => {
-    if (label === 'Type') {
-      setFileTypeFilter(value);
-      setSelectedFilters((prev) => ({ ...prev, fileType: value }));
-    }
-    if (label === 'Created') {
-      setCreatedAtFilter(value);
-      setSelectedFilters((prev) => ({ ...prev, createdAt: value }));
-    }
-    if (label === 'Modified') {
-      setModifiedAtFilter(value);
-      setSelectedFilters((prev) => ({ ...prev, modifiedAt: value }));
-    }
+    setSelectedFilters((prev) => {
+      const updatedFilters = { ...prev };
+
+      if (label === 'Type') {
+        setFileTypeFilter(value === 'Reset' ? '' : value);
+        updatedFilters.fileType = value === 'Reset' ? '' : value;
+      }
+      if (label === 'Created') {
+        setCreatedAtFilter(value === 'Reset' ? '' : value);
+        updatedFilters.createdAt = value === 'Reset' ? '' : value;
+      }
+      if (label === 'Modified') {
+        setModifiedAtFilter(value === 'Reset' ? '' : value);
+        updatedFilters.modifiedAt = value === 'Reset' ? '' : value;
+      }
+
+      return updatedFilters;
+    });
   };
 
   return (
@@ -109,7 +115,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           <Filter
             label="Type"
             icon={<InsertDriveFileIcon />}
-            options={['.txt', '.png', '.jpeg', '.pdf']}
+            options={['.txt', '.png', '.jpeg', '.pdf', 'Reset']}
             onFilterChange={handleFilterChange}
           />
           {selectedFilters.fileType && (
@@ -132,7 +138,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           <Filter
             label="Modified"
             icon={<EventIcon />}
-            options={['Today', 'Last week', 'Last month']}
+            options={['Today', 'Last week', 'Last month', 'Reset']}
             onFilterChange={handleFilterChange}
           />
           {selectedFilters.modifiedAt && (
@@ -155,7 +161,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           <Filter
             label="Created"
             icon={<EventIcon />}
-            options={['Today', 'Last week', 'Last month']}
+            options={['Today', 'Last week', 'Last month', 'Reset']}
             onFilterChange={handleFilterChange}
           />
           {selectedFilters.createdAt && (
