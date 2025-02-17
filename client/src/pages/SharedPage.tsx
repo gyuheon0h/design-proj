@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import { typography } from '../Styles';
 import { fetchFolderNames } from '../utils/helperRequests';
 import { Permission } from '../interfaces/Permission';
+import Header from '../components/Header';
 
 const Shared = () => {
   const location = useLocation();
@@ -197,71 +198,17 @@ const Shared = () => {
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Sticky Header Section with Title, Breadcrumb, and Search Bar */}
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          left: 0,
-          backgroundColor: 'white',
-          zIndex: 1000,
-          padding: '15px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-        }}
-      >
-        {/* Title */}
-        <Typography
-          variant="h1"
-          sx={{
-            fontWeight: 'bold',
-            fontFamily: typography.fontFamily,
-            fontSize: typography.fontSize.extraLarge,
-            color: '#161C94',
-            marginLeft: '10px',
-            paddingTop: '25px',
-            paddingBottom: '15px',
-          }}
-        >
-          Shared with you:
-        </Typography>
-
-        {/* Search Bar */}
-        <Box sx={{ marginLeft: '10px' }}>
-          <SearchBar
-            location="Shared With Me"
-            onSearch={handleSearch}
-            setFileTypeFilter={setFileTypeFilter}
-            setCreatedAtFilter={setCreatedAtFilter}
-            setModifiedAtFilter={setModifiedAtFilter}
-          />
-        </Box>
-        {/* Breadcrumb Navigation */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '14px',
-          }}
-        >
-          {['Shared', ...folderPath].map((crumb, index) => (
-            <span
-              key={index}
-              onClick={() => handleBreadcrumbClick(index - 1)}
-              style={{
-                cursor: 'pointer',
-                color: '#161C94',
-                fontWeight: 'bold',
-                marginLeft: '10px',
-              }}
-            >
-              {index === 0 ? 'Shared' : folderNames[crumb] || ''}
-              {index < folderPath.length ? ' / ' : ''}
-            </span>
-          ))}
-        </Box>
-      </Box>
+      <Header
+        title="Shared With Me:"
+        location="Shared"
+        folderPath={folderPath}
+        folderNames={folderNames}
+        handleBreadcrumbClick={handleBreadcrumbClick}
+        handleSearch={handleSearch}
+        setFileTypeFilter={setFileTypeFilter}
+        setCreatedAtFilter={setCreatedAtFilter}
+        setModifiedAtFilter={setModifiedAtFilter}
+      />
 
       {/* Scrollable Content */}
       <Box sx={{ flexGrow: 1, overflowY: 'auto', padding: '20px' }}>

@@ -13,6 +13,7 @@ import { useUser } from '../context/UserContext';
 import CreateButton from '../components/CreateButton';
 import { FileComponentProps } from '../components/File';
 import { fetchFolderNames } from '../utils/helperRequests';
+import Header from '../components/Header';
 
 const Favorites = () => {
   const location = useLocation();
@@ -177,73 +178,17 @@ const Favorites = () => {
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Sticky Header Section with Title, Breadcrumb, and Search Bar */}
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          left: 0,
-          backgroundColor: 'white',
-          zIndex: 1000,
-          padding: '15px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-        }}
-      >
-        {/* Title */}
-        <Typography
-          variant="h1"
-          sx={{
-            fontWeight: 'bold',
-            fontFamily: typography.fontFamily,
-            fontSize: typography.fontSize.extraLarge,
-            color: '#161C94',
-            marginLeft: '10px',
-            paddingTop: '25px',
-            paddingBottom: '15px',
-          }}
-        >
-          Your Favorites:
-        </Typography>
-
-        {/* SearchBar added here */}
-        <Box sx={{ marginLeft: '10px' }}>
-          <SearchBar
-            location="Favorites"
-            onSearch={handleSearch}
-            setFileTypeFilter={setFileTypeFilter}
-            setCreatedAtFilter={setCreatedAtFilter}
-            setModifiedAtFilter={setModifiedAtFilter}
-          />
-        </Box>
-
-        {/* Breadcrumb Navigation */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '14px',
-          }}
-        >
-          {['Favorites', ...folderPath].map((crumb, index) => (
-            <span
-              key={index}
-              onClick={() => handleBreadcrumbClick(index - 1)}
-              style={{
-                cursor: 'pointer',
-                color: '#161C94',
-                fontWeight: 'bold',
-                marginLeft: '10px',
-                paddingTop: '10px',
-              }}
-            >
-              {index === 0 ? 'Favorites' : folderNames[crumb] || ''}
-              {index < folderPath.length ? ' / ' : ''}
-            </span>
-          ))}
-        </Box>
-      </Box>
+      <Header
+        title="Your Favorites:"
+        location="Favorites"
+        folderPath={folderPath}
+        folderNames={folderNames}
+        handleBreadcrumbClick={handleBreadcrumbClick}
+        handleSearch={handleSearch}
+        setFileTypeFilter={setFileTypeFilter}
+        setCreatedAtFilter={setCreatedAtFilter}
+        setModifiedAtFilter={setModifiedAtFilter}
+      />
 
       {/* Scrollable Content */}
       <Box

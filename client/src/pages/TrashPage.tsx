@@ -10,6 +10,7 @@ import { typography } from '../Styles';
 import { useUser } from '../context/UserContext';
 import { FileComponentProps } from '../components/File';
 import { FolderProps } from '../components/Folder';
+import Header from '../components/Header';
 
 const Trash = () => {
   const userContext = useUser();
@@ -126,46 +127,17 @@ const Trash = () => {
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Sticky Header Section with Title, Search Bar */}
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          left: 0,
-          backgroundColor: 'white',
-          zIndex: 1000,
-          padding: '15px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-        }}
-      >
-        {/* Title */}
-        <Typography
-          variant="h1"
-          sx={{
-            fontWeight: 'bold',
-            fontFamily: typography.fontFamily,
-            fontSize: typography.fontSize.extraLarge,
-            color: '#161C94',
-            marginLeft: '10px',
-            paddingTop: '25px',
-            paddingBottom: '15px',
-          }}
-        >
-          Trash Bin:
-        </Typography>
-
-        {/* SearchBar added here */}
-        <Box sx={{ marginLeft: '10px' }}>
-          <SearchBar
-            location="Trash Bin"
-            onSearch={handleSearch}
-            setFileTypeFilter={setFileTypeFilter}
-            setCreatedAtFilter={setCreatedAtFilter}
-            setModifiedAtFilter={setModifiedAtFilter}
-          />
-        </Box>
-      </Box>
+      <Header
+        title="Trash Bin:"
+        location="Trash Bin"
+        folderPath={[]}
+        folderNames={{}}
+        handleBreadcrumbClick={() => {}}
+        handleSearch={handleSearch}
+        setFileTypeFilter={setFileTypeFilter}
+        setCreatedAtFilter={setCreatedAtFilter}
+        setModifiedAtFilter={setModifiedAtFilter}
+      />
 
       {/* Scrollable Content */}
       <Box sx={{ flexGrow: 1, overflowY: 'auto', padding: '20px' }}>
