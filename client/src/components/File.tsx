@@ -13,6 +13,8 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
 import RestoreIcon from '@mui/icons-material/Restore';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
+import FolderZipIcon from '@mui/icons-material/FolderZip';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -46,27 +48,29 @@ export interface FileComponentProps {
 }
 
 const getFileIcon = (fileType: string) => {
-  fileType = fileType.toLowerCase();
-  switch (fileType) {
-    case 'csv':
-      return <TableChartIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'txt':
+  const lowerCaseType = fileType.trim().toLowerCase();
+  const mimeType = lowerCaseType.split('/')[0];
+
+  switch (mimeType) {
+    case 'text':
       return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'pdf':
+    case 'application':
+      if (lowerCaseType === 'application/json')
+        return (
+          <EditNoteIcon
+            sx={{ fontSize: 30, marginRight: '10px', color: 'blue' }}
+          />
+        );
       return (
         <InsertDriveFileIcon
           sx={{ fontSize: 30, marginRight: '10px', color: 'red' }}
         />
       );
-    case 'photo':
+    case 'image':
       return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'image/jpg':
-      return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'png':
-      return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'mp3':
+    case 'audio':
       return <MusicNoteIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'mp4':
+    case 'video':
       return <MovieIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
     default:
       return <InsertDriveFileIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
