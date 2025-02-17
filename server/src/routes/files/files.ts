@@ -81,6 +81,24 @@ fileRouter.post(
   },
 );
 
+// Bypass auth for shared page. Need to add security here, maybe check permissions table
+fileRouter.post('/folder/shared', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { folderId } = req.body;
+
+    const files = await FileModel.getFilesByFolder(folderId || null);
+
+    const sortedFiles = files.sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return res.json(sortedFiles);
+  } catch (error) {
+    console.error('Error getting files by folder:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 /**
  * GET /api/files/favorites/
  * Route to get favorited files owned by a certain user (ownerId).
@@ -289,7 +307,7 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
 });
 
 /**
- * GETS all permissions pertaining to the userId
+ * GETS all folder and permissions that userId has permissions for
  */
 fileRouter.get('/shared', authorize, async (req: AuthenticatedRequest, res) => {
   try {
@@ -298,9 +316,12 @@ fileRouter.get('/shared', authorize, async (req: AuthenticatedRequest, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const sharedWithUser =
-      await PermissionModel.getFilesByUserId(currentUserId);
-    return res.json(sharedWithUser);
+    const permissions = await PermissionModel.getFilesByUserId(currentUserId);
+
+    const files = await Promise.all(
+      permissions.map((perm) => FileModel.getById(perm.fileId)),
+    );
+    return res.json({ files, permissions });
   } catch (error) {
     console.error('Error getting shared files:', error);
     return res.status(500).json({ error: 'Internal Server Error' });

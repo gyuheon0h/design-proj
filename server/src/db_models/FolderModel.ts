@@ -27,7 +27,7 @@ class FolderModel extends BaseModel<Folder> {
    * @param parentFolderId
    * @returns
    */
-  async getSubfolders(
+  async getSubfoldersByOwner(
     ownerId: string,
     parentFolderId: string | null,
   ): Promise<Folder[]> {
@@ -39,6 +39,10 @@ class FolderModel extends BaseModel<Folder> {
       'parentFolder',
       parentFolderId,
     );
+  }
+
+  async getSubfolders(parentFolderId: string | null): Promise<Folder[]> {
+    return await this.getAllByColumn('parentFolder', parentFolderId);
   }
 
   // Soft delete a folder

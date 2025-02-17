@@ -178,19 +178,19 @@ class BaseModel<T> {
 
   protected async getAllByJoin<K extends keyof T>(
     joinTable: string,
-    joinOn: string,
+    onCondition: string,
     column: K,
     value: T[K],
     checkJoinTableDeletedAt = true,
   ): Promise<T[]> {
     const query = `
-      SELECT baseTable.*
-      FROM "${this.table}" baseTable
-      JOIN "${joinTable}" joinTbl ON ${joinOn}
-      WHERE baseTable."${String(column)}" = $1
-        AND baseTable."deletedAt" IS NULL
-        ${checkJoinTableDeletedAt ? `AND joinTbl."deletedAt" IS NULL` : ''}
-    `;
+    SELECT baseTable.*
+    FROM "${this.table}" baseTable
+    JOIN "${joinTable}" joinTbl ON ${onCondition}
+    WHERE baseTable."${String(column)}" = $1
+      AND baseTable."deletedAt" IS NULL
+      ${checkJoinTableDeletedAt ? `AND joinTbl."deletedAt" IS NULL` : ''}
+  `;
 
     const result = await pool.query(query, [value]);
     return result.rows as T[];

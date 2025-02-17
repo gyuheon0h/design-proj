@@ -14,20 +14,13 @@ import { useUser } from '../context/UserContext';
 import { FileComponentProps } from '../components/File';
 import { fetchFolderNames } from '../utils/helperRequests';
 
-interface HomeProps {
-  searchQuery: string;
-}
-
-const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
+const Home = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const userContext = useUser();
 
   // Local state for search query to allow manual search as well
-  const [localSearchQuery, setLocalSearchQuery] = useState('');
-
-  // Use external search query if provided, otherwise use local search query
-  const searchQuery = externalSearchQuery || localSearchQuery;
+  const [searchQuery, setSearchQuery] = useState('');
 
   const folderPath = location.pathname
     .replace('/home', '')
@@ -57,12 +50,7 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
       /* FILE TYPE */
       const fileType =
         '.' + file.fileType.substring(file.fileType.indexOf('/') + 1);
-      console.log(
-        'fileTypeFilter: ',
-        fileTypeFilter,
-        '; file.fileType: ',
-        fileType,
-      );
+
       const matchesFileType = fileTypeFilter
         ? fileType === fileTypeFilter
         : true;
@@ -134,12 +122,6 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
 
   // for filtering
   useEffect(() => {
-    console.log('Current Filters:', {
-      fileTypeFilter,
-      createdAtFilter,
-      modifiedAtFilter,
-    });
-
     fetchData(currentFolderId);
   }, [fileTypeFilter, createdAtFilter, modifiedAtFilter, currentFolderId]);
 
@@ -183,7 +165,7 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
 
   // Handle local search input
   const handleSearch = (query: string) => {
-    setLocalSearchQuery(query);
+    setSearchQuery(query);
   };
 
   return (

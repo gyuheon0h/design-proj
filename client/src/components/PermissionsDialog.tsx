@@ -80,7 +80,6 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
         `http://localhost:5001/api/${resourceType}/${resourceId}/permissions`,
         { withCredentials: true },
       );
-      console.log('Permissions:', response.data);
       setPermissions(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error getting permissions:', error);

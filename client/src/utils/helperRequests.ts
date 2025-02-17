@@ -59,6 +59,9 @@ export async function fetchFolderNames(
   }
 }
 
+//TODO: @gyuheon this was for ur permissions dialog but idk if u ended up using it... should we delete this?
+
+//given a list of userIds, return all the userNames associated
 export async function fetchUserNames(
   userIds: string[],
 ): Promise<{ [key: string]: string }> {

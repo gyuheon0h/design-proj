@@ -263,13 +263,24 @@ const FileComponent = (props: FileComponentProps) => {
           {props.page === 'trash' ? (
             <MenuItem
               onClick={() => {
-                console.log('Restoring file...');
                 handleRestoreFile();
                 handleOptionsClose();
               }}
             >
               <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
               Restore
+            </MenuItem>
+          ) : props.page === 'shared' ? (
+            <MenuItem
+              onClick={() => {
+                downloadFile(props.id, props.name);
+                handleOptionsClose();
+              }}
+            >
+              <InsertDriveFileIcon
+                sx={{ fontSize: '20px', marginRight: '9px' }}
+              />{' '}
+              Download
             </MenuItem>
           ) : (
             [
