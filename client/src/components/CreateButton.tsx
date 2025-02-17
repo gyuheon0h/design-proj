@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Fab, Menu, MenuItem } from '@mui/material';
 import axios from 'axios';
 import UploadDialog from './CreateFileDialog';
 import FolderDialog from './CreateFolderDialog';
 import AddIcon from '@mui/icons-material/Add';
+import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
 
 interface CreateButtonProps {
   currentFolderId: string | null;
@@ -14,15 +15,16 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   currentFolderId,
   refresh,
 }) => {
+  const nodeRef = useRef<HTMLDivElement>(null);
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
 
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
+  // Drag detection
+  const [didDrag, setDidDrag] = useState(false);
 
   const handleMenuClose = () => {
     setAnchorEl(null);
@@ -42,6 +44,17 @@ const CreateButton: React.FC<CreateButtonProps> = ({
 
   const closeUploadDialog = () => {
     setUploadDialogOpen(false);
+  };
+
+  // Draggable handlers
+  const handleDragStart = () => {
+    // Reset drag state
+    setDidDrag(false);
+  };
+
+  const handleDrag = (e: DraggableEvent, data: DraggableData) => {
+    console.log('Dragging');
+    setDidDrag(true);
   };
 
   const handleUploadFile = async (file: Blob, fileName: string) => {
@@ -88,24 +101,32 @@ const CreateButton: React.FC<CreateButtonProps> = ({
 
   return (
     <>
-      <Fab
-        color="primary"
-        aria-label="create"
-        onClick={(e) => setAnchorEl(e.currentTarget)}
-        sx={{
-          position: 'fixed',
-          bottom: '48px',
-          right: '48px',
-          width: 72,
-          height: 72,
-        }}
+      <Draggable
+        nodeRef={nodeRef as React.RefObject<HTMLElement>}
+        onStart={handleDragStart}
+        onDrag={handleDrag}
       >
-        <AddIcon />
-      </Fab>
+        <div ref={nodeRef}>
+          <Fab
+            color="primary"
+            aria-label="create"
+            onClick={(e) => setAnchorEl(e.currentTarget)}
+            sx={{
+              position: 'fixed',
+              bottom: '48px',
+              right: '48px',
+              width: 72,
+              height: 72,
+            }}
+          >
+            <AddIcon />
+          </Fab>
+        </div>
+      </Draggable>
 
       <Menu
         anchorEl={anchorEl}
-        open={menuOpen}
+        open={menuOpen && !didDrag}
         onClose={() => setAnchorEl(null)}
       >
         <MenuItem
