@@ -1,4 +1,7 @@
 import axios from 'axios';
+import { FileComponentProps } from '../components/File';
+import { useLocation } from 'react-router-dom';
+import { useState } from 'react';
 
 export async function getUsernameById(id: string): Promise<string> {
   try {
@@ -59,26 +62,96 @@ export async function fetchFolderNames(
   }
 }
 
-//TODO: @gyuheon this was for ur permissions dialog but idk if u ended up using it... should we delete this?
+export function applyFilters(
+  files: FileComponentProps[],
+  fileTypeFilter: string | null,
+  createdAtFilter: string | null,
+  modifiedAtFilter: string | null,
+): FileComponentProps[] {
+  return files.filter((file) => {
+    const fileType =
+      '.' + file.fileType.substring(file.fileType.indexOf('/') + 1);
+    const matchesFileType = fileTypeFilter ? fileType === fileTypeFilter : true;
 
-//given a list of userIds, return all the userNames associated
-export async function fetchUserNames(
-  userIds: string[],
-): Promise<{ [key: string]: string }> {
-  try {
-    const userRequests = userIds.map((id) =>
-      axios.get(`http://localhost:5001/api/user/`, { params: { id } }),
-    );
-    const userResponses = await Promise.all(userRequests);
+    const now = new Date();
+    let createdStartDate: Date | null = null;
+    if (createdAtFilter === 'Today') {
+      createdStartDate = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+      );
+    } else if (createdAtFilter === 'Last Week') {
+      createdStartDate = new Date();
+      createdStartDate.setDate(now.getDate() - 7);
+    } else if (createdAtFilter === 'Last Month') {
+      createdStartDate = new Date();
+      createdStartDate.setMonth(now.getMonth() - 1);
+    }
+    const fileCreatedAt = new Date(file.createdAt);
+    const matchesCreatedAt = createdStartDate
+      ? fileCreatedAt >= createdStartDate
+      : true;
 
-    const userNames: { [key: string]: string } = {};
-    userIds.forEach((id, index) => {
-      userNames[id] = userResponses[index].data?.user?.username || '';
-    });
+    let startDate: Date | null = null;
+    if (modifiedAtFilter === 'Today') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    } else if (modifiedAtFilter === 'Last Week') {
+      startDate = new Date();
+      startDate.setDate(now.getDate() - 7);
+    } else if (modifiedAtFilter === 'Last Month') {
+      startDate = new Date();
+      startDate.setMonth(now.getMonth() - 1);
+    }
+    const fileModifiedAt = new Date(file.lastModifiedAt);
+    const matchesModifiedAt = startDate ? fileModifiedAt >= startDate : true;
 
-    return userNames;
-  } catch (error) {
-    console.error('Error fetching user names:', error);
-    return {};
-  }
+    return matchesFileType && matchesCreatedAt && matchesModifiedAt;
+  });
+}
+
+export function useFolderPath(basePath: string) {
+  const location = useLocation();
+  const folderPath = location.pathname
+    .replace(basePath, '')
+    .split('/')
+    .filter(Boolean);
+  const currentFolderId = folderPath.length
+    ? folderPath[folderPath.length - 1]
+    : null;
+  return { folderPath, currentFolderId };
+}
+
+type FilterState = {
+  fileType: string | null;
+  createdAt: string | null;
+  modifiedAt: string | null;
+};
+
+export function useFilters() {
+  const [filters, setFilters] = useState<FilterState>({
+    fileType: null,
+    createdAt: null,
+    modifiedAt: null,
+  });
+
+  const setFileTypeFilter = (type: string | null) =>
+    setFilters((prev) => ({ ...prev, fileType: type }));
+
+  const setCreatedAtFilter = (date: string | null) =>
+    setFilters((prev) => ({ ...prev, createdAt: date }));
+
+  const setModifiedAtFilter = (date: string | null) =>
+    setFilters((prev) => ({ ...prev, modifiedAt: date }));
+
+  const [filteredFiles, setFilteredFiles] = useState<FileComponentProps[]>([]);
+
+  return {
+    filters,
+    setFileTypeFilter,
+    setCreatedAtFilter,
+    setModifiedAtFilter,
+    filteredFiles,
+    setFilteredFiles,
+  };
 }
