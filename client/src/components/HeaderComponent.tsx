@@ -1,7 +1,7 @@
 import React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import SearchBar from '../components/SearchBar';
+import SearchBar from './SearchBar';
 import { typography } from '../Styles';
 
 interface HeaderProps {

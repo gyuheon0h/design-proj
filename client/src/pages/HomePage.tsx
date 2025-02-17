@@ -13,7 +13,8 @@ import CreateButton from '../components/CreateButton';
 import { useUser } from '../context/UserContext';
 import { FileComponentProps } from '../components/File';
 import { fetchFolderNames } from '../utils/helperRequests';
-import Header from '../components/Header';
+import Header from '../components/HeaderComponent';
+import ContentComponent from '../components/Content';
 
 const Home = () => {
   const location = useLocation();
@@ -169,6 +170,8 @@ const Home = () => {
     setSearchQuery(query);
   };
 
+  const handleFetchData = () => fetchData(currentFolderId);
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Sticky Header Section with Title, Breadcrumb, and Search Bar */}
@@ -185,41 +188,18 @@ const Home = () => {
       />
 
       {/* Scrollable Content */}
-      <Box
-        sx={{
-          flexGrow: 1,
-          overflowY: 'auto',
-          padding: '20px',
-          paddingTop: '0px',
-        }}
-      >
-        <div style={{ marginLeft: '10px' }}>
-          <FolderContainer
-            page="home"
-            folders={folders}
-            onFolderClick={handleFolderClick}
-            currentFolderId={currentFolderId}
-            refreshFolders={fetchData}
-            itemsPerPage={itemsPerPage}
-            username={userContext?.username || ''}
-            searchQuery={searchQuery}
-          />
-        </div>
+      <ContentComponent
+        page="home"
+        folders={folders}
+        files={filteredFiles}
+        onFolderClick={handleFolderClick}
+        currentFolderId={currentFolderId}
+        fetchData={handleFetchData}
+        itemsPerPage={itemsPerPage}
+        username={userContext?.username || ''}
+        searchQuery={searchQuery}
+      />
 
-        <Divider style={{ margin: '20px 0' }} />
-
-        {/* Files Section */}
-        <div style={{ marginLeft: '10px' }}>
-          <FileContainer
-            page={'home'}
-            files={filteredFiles}
-            currentFolderId={currentFolderId}
-            refreshFiles={fetchData}
-            username={userContext?.username || ''}
-            searchQuery={searchQuery}
-          />
-        </div>
-      </Box>
       <CreateButton currentFolderId={currentFolderId} refresh={fetchData} />
     </Box>
   );

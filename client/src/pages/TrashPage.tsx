@@ -10,7 +10,8 @@ import { typography } from '../Styles';
 import { useUser } from '../context/UserContext';
 import { FileComponentProps } from '../components/File';
 import { FolderProps } from '../components/Folder';
-import Header from '../components/Header';
+import Header from '../components/HeaderComponent';
+import ContentComponent from '../components/Content';
 
 const Trash = () => {
   const userContext = useUser();
@@ -140,37 +141,17 @@ const Trash = () => {
       />
 
       {/* Scrollable Content */}
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', padding: '20px' }}>
-        {/* Folders Section */}
-        <div style={{ marginLeft: '10px' }}>
-          <FolderContainer
-            page="trash"
-            folders={folders}
-            onFolderClick={() => {
-              alert('You cannot view folders in the trash bin.');
-            }}
-            currentFolderId={null}
-            refreshFolders={fetchData}
-            itemsPerPage={5}
-            username={userContext?.username || ''}
-            searchQuery={searchQuery}
-          />
-        </div>
-
-        <Divider style={{ margin: '20px 0' }} />
-
-        {/* Files Section */}
-        <div style={{ marginLeft: '10px' }}>
-          <FileContainer
-            page="trash"
-            files={filteredFiles}
-            currentFolderId={null}
-            refreshFiles={fetchData}
-            username={userContext?.username || ''}
-            searchQuery={searchQuery}
-          />
-        </div>
-      </Box>
+      <ContentComponent
+        page="trash"
+        folders={folders}
+        files={filteredFiles}
+        onFolderClick={() => alert('You cannot view folders in the trash bin.')}
+        currentFolderId={null}
+        fetchData={fetchData}
+        itemsPerPage={5}
+        username={userContext?.username || ''}
+        searchQuery={searchQuery}
+      />
 
       <Divider sx={{ margin: '20px 0' }} />
     </Box>

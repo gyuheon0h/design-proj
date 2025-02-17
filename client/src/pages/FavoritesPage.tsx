@@ -13,7 +13,8 @@ import { useUser } from '../context/UserContext';
 import CreateButton from '../components/CreateButton';
 import { FileComponentProps } from '../components/File';
 import { fetchFolderNames } from '../utils/helperRequests';
-import Header from '../components/Header';
+import Header from '../components/HeaderComponent';
+import ContentComponent from '../components/Content';
 
 const Favorites = () => {
   const location = useLocation();
@@ -162,6 +163,8 @@ const Favorites = () => {
     }
   };
 
+  const handleFetchData = () => fetchData(currentFolderId);
+
   const handleFolderClick = (folder: FolderProps) => {
     navigate(`/favorites/${[...folderPath, folder.id].join('/')}`);
   };
@@ -191,41 +194,19 @@ const Favorites = () => {
       />
 
       {/* Scrollable Content */}
-      <Box
-        sx={{
-          flexGrow: 1,
-          overflowY: 'auto',
-          padding: '20px',
-          paddingTop: '0px',
-        }}
-      >
-        <div style={{ marginLeft: '10px' }}>
-          <FolderContainer
-            page="favorites"
-            folders={folders}
-            onFolderClick={handleFolderClick}
-            currentFolderId={currentFolderId}
-            refreshFolders={fetchData}
-            itemsPerPage={itemsPerPage}
-            username={userContext?.username || ''}
-            searchQuery={searchQuery}
-          />
-        </div>
+      <ContentComponent
+        page="favorites"
+        folders={folders}
+        files={filteredFiles}
+        onFolderClick={handleFolderClick}
+        currentFolderId={currentFolderId}
+        fetchData={handleFetchData}
+        itemsPerPage={itemsPerPage}
+        username={userContext?.username || ''}
+        searchQuery={searchQuery}
+      />
 
-        <Divider style={{ margin: '20px 0' }} />
-
-        {/* Files Section */}
-        <div style={{ marginLeft: '10px' }}>
-          <FileContainer
-            files={filteredFiles}
-            currentFolderId={currentFolderId}
-            refreshFiles={fetchData}
-            username={userContext?.username || ''}
-            searchQuery={searchQuery}
-            page={'favorites'}
-          />
-        </div>
-      </Box>
+      {/* Create Button */}
       {currentFolderId && (
         <CreateButton
           currentFolderId={currentFolderId}

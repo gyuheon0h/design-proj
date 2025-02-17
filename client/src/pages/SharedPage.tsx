@@ -13,7 +13,8 @@ import Typography from '@mui/material/Typography';
 import { typography } from '../Styles';
 import { fetchFolderNames } from '../utils/helperRequests';
 import { Permission } from '../interfaces/Permission';
-import Header from '../components/Header';
+import Header from '../components/HeaderComponent';
+import ContentComponent from '../components/Content';
 
 const Shared = () => {
   const location = useLocation();
@@ -195,6 +196,8 @@ const Shared = () => {
     setSearchQuery(query);
   };
 
+  const handleFetchData = () => fetchData(currentFolderId);
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Sticky Header Section with Title, Breadcrumb, and Search Bar */}
@@ -211,34 +214,17 @@ const Shared = () => {
       />
 
       {/* Scrollable Content */}
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', padding: '20px' }}>
-        <div style={{ marginLeft: '10px' }}>
-          <FolderContainer
-            folders={folders}
-            onFolderClick={handleFolderClick}
-            currentFolderId={currentFolderId}
-            refreshFolders={fetchData}
-            itemsPerPage={itemsPerPage}
-            username={userContext?.username || ''}
-            page={'shared'}
-            searchQuery={searchQuery}
-          />
-        </div>
-
-        <Divider style={{ margin: '20px 0' }} />
-
-        {/* Files Section */}
-        <div style={{ marginLeft: '10px' }}>
-          <FileContainer
-            files={filteredFiles}
-            page="shared"
-            username={userContext?.username || ''}
-            currentFolderId={currentFolderId}
-            refreshFiles={fetchData}
-            searchQuery={searchQuery}
-          />
-        </div>
-      </Box>
+      <ContentComponent
+        page="shared"
+        folders={folders}
+        files={filteredFiles}
+        onFolderClick={handleFolderClick}
+        currentFolderId={currentFolderId}
+        fetchData={handleFetchData}
+        itemsPerPage={itemsPerPage}
+        username={userContext?.username || ''}
+        searchQuery={searchQuery}
+      />
     </Box>
   );
 };
