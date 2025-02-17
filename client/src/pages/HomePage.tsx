@@ -57,12 +57,7 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
       /* FILE TYPE */
       const fileType =
         '.' + file.fileType.substring(file.fileType.indexOf('/') + 1);
-      console.log(
-        'fileTypeFilter: ',
-        fileTypeFilter,
-        '; file.fileType: ',
-        fileType,
-      );
+
       const matchesFileType = fileTypeFilter
         ? fileType === fileTypeFilter
         : true;
@@ -134,12 +129,6 @@ const Home: React.FC<HomeProps> = ({ searchQuery: externalSearchQuery }) => {
 
   // for filtering
   useEffect(() => {
-    console.log('Current Filters:', {
-      fileTypeFilter,
-      createdAtFilter,
-      modifiedAtFilter,
-    });
-
     fetchData(currentFolderId);
   }, [fileTypeFilter, createdAtFilter, modifiedAtFilter, currentFolderId]);
 

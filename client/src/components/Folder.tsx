@@ -188,6 +188,8 @@ const Folder = (props: FolderProps) => {
               <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
               Restore
             </MenuItem>
+          ) : props.page === 'shared' ? (
+            <></>
           ) : (
             [
               <MenuItem onClick={handlePermissionsClick}>

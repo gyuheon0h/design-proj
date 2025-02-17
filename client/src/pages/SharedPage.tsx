@@ -17,6 +17,14 @@ interface SharedProps {
   searchQuery: string;
 }
 
+interface Permission {
+  id: string;
+  fileId: string;
+  userId: string;
+  role: 'owner' | 'editor' | 'viewer';
+  deletedAt: Date | null;
+}
+
 const Shared: React.FC<SharedProps> = ({
   searchQuery: externalSearchQuery,
 }) => {
@@ -41,6 +49,7 @@ const Shared: React.FC<SharedProps> = ({
   const [folders, setFolders] = useState<FolderProps[]>([]);
   const [files, setFiles] = useState<FileComponentProps[]>([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
+  const [, setTopLevelPerms] = useState<Permission[]>([]); // Might need to have to display later
   const itemsPerPage = 5;
 
   // for filtering
@@ -53,17 +62,11 @@ const Shared: React.FC<SharedProps> = ({
   // for filtering on frontend
   useEffect(() => {
     // Filter folders and files based on the selected filters
-
     const filteredFiles = files.filter((file) => {
       /* FILE TYPE */
       const fileType =
         '.' + file.fileType.substring(file.fileType.indexOf('/') + 1);
-      console.log(
-        'fileTypeFilter: ',
-        fileTypeFilter,
-        '; file.fileType: ',
-        fileType,
-      );
+
       const matchesFileType = fileTypeFilter
         ? fileType === fileTypeFilter
         : true;
@@ -156,7 +159,7 @@ const Shared: React.FC<SharedProps> = ({
 
       if (!folderId) {
         console.log('in shared page');
-        [foldersRes, filesRes] = await Promise.all([
+        const [sharedFolders, sharedFiles] = await Promise.all([
           axios.get('http://localhost:5001/api/folder/shared', {
             withCredentials: true,
           }),
@@ -164,9 +167,13 @@ const Shared: React.FC<SharedProps> = ({
             withCredentials: true,
           }),
         ]);
+        foldersRes = sharedFolders.data.folders;
+        filesRes = sharedFiles.data.files;
+        setTopLevelPerms(sharedFiles.data.permissions);
+        console.log(foldersRes, filesRes);
       } else {
         console.log('in nested shared page');
-        [foldersRes, filesRes] = await Promise.all([
+        const [sharedFolders, sharedFiles] = await Promise.all([
           axios.post(
             'http://localhost:5001/api/folder/parent',
             { folderId },
@@ -178,10 +185,12 @@ const Shared: React.FC<SharedProps> = ({
             { withCredentials: true },
           ),
         ]);
+        foldersRes = sharedFolders.data;
+        filesRes = sharedFiles.data;
       }
 
-      setFolders(foldersRes.data);
-      setFiles(filesRes.data);
+      setFolders(foldersRes);
+      setFiles(filesRes);
     } catch (error) {
       console.error('Error fetching data:', error);
     }

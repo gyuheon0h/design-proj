@@ -53,7 +53,7 @@ class PermissionModel extends BaseModel<Permission> {
     try {
       return await this.getAllByJoin(
         'File',
-        '"Permission"."fileId" = "File"."id"',
+        'baseTable."fileId" = joinTbl."id"',
         'userId',
         userId,
         true,
@@ -68,11 +68,11 @@ class PermissionModel extends BaseModel<Permission> {
   async getFoldersByUserId(userId: string): Promise<Permission[]> {
     try {
       return await this.getAllByJoin(
-        'Folder',
-        '"Permission"."fileId" = "Folder"."id"',
-        'userId',
-        userId,
-        true,
+        'Folder', // joinTable
+        'baseTable."fileId" = joinTbl."id"', // onCondition
+        'userId', // column in Permission
+        userId, // actual value
+        true, // check joinTbl.deletedAt
       );
     } catch (error) {
       console.error('Error retrieving folder permissions by userId:', error);

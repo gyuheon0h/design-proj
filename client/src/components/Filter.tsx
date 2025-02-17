@@ -28,7 +28,6 @@ const Filter: React.FC<FilterProps> = ({
 
   // for filtering
   const handleMenuItemClick = (option: string) => {
-    console.log('menu clicked, option is ', option);
     onFilterChange(label, option); // notify parent of the selected filter
     setAnchorEl(null);
   };

@@ -168,7 +168,7 @@ folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
 });
 
 /**
- * GETS all permissions pertaining to the userId
+ * GETS all folder and permissions that userId has permissions for
  */
 folderRouter.get(
   '/shared',
@@ -180,11 +180,16 @@ folderRouter.get(
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      const sharedWithUser =
-        await PermissionModel.getFilesByUserId(currentUserId);
-      return res.json(sharedWithUser);
+      const permissions =
+        await PermissionModel.getFoldersByUserId(currentUserId);
+
+      const folders = await Promise.all(
+        permissions.map((perm) => FolderModel.getById(perm.fileId)),
+      );
+
+      return res.json({ permissions, folders });
     } catch (error) {
-      console.error('Error getting deleted files:', error);
+      console.error('Error getting shared folders:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   },

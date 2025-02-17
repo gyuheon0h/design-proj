@@ -289,7 +289,7 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
 });
 
 /**
- * GETS all permissions pertaining to the userId
+ * GETS all folder and permissions that userId has permissions for
  */
 fileRouter.get('/shared', authorize, async (req: AuthenticatedRequest, res) => {
   try {
@@ -298,9 +298,12 @@ fileRouter.get('/shared', authorize, async (req: AuthenticatedRequest, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const sharedWithUser =
-      await PermissionModel.getFilesByUserId(currentUserId);
-    return res.json(sharedWithUser);
+    const permissions = await PermissionModel.getFilesByUserId(currentUserId);
+
+    const files = await Promise.all(
+      permissions.map((perm) => FileModel.getById(perm.fileId)),
+    );
+    return res.json({ files, permissions });
   } catch (error) {
     console.error('Error getting shared files:', error);
     return res.status(500).json({ error: 'Internal Server Error' });

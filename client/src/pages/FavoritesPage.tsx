@@ -80,12 +80,7 @@ const Favorites: React.FC<FavoritesProps> = ({
       /* FILE TYPE */
       const fileType =
         '.' + file.fileType.substring(file.fileType.indexOf('/') + 1);
-      console.log(
-        'fileTypeFilter: ',
-        fileTypeFilter,
-        '; file.fileType: ',
-        fileType,
-      );
+
       const matchesFileType = fileTypeFilter
         ? fileType === fileTypeFilter
         : true;
@@ -137,12 +132,6 @@ const Favorites: React.FC<FavoritesProps> = ({
 
   // for filtering
   useEffect(() => {
-    console.log('Current Filters:', {
-      fileTypeFilter,
-      createdAtFilter,
-      modifiedAtFilter,
-    });
-
     fetchData(currentFolderId);
   }, [fileTypeFilter, createdAtFilter, modifiedAtFilter, currentFolderId]);
 

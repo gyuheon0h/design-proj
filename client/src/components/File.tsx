@@ -47,7 +47,6 @@ export interface FileComponentProps {
 
 const getFileIcon = (fileType: string) => {
   fileType = fileType.toLowerCase();
-  console.log(fileType);
   switch (fileType) {
     case 'csv':
       return <TableChartIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
@@ -260,13 +259,24 @@ const FileComponent = (props: FileComponentProps) => {
           {props.page === 'trash' ? (
             <MenuItem
               onClick={() => {
-                console.log('Restoring file...');
                 handleRestoreFile();
                 handleOptionsClose();
               }}
             >
               <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
               Restore
+            </MenuItem>
+          ) : props.page === 'shared' ? (
+            <MenuItem
+              onClick={() => {
+                downloadFile(props.id, props.name);
+                handleOptionsClose();
+              }}
+            >
+              <InsertDriveFileIcon
+                sx={{ fontSize: '20px', marginRight: '9px' }}
+              />{' '}
+              Download
             </MenuItem>
           ) : (
             [
