@@ -1,14 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import SearchBar from '../components/SearchBar';
 import { FolderProps } from '../components/Folder';
-import FileContainer from '../components/FileContainer';
-import Divider from '@mui/material/Divider';
 import axios from 'axios';
-import FolderContainer from '../components/FolderContainer';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import { typography } from '../Styles';
 import { useUser } from '../context/UserContext';
 import CreateButton from '../components/CreateButton';
 import { FileComponentProps } from '../components/File';

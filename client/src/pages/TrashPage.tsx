@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react';
-import SearchBar from '../components/SearchBar';
-import FileContainer from '../components/FileContainer';
-import FolderContainer from '../components/FolderContainer';
-import Divider from '@mui/material/Divider';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import axios from 'axios';
-import { typography } from '../Styles';
 import { useUser } from '../context/UserContext';
 import { FileComponentProps } from '../components/File';
 import { FolderProps } from '../components/Folder';
@@ -152,8 +146,6 @@ const Trash = () => {
         username={userContext?.username || ''}
         searchQuery={searchQuery}
       />
-
-      <Divider sx={{ margin: '20px 0' }} />
     </Box>
   );
 };

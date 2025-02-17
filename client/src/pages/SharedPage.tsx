@@ -1,16 +1,10 @@
-import SearchBar from '../components/SearchBar';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { FolderProps } from '../components/Folder';
 import axios from 'axios';
-import FileContainer from '../components/FileContainer';
-import FolderContainer from '../components/FolderContainer';
 import { useUser } from '../context/UserContext';
 import { FileComponentProps } from '../components/File';
-import Divider from '@mui/material/Divider';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import { typography } from '../Styles';
 import { fetchFolderNames } from '../utils/helperRequests';
 import { Permission } from '../interfaces/Permission';
 import Header from '../components/HeaderComponent';
