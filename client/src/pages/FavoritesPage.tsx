@@ -37,8 +37,6 @@ const Favorites = () => {
   const [filteredFolders, setFilteredFolders] = useState<FolderProps[]>([]);
   const [filteredFiles, setFilteredFiles] = useState<FileComponentProps[]>([]);
 
-  const itemsPerPage = 5;
-
   useEffect(() => {
     fetchData(currentFolderId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -195,7 +193,6 @@ const Favorites = () => {
         onFolderClick={handleFolderClick}
         currentFolderId={currentFolderId}
         fetchData={handleFetchData}
-        itemsPerPage={itemsPerPage}
         username={userContext?.username || ''}
         searchQuery={searchQuery}
       />

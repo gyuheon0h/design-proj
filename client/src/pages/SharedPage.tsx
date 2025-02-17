@@ -30,7 +30,6 @@ const Shared = () => {
   const [files, setFiles] = useState<FileComponentProps[]>([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
   const [, setTopLevelPerms] = useState<Permission[]>([]); // Might need to have to display later
-  const itemsPerPage = 5;
 
   // for filtering
   const [fileTypeFilter, setFileTypeFilter] = useState<string | null>(null);
@@ -215,7 +214,6 @@ const Shared = () => {
         onFolderClick={handleFolderClick}
         currentFolderId={currentFolderId}
         fetchData={handleFetchData}
-        itemsPerPage={itemsPerPage}
         username={userContext?.username || ''}
         searchQuery={searchQuery}
       />

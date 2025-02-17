@@ -11,7 +11,6 @@ interface FolderContainerProps {
   onFolderClick: (folder: FolderProps) => void;
   currentFolderId: string | null;
   refreshFolders: (folderId: string | null) => void;
-  itemsPerPage: number;
   username: string;
   searchQuery: string; // New prop for search input
 }
@@ -22,10 +21,11 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   onFolderClick,
   currentFolderId,
   refreshFolders,
-  itemsPerPage,
   username,
   searchQuery, // Receive search query
 }) => {
+  const itemsPerPage = 5;
+
   const [activeStartIndex, setActiveStartIndex] = useState(0);
   const [filteredFolders, setFilteredFolders] = useState<FolderProps[]>([]);
   const [visibleFolders, setVisibleFolders] = useState<FolderProps[]>([]);

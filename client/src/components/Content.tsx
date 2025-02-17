@@ -11,7 +11,6 @@ interface ContentComponentProps {
   onFolderClick: (folder: any) => void;
   currentFolderId: string | null;
   fetchData: () => void;
-  itemsPerPage: number;
   username: string;
   searchQuery: string;
 }
@@ -23,7 +22,6 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
   onFolderClick,
   currentFolderId,
   fetchData,
-  itemsPerPage,
   username,
   searchQuery,
 }) => {
@@ -43,7 +41,6 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
           onFolderClick={onFolderClick}
           currentFolderId={currentFolderId}
           refreshFolders={fetchData}
-          itemsPerPage={itemsPerPage}
           username={username}
           searchQuery={searchQuery}
         />

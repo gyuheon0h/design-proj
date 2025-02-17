@@ -142,7 +142,6 @@ const Trash = () => {
         onFolderClick={() => alert('You cannot view folders in the trash bin.')}
         currentFolderId={null}
         fetchData={fetchData}
-        itemsPerPage={5}
         username={userContext?.username || ''}
         searchQuery={searchQuery}
       />

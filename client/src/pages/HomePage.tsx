@@ -29,7 +29,6 @@ const Home = () => {
   const [folders, setFolders] = useState<FolderProps[]>([]);
   const [files, setFiles] = useState<FileComponentProps[]>([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
-  const itemsPerPage = 5;
 
   // for filtering
   const [fileTypeFilter, setFileTypeFilter] = useState<string | null>(null);
@@ -189,7 +188,6 @@ const Home = () => {
         onFolderClick={handleFolderClick}
         currentFolderId={currentFolderId}
         fetchData={handleFetchData}
-        itemsPerPage={itemsPerPage}
         username={userContext?.username || ''}
         searchQuery={searchQuery}
       />
