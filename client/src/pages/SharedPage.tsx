@@ -12,14 +12,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { typography } from '../Styles';
 import { fetchFolderNames } from '../utils/helperRequests';
-
-interface Permission {
-  id: string;
-  fileId: string;
-  userId: string;
-  role: 'owner' | 'editor' | 'viewer';
-  deletedAt: Date | null;
-}
+import { Permission } from '../interfaces/Permission';
 
 const Shared = () => {
   const location = useLocation();
