@@ -18,7 +18,7 @@ import ContentComponent from '../components/Content';
 const Shared = () => {
   const navigate = useNavigate();
   const userContext = useUser();
-  const { folderPath, currentFolderId } = useFolderPath('/home');
+  const { folderPath, currentFolderId } = useFolderPath('/shared');
 
   // Local state for search query
   const [searchQuery, setSearchQuery] = useState('');
