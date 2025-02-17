@@ -48,42 +48,29 @@ export interface FileComponentProps {
 }
 
 const getFileIcon = (fileType: string) => {
-  const mimeType = fileType.trim().toLowerCase();
+  const lowerCaseType = fileType.trim().toLowerCase();
+  const mimeType = lowerCaseType.split('/')[0];
 
   switch (mimeType) {
-    case 'text/csv':
-      return <TableChartIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'text/plain':
+    case 'text':
       return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'application/pdf':
+    case 'application':
+      if (lowerCaseType === 'application/json')
+        return (
+          <EditNoteIcon
+            sx={{ fontSize: 30, marginRight: '10px', color: 'blue' }}
+          />
+        );
       return (
         <InsertDriveFileIcon
           sx={{ fontSize: 30, marginRight: '10px', color: 'red' }}
         />
       );
-    case 'application/json':
-      return (
-        <EditNoteIcon
-          sx={{ fontSize: 30, marginRight: '10px', color: 'blue' }}
-        />
-      );
-    case 'application/zip':
-      return (
-        <FolderZipIcon
-          sx={{ fontSize: 30, marginRight: '10px', color: 'red' }}
-        />
-      );
-    case 'image/jpeg':
-    case 'image/png':
-    case 'image/jpg':
-    case 'image/svg+xml':
+    case 'image':
       return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'audio/mpeg':
-    case 'audio/ogg':
-    case 'audio/mp3':
+    case 'audio':
       return <MusicNoteIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'video/mp4':
-    case 'webm':
+    case 'video':
       return <MovieIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
     default:
       return <InsertDriveFileIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
