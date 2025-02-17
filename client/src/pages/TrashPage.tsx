@@ -6,7 +6,7 @@ import { FileComponentProps } from '../components/File';
 import { FolderProps } from '../components/Folder';
 import Header from '../components/HeaderComponent';
 import ContentComponent from '../components/Content';
-import { applyFileFilters } from '../utils/helperRequests';
+import { applyFilters } from '../utils/helperRequests';
 
 const Trash = () => {
   const userContext = useUser();
@@ -26,7 +26,7 @@ const Trash = () => {
   // for filtering on frontend
   useEffect(() => {
     // Filter folders and files based on the selected filters
-    const filteredFiles = applyFileFilters(
+    const filteredFiles = applyFilters(
       files,
       fileTypeFilter,
       createdAtFilter,

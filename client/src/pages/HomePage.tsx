@@ -7,7 +7,7 @@ import CreateButton from '../components/CreateButton';
 import { useUser } from '../context/UserContext';
 import { FileComponentProps } from '../components/File';
 import {
-  applyFileFilters,
+  applyFilters,
   fetchFolderNames,
   useFolderPath,
 } from '../utils/helperRequests';
@@ -35,7 +35,7 @@ const Home = () => {
   // for filtering on frontend
   useEffect(() => {
     // Filter folders and files based on the selected filters
-    const filteredFiles = applyFileFilters(
+    const filteredFiles = applyFilters(
       files,
       fileTypeFilter,
       createdAtFilter,

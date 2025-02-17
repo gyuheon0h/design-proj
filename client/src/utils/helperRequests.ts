@@ -85,7 +85,7 @@ export async function fetchUserNames(
   }
 }
 
-export function applyFileFilters(
+export function applyFilters(
   files: FileComponentProps[],
   fileTypeFilter: string | null,
   createdAtFilter: string | null,
