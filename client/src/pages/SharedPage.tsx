@@ -5,26 +5,22 @@ import axios from 'axios';
 import { useUser } from '../context/UserContext';
 import { FileComponentProps } from '../components/File';
 import Box from '@mui/material/Box';
-import { applyFileFilters, fetchFolderNames } from '../utils/helperRequests';
+import {
+  applyFileFilters,
+  fetchFolderNames,
+  useFolderPath,
+} from '../utils/helperRequests';
 import { Permission } from '../interfaces/Permission';
 import Header from '../components/HeaderComponent';
 import ContentComponent from '../components/Content';
 
 const Shared = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const userContext = useUser();
+  const { folderPath, currentFolderId } = useFolderPath('/home');
 
   // Local state for search query
   const [searchQuery, setSearchQuery] = useState('');
-
-  const folderPath = location.pathname
-    .replace('/shared', '')
-    .split('/')
-    .filter(Boolean);
-  const currentFolderId = folderPath.length
-    ? folderPath[folderPath.length - 1]
-    : null;
 
   const [folders, setFolders] = useState<FolderProps[]>([]);
   const [files, setFiles] = useState<FileComponentProps[]>([]);

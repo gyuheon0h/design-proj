@@ -6,25 +6,21 @@ import Box from '@mui/material/Box';
 import { useUser } from '../context/UserContext';
 import CreateButton from '../components/CreateButton';
 import { FileComponentProps } from '../components/File';
-import { applyFileFilters, fetchFolderNames } from '../utils/helperRequests';
+import {
+  applyFileFilters,
+  fetchFolderNames,
+  useFolderPath,
+} from '../utils/helperRequests';
 import Header from '../components/HeaderComponent';
 import ContentComponent from '../components/Content';
 
 const Favorites = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const userContext = useUser();
+  const { folderPath, currentFolderId } = useFolderPath('/favorites');
 
   // Local state for search query to allow manual search as well
   const [searchQuery, setSearchQuery] = useState('');
-
-  const folderPath = location.pathname
-    .replace('/favorites', '')
-    .split('/')
-    .filter(Boolean);
-  const currentFolderId = folderPath.length
-    ? folderPath[folderPath.length - 1]
-    : null;
 
   const [folders, setFolders] = useState<FolderProps[]>([]);
   const [files, setFiles] = useState<FileComponentProps[]>([]);

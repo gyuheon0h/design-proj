@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { FileComponentProps } from '../components/File';
+import { useLocation } from 'react-router-dom';
 
 export async function getUsernameById(id: string): Promise<string> {
   try {
@@ -130,4 +131,16 @@ export function applyFileFilters(
 
     return matchesFileType && matchesCreatedAt && matchesModifiedAt;
   });
+}
+
+export function useFolderPath(basePath: string) {
+  const location = useLocation();
+  const folderPath = location.pathname
+    .replace(basePath, '')
+    .split('/')
+    .filter(Boolean);
+  const currentFolderId = folderPath.length
+    ? folderPath[folderPath.length - 1]
+    : null;
+  return { folderPath, currentFolderId };
 }
