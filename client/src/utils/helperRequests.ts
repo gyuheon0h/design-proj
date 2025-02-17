@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { FileComponentProps } from '../components/File';
 
 export async function getUsernameById(id: string): Promise<string> {
   try {
@@ -81,4 +82,52 @@ export async function fetchUserNames(
     console.error('Error fetching user names:', error);
     return {};
   }
+}
+
+export function applyFileFilters(
+  files: FileComponentProps[],
+  fileTypeFilter: string | null,
+  createdAtFilter: string | null,
+  modifiedAtFilter: string | null,
+): FileComponentProps[] {
+  return files.filter((file) => {
+    const fileType =
+      '.' + file.fileType.substring(file.fileType.indexOf('/') + 1);
+    const matchesFileType = fileTypeFilter ? fileType === fileTypeFilter : true;
+
+    const now = new Date();
+    let createdStartDate: Date | null = null;
+    if (createdAtFilter === 'Today') {
+      createdStartDate = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+      );
+    } else if (createdAtFilter === 'Last Week') {
+      createdStartDate = new Date();
+      createdStartDate.setDate(now.getDate() - 7);
+    } else if (createdAtFilter === 'Last Month') {
+      createdStartDate = new Date();
+      createdStartDate.setMonth(now.getMonth() - 1);
+    }
+    const fileCreatedAt = new Date(file.createdAt);
+    const matchesCreatedAt = createdStartDate
+      ? fileCreatedAt >= createdStartDate
+      : true;
+
+    let startDate: Date | null = null;
+    if (modifiedAtFilter === 'Today') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    } else if (modifiedAtFilter === 'Last Week') {
+      startDate = new Date();
+      startDate.setDate(now.getDate() - 7);
+    } else if (modifiedAtFilter === 'Last Month') {
+      startDate = new Date();
+      startDate.setMonth(now.getMonth() - 1);
+    }
+    const fileModifiedAt = new Date(file.lastModifiedAt);
+    const matchesModifiedAt = startDate ? fileModifiedAt >= startDate : true;
+
+    return matchesFileType && matchesCreatedAt && matchesModifiedAt;
+  });
 }
