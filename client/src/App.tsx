@@ -14,24 +14,16 @@ function App() {
   const shouldShowDrawer =
     location.pathname !== '/' && location.pathname !== '/register';
 
-  const [searchQuery, setSearchQuery] = useState(''); //TODO: what is this searchQuery doing here
-
   return (
     <div style={{ display: 'flex', overflowY: 'scroll' }}>
       {shouldShowDrawer && <NavigationDrawer />}
       <div style={{ flexGrow: 1 }}>
         <Routes>
           <Route path="/" element={<Login />} />
-          <Route path="/home/*?" element={<Home searchQuery={searchQuery} />} />
-          <Route
-            path="/favorites/*?"
-            element={<Favorites searchQuery={searchQuery} />}
-          />
-          <Route
-            path="/shared/*?"
-            element={<Shared searchQuery={searchQuery} />}
-          />
-          <Route path="/trash" element={<Trash searchQuery={searchQuery} />} />
+          <Route path="/home/*?" element={<Home />} />
+          <Route path="/favorites/*?" element={<Favorites />} />
+          <Route path="/shared/*?" element={<Shared />} />
+          <Route path="/trash" element={<Trash />} />
           <Route path="/register" element={<Register />} />
         </Routes>
       </div>

@@ -11,18 +11,11 @@ import { useUser } from '../context/UserContext';
 import { FileComponentProps } from '../components/File';
 import { FolderProps } from '../components/Folder';
 
-interface TrashProps {
-  searchQuery: string;
-}
-
-const Trash: React.FC<TrashProps> = ({ searchQuery: externalSearchQuery }) => {
+const Trash = () => {
   const userContext = useUser();
 
   // Local state for search query
-  const [localSearchQuery, setLocalSearchQuery] = useState('');
-
-  // Use external search query if provided, otherwise use local search query
-  const searchQuery = externalSearchQuery || localSearchQuery;
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [folders, setFolders] = useState<FolderProps[]>([]);
   const [files, setFiles] = useState<FileComponentProps[]>([]);
@@ -127,7 +120,7 @@ const Trash: React.FC<TrashProps> = ({ searchQuery: externalSearchQuery }) => {
 
   // Handle search input
   const handleSearch = (query: string) => {
-    setLocalSearchQuery(query);
+    setSearchQuery(query);
   };
 
   return (

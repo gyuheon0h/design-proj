@@ -13,10 +13,6 @@ import Typography from '@mui/material/Typography';
 import { typography } from '../Styles';
 import { fetchFolderNames } from '../utils/helperRequests';
 
-interface SharedProps {
-  searchQuery: string;
-}
-
 interface Permission {
   id: string;
   fileId: string;
@@ -25,18 +21,13 @@ interface Permission {
   deletedAt: Date | null;
 }
 
-const Shared: React.FC<SharedProps> = ({
-  searchQuery: externalSearchQuery,
-}) => {
+const Shared = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const userContext = useUser();
 
   // Local state for search query
-  const [localSearchQuery, setLocalSearchQuery] = useState('');
-
-  // Use external search query if provided, otherwise use local search query
-  const searchQuery = externalSearchQuery || localSearchQuery;
+  const [searchQuery, setSearchQuery] = useState('');
 
   const folderPath = location.pathname
     .replace('/shared', '')
@@ -207,7 +198,7 @@ const Shared: React.FC<SharedProps> = ({
 
   // Handle search input
   const handleSearch = (query: string) => {
-    setLocalSearchQuery(query);
+    setSearchQuery(query);
   };
 
   return (
