@@ -6,7 +6,7 @@ import FileContainer from '../components/FileContainer';
 
 interface ContentComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
-  folders: any[];
+  folders: any[]; //TODO: avoid using any when possible...
   files: any[];
   onFolderClick: (folder: any) => void;
   currentFolderId: string | null;

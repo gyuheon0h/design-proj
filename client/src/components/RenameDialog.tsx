@@ -6,7 +6,6 @@ import {
   DialogActions,
   TextField,
   Button,
-  Box,
 } from '@mui/material';
 
 interface RenameDialogProps {
