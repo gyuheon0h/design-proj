@@ -58,7 +58,18 @@ const Filter: React.FC<FilterProps> = ({
 
       <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
         {options.map((option, index) => (
-          <MenuItem key={index} onClick={() => handleMenuItemClick(option)}>
+          <MenuItem
+            key={index}
+            onClick={() => handleMenuItemClick(option)}
+            // Make reset button red and bold
+            sx={{
+              color: option === 'Reset' ? 'red' : 'inherit',
+              fontWeight: option === 'Reset' ? 'bold' : 'normal',
+              '&:hover': {
+                backgroundColor: option === 'Reset' ? '#ffcccc' : 'lightgrey',
+              },
+            }}
+          >
             {option}
           </MenuItem>
         ))}
