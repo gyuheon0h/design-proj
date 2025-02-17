@@ -81,6 +81,24 @@ fileRouter.post(
   },
 );
 
+// Bypass auth for shared page. Need to add security here, maybe check permissions table
+fileRouter.post('/folder/shared', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { folderId } = req.body;
+
+    const files = await FileModel.getFilesByFolder(folderId || null);
+
+    const sortedFiles = files.sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return res.json(sortedFiles);
+  } catch (error) {
+    console.error('Error getting files by folder:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 /**
  * GET /api/files/favorites/
  * Route to get favorited files owned by a certain user (ownerId).

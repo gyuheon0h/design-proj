@@ -22,7 +22,7 @@ folderRouter.post(
       const userId = req.user.userId;
 
       // Handle null case properly
-      const subfolders = await FolderModel.getSubfolders(
+      const subfolders = await FolderModel.getSubfoldersByOwner(
         userId,
         folderId || null,
       );
@@ -41,6 +41,25 @@ folderRouter.post(
     }
   },
 );
+
+// Bypassing auth for now. Will need to add back in later by checking permissions table
+folderRouter.post('/parent/shared', async (req, res) => {
+  try {
+    const { folderId } = req.body; // Get from request body
+
+    const subfolders = await FolderModel.getSubfolders(folderId || null);
+
+    // sort in descending order
+    const sortedSubfolders = subfolders.sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return res.json(sortedSubfolders);
+  } catch (error) {
+    console.error('Error getting subfolders:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 /**
  * POST /api/folders/create

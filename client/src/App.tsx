@@ -28,7 +28,7 @@ function App() {
             element={<Favorites searchQuery={searchQuery} />}
           />
           <Route
-            path="/shared"
+            path="/shared/*?"
             element={<Shared searchQuery={searchQuery} />}
           />
           <Route path="/trash" element={<Trash searchQuery={searchQuery} />} />

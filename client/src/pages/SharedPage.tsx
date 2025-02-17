@@ -175,12 +175,12 @@ const Shared: React.FC<SharedProps> = ({
         console.log('in nested shared page');
         const [sharedFolders, sharedFiles] = await Promise.all([
           axios.post(
-            'http://localhost:5001/api/folder/parent',
+            'http://localhost:5001/api/folder/parent/shared',
             { folderId },
             { withCredentials: true },
           ),
           axios.post(
-            'http://localhost:5001/api/file/folder',
+            'http://localhost:5001/api/file/folder/shared',
             { folderId },
             { withCredentials: true },
           ),
@@ -191,6 +191,7 @@ const Shared: React.FC<SharedProps> = ({
 
       setFolders(foldersRes);
       setFiles(filesRes);
+      console.log(foldersRes, filesRes);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
