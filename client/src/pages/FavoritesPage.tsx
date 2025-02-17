@@ -14,22 +14,13 @@ import CreateButton from '../components/CreateButton';
 import { FileComponentProps } from '../components/File';
 import { fetchFolderNames } from '../utils/helperRequests';
 
-interface FavoritesProps {
-  searchQuery: string;
-}
-
-const Favorites: React.FC<FavoritesProps> = ({
-  searchQuery: externalSearchQuery,
-}) => {
+const Favorites = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const userContext = useUser();
 
   // Local state for search query to allow manual search as well
-  const [localSearchQuery, setLocalSearchQuery] = useState('');
-
-  // Use external search query if provided, otherwise use local search query
-  const searchQuery = externalSearchQuery || localSearchQuery;
+  const [searchQuery, setSearchQuery] = useState('');
 
   const folderPath = location.pathname
     .replace('/favorites', '')
@@ -180,7 +171,7 @@ const Favorites: React.FC<FavoritesProps> = ({
 
   // Handle local search input
   const handleSearch = (query: string) => {
-    setLocalSearchQuery(query);
+    setSearchQuery(query);
   };
 
   return (
