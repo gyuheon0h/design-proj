@@ -62,30 +62,6 @@ export async function fetchFolderNames(
   }
 }
 
-//TODO: @gyuheon this was for ur permissions dialog but idk if u ended up using it... should we delete this?
-
-//given a list of userIds, return all the userNames associated
-export async function fetchUserNames(
-  userIds: string[],
-): Promise<{ [key: string]: string }> {
-  try {
-    const userRequests = userIds.map((id) =>
-      axios.get(`http://localhost:5001/api/user/`, { params: { id } }),
-    );
-    const userResponses = await Promise.all(userRequests);
-
-    const userNames: { [key: string]: string } = {};
-    userIds.forEach((id, index) => {
-      userNames[id] = userResponses[index].data?.user?.username || '';
-    });
-
-    return userNames;
-  } catch (error) {
-    console.error('Error fetching user names:', error);
-    return {};
-  }
-}
-
 export function applyFilters(
   files: FileComponentProps[],
   fileTypeFilter: string | null,
