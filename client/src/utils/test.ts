@@ -1,25 +1,25 @@
-// Custom hook for filter state management
-export function useFilters() {
-  //   const [filters, setFilters] = useState({
-  //     fileType: null,
-  //     createdAt: null,
-  //     modifiedAt: null,
-  //   });
-  //   const setFileTypeFilter = (type) =>
-  //     setFilters((prev) => ({ ...prev, fileType: type }));
-  //   const setCreatedAtFilter = (date) =>
-  //     setFilters((prev) => ({ ...prev, createdAt: date }));
-  //   const setModifiedAtFilter = (date) =>
-  //     setFilters((prev) => ({ ...prev, modifiedAt: date }));
-  //   return {
-  //     filters,
-  //     setFileTypeFilter,
-  //     setCreatedAtFilter,
-  //     setModifiedAtFilter,
-  //   };
-}
+// // Custom hook for filter state management
+// export function useFilters() {
+//   const [filters, setFilters] = useState({
+//     fileType: null,
+//     createdAt: null,
+//     modifiedAt: null,
+//   });
+//   const setFileTypeFilter = (type) =>
+//     setFilters((prev) => ({ ...prev, fileType: type }));
+//   const setCreatedAtFilter = (date) =>
+//     setFilters((prev) => ({ ...prev, createdAt: date }));
+//   const setModifiedAtFilter = (date) =>
+//     setFilters((prev) => ({ ...prev, modifiedAt: date }));
+//   return {
+//     filters,
+//     setFileTypeFilter,
+//     setCreatedAtFilter,
+//     setModifiedAtFilter,
+//   };
+// }
 
-// Utility for filtering files based on provided filters
+// // Utility for filtering files based on provided filters
 // export function filterFiles(files, filters) {
 //   return files.filter((file) => {
 //     const matchesFileType = filters.fileType
@@ -37,3 +37,5 @@ export function useFilters() {
 //     return matchesFileType && matchesCreatedAt && matchesModifiedAt;
 //   });
 // }
+
+export {};

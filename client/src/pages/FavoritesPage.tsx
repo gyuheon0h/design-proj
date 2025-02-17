@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FolderProps } from '../components/Folder';
 import axios from 'axios';
 import Box from '@mui/material/Box';
@@ -9,6 +9,7 @@ import { FileComponentProps } from '../components/File';
 import {
   applyFilters,
   fetchFolderNames,
+  useFilters,
   useFolderPath,
 } from '../utils/helperRequests';
 import Header from '../components/HeaderComponent';
@@ -27,15 +28,32 @@ const Favorites = () => {
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
 
   // for filtering
-  const [fileTypeFilter, setFileTypeFilter] = useState<string | null>(null);
-  const [createdAtFilter, setCreatedAtFilter] = useState<string | null>(null);
-  const [modifiedAtFilter, setModifiedAtFilter] = useState<string | null>(null);
-  const [filteredFiles, setFilteredFiles] = useState<FileComponentProps[]>([]);
+  const {
+    filters,
+    setFileTypeFilter,
+    setCreatedAtFilter,
+    setModifiedAtFilter,
+    filteredFiles,
+    setFilteredFiles,
+  } = useFilters();
 
   useEffect(() => {
     fetchData(currentFolderId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFolderId]);
+  }, [currentFolderId, filters]);
+
+  // for filtering
+  useEffect(() => {
+    // Filter folders and files based on the selected filters
+    setFilteredFiles(
+      applyFilters(
+        files,
+        filters.fileType,
+        filters.createdAt,
+        filters.modifiedAt,
+      ),
+    );
+  }, [files, filters, setFilteredFiles]);
 
   useEffect(() => {
     const fetchNames = async () => {
@@ -52,26 +70,8 @@ const Favorites = () => {
     fetchNames();
   }, [folderPath]); // Separate effect for folder names
 
-  // for filtering
-  useEffect(() => {
-    // Filter folders and files based on the selected filters
-
-    const filteredFiles = applyFilters(
-      files,
-      fileTypeFilter,
-      createdAtFilter,
-      modifiedAtFilter,
-    );
-
-    setFilteredFiles(filteredFiles);
-  }, [folders, files, fileTypeFilter, createdAtFilter, modifiedAtFilter]);
-
-  // for filtering
-  useEffect(() => {
-    fetchData(currentFolderId);
-  }, [fileTypeFilter, createdAtFilter, modifiedAtFilter, currentFolderId]);
-
   const fetchData = async (folderId: string | null) => {
+    //TODO: missing query params...
     try {
       let foldersRes, filesRes;
 

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { FileComponentProps } from '../components/File';
 import { useLocation } from 'react-router-dom';
+import { useState } from 'react';
 
 export async function getUsernameById(id: string): Promise<string> {
   try {
@@ -143,4 +144,38 @@ export function useFolderPath(basePath: string) {
     ? folderPath[folderPath.length - 1]
     : null;
   return { folderPath, currentFolderId };
+}
+
+type FilterState = {
+  fileType: string | null;
+  createdAt: string | null;
+  modifiedAt: string | null;
+};
+
+export function useFilters() {
+  const [filters, setFilters] = useState<FilterState>({
+    fileType: null,
+    createdAt: null,
+    modifiedAt: null,
+  });
+
+  const setFileTypeFilter = (type: string | null) =>
+    setFilters((prev) => ({ ...prev, fileType: type }));
+
+  const setCreatedAtFilter = (date: string | null) =>
+    setFilters((prev) => ({ ...prev, createdAt: date }));
+
+  const setModifiedAtFilter = (date: string | null) =>
+    setFilters((prev) => ({ ...prev, modifiedAt: date }));
+
+  const [filteredFiles, setFilteredFiles] = useState<FileComponentProps[]>([]);
+
+  return {
+    filters,
+    setFileTypeFilter,
+    setCreatedAtFilter,
+    setModifiedAtFilter,
+    filteredFiles,
+    setFilteredFiles,
+  };
 }

@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { FolderProps } from '../components/Folder';
 import axios from 'axios';
@@ -8,6 +8,7 @@ import Box from '@mui/material/Box';
 import {
   applyFilters,
   fetchFolderNames,
+  useFilters,
   useFolderPath,
 } from '../utils/helperRequests';
 import { Permission } from '../interfaces/Permission';
@@ -28,28 +29,32 @@ const Shared = () => {
   const [, setTopLevelPerms] = useState<Permission[]>([]); // Might need to have to display later
 
   // for filtering
-  const [fileTypeFilter, setFileTypeFilter] = useState<string | null>(null);
-  const [createdAtFilter, setCreatedAtFilter] = useState<string | null>(null);
-  const [modifiedAtFilter, setModifiedAtFilter] = useState<string | null>(null);
-  const [filteredFiles, setFilteredFiles] = useState<FileComponentProps[]>([]);
-
-  // for filtering on frontend
-  useEffect(() => {
-    // Filter folders and files based on the selected filters
-    const filteredFiles = applyFilters(
-      files,
-      fileTypeFilter,
-      createdAtFilter,
-      modifiedAtFilter,
-    );
-
-    setFilteredFiles(filteredFiles);
-  }, [folders, files, fileTypeFilter, createdAtFilter, modifiedAtFilter]);
+  const {
+    filters,
+    setFileTypeFilter,
+    setCreatedAtFilter,
+    setModifiedAtFilter,
+    filteredFiles,
+    setFilteredFiles,
+  } = useFilters();
 
   useEffect(() => {
     fetchData(currentFolderId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFolderId]);
+  }, [currentFolderId, filters]);
+
+  // for filtering on frontend
+  useEffect(() => {
+    // Filter folders and files based on the selected filters
+    setFilteredFiles(
+      applyFilters(
+        files,
+        filters.fileType,
+        filters.createdAt,
+        filters.modifiedAt,
+      ),
+    );
+  }, [files, filters, setFilteredFiles]);
 
   useEffect(() => {
     const fetchNames = async () => {
@@ -66,22 +71,12 @@ const Shared = () => {
     fetchNames();
   }, [folderPath]);
 
-  // for filtering
-  useEffect(() => {
-    console.log('Current Filters:', {
-      fileTypeFilter,
-      createdAtFilter,
-      modifiedAtFilter,
-    });
-
-    fetchData(currentFolderId);
-  }, [fileTypeFilter, createdAtFilter, modifiedAtFilter, currentFolderId]);
-
-  useEffect(() => {
-    fetchData(currentFolderId);
-    fetchFolderNames(folderPath);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFolderId]);
+  //TODO: wat is this doing
+  // useEffect(() => {
+  //   fetchData(currentFolderId);
+  //   fetchFolderNames(folderPath);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [currentFolderId]);
 
   const fetchData = async (folderId: string | null) => {
     try {

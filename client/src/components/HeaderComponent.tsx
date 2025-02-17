@@ -11,9 +11,9 @@ interface HeaderProps {
   folderNames: { [key: string]: string };
   handleBreadcrumbClick: (index: number) => void;
   handleSearch: (query: string) => void;
-  setFileTypeFilter: React.Dispatch<React.SetStateAction<string | null>>;
-  setCreatedAtFilter: React.Dispatch<React.SetStateAction<string | null>>;
-  setModifiedAtFilter: React.Dispatch<React.SetStateAction<string | null>>;
+  setFileTypeFilter: (value: string | null) => void;
+  setCreatedAtFilter: (value: string | null) => void;
+  setModifiedAtFilter: (value: string | null) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({

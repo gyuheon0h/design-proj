@@ -6,7 +6,7 @@ import { FileComponentProps } from '../components/File';
 import { FolderProps } from '../components/Folder';
 import Header from '../components/HeaderComponent';
 import ContentComponent from '../components/Content';
-import { applyFilters } from '../utils/helperRequests';
+import { applyFilters, useFilters } from '../utils/helperRequests';
 
 const Trash = () => {
   const userContext = useUser();
@@ -18,34 +18,32 @@ const Trash = () => {
   const [files, setFiles] = useState<FileComponentProps[]>([]);
 
   // for filtering
-  const [fileTypeFilter, setFileTypeFilter] = useState<string | null>(null);
-  const [createdAtFilter, setCreatedAtFilter] = useState<string | null>(null);
-  const [modifiedAtFilter, setModifiedAtFilter] = useState<string | null>(null);
-  const [filteredFiles, setFilteredFiles] = useState<FileComponentProps[]>([]);
+  const {
+    filters,
+    setFileTypeFilter,
+    setCreatedAtFilter,
+    setModifiedAtFilter,
+    filteredFiles,
+    setFilteredFiles,
+  } = useFilters();
+
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   // for filtering on frontend
   useEffect(() => {
     // Filter folders and files based on the selected filters
-    const filteredFiles = applyFilters(
-      files,
-      fileTypeFilter,
-      createdAtFilter,
-      modifiedAtFilter,
+    setFilteredFiles(
+      applyFilters(
+        files,
+        filters.fileType,
+        filters.createdAt,
+        filters.modifiedAt,
+      ),
     );
-
-    setFilteredFiles(filteredFiles);
-  }, [folders, files, fileTypeFilter, createdAtFilter, modifiedAtFilter]);
-
-  // for filtering
-  useEffect(() => {
-    console.log('Current Filters:', {
-      fileTypeFilter,
-      createdAtFilter,
-      modifiedAtFilter,
-    });
-
-    fetchData();
-  }, [fileTypeFilter, createdAtFilter, modifiedAtFilter]);
+  }, [files, filters, setFilteredFiles]);
 
   const fetchData = async () => {
     try {
