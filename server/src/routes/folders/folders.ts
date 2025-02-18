@@ -429,4 +429,39 @@ folderRouter.patch('/rename/:folderId', authorize, async (req, res) => {
   }
 });
 
+/**
+ * PATCH /api/files/move/:folderId
+ * Route to move a folder (updates parentFolderId)
+ */
+folderRouter.patch('/move/:folderId', authorize, async (req, res) => {
+  try {
+    const { parentFolderId } = req.body;
+    if (!parentFolderId) {
+      return res
+        .status(400)
+        .json({ message: 'No new parentFolderId provided' });
+    }
+
+    const userId = (req as any).user.userId;
+    const { fileId } = req.params;
+    const file = await FolderModel.getById(fileId);
+
+    if (!file) {
+      return res.status(404).json({ message: 'Folder not found' });
+    }
+
+    const fileMetadata = await FolderModel.updateFolderMetadata(fileId, {
+      parentFolder: parentFolderId,
+    });
+
+    return res.status(200).json({
+      message: 'Folder moved successfully',
+      file: fileMetadata,
+    });
+  } catch (error) {
+    console.error('Folder move error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 export default folderRouter;

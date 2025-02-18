@@ -307,6 +307,41 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
 });
 
 /**
+ * PATCH /api/files/move/:fileId
+ * Route to move a file (updates parentFolderId)
+ */
+fileRouter.patch('/move/:fileId', authorize, async (req, res) => {
+  try {
+    const { parentFolderId } = req.body;
+    if (!parentFolderId) {
+      return res
+        .status(400)
+        .json({ message: 'No new parentFolderId provided' });
+    }
+
+    const userId = (req as any).user.userId;
+    const { fileId } = req.params;
+    const file = await FileModel.getById(fileId);
+
+    if (!file) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    const fileMetadata = await FileModel.updateFileMetadata(fileId, {
+      parentFolder: parentFolderId,
+    });
+
+    return res.status(200).json({
+      message: 'File moved successfully',
+      file: fileMetadata,
+    });
+  } catch (error) {
+    console.error('File move error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+/**
  * GETS all folder and permissions that userId has permissions for
  */
 fileRouter.get('/shared', authorize, async (req: AuthenticatedRequest, res) => {
