@@ -110,7 +110,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
           <Fab
             color="primary"
             aria-label="create"
-            onClick={(e) => setAnchorEl(e.currentTarget)}
+            onClick={handleMenuOpen}
             sx={{
               position: 'fixed',
               bottom: '48px',
@@ -127,7 +127,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
       <Menu
         anchorEl={anchorEl}
         open={menuOpen && !didDrag}
-        onClose={() => setAnchorEl(null)}
+        onClose={() => handleMenuClose}
       >
         <MenuItem
           onClick={() => {

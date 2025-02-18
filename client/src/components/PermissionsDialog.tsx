@@ -16,29 +16,14 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
+import { User } from '../interfaces/User';
+import { Permission } from '../interfaces/Permission';
 
 interface PermissionDialogProps {
   open: boolean;
   onClose: () => void;
   fileId: string | null;
   folderId: string | null;
-}
-
-interface Permission {
-  id: string;
-  fileId: string; // or folderId if it's a folder
-  userId: string;
-  role: 'owner' | 'editor' | 'viewer';
-  deletedAt: Date | null;
-}
-
-interface User {
-  id: string;
-  username: string;
-  passwordHash: string;
-  createdAt: Date;
-  deletedAt?: Date | null;
-  email: string;
 }
 
 const getAllUsers = async (): Promise<User[]> => {

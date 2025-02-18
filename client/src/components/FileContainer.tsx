@@ -2,19 +2,7 @@ import React, { useState, useEffect } from 'react';
 import FileComponent from './File';
 import axios from 'axios';
 import { getUsernameById } from '../utils/helperRequests';
-
-interface File {
-  id: string;
-  name: string;
-  owner: string;
-  createdAt: Date;
-  lastModifiedBy: string | null;
-  lastModifiedAt: Date;
-  parentFolder: string | null;
-  gcsKey: string;
-  fileType: string;
-  isFavorited: boolean;
-}
+import { File } from '../interfaces/File';
 
 interface FileContainerProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
