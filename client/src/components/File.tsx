@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Card,
   Typography,
@@ -13,7 +13,6 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
 import RestoreIcon from '@mui/icons-material/Restore';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
-import FolderZipIcon from '@mui/icons-material/FolderZip';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
@@ -21,12 +20,16 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import ImageIcon from '@mui/icons-material/Image';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import MovieIcon from '@mui/icons-material/Movie';
-import TableChartIcon from '@mui/icons-material/TableChart';
-import { getUsernameById, downloadFile } from '../utils/helperRequests';
+import {
+  getUsernameById,
+  downloadFile,
+  getImageBlobGcskey,
+} from '../utils/helperRequests';
 import RenameFileDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import ImageViewerDialog from './ImageViewerDialog';
 import { colors } from '../Styles';
 
 export interface FileComponentProps {
@@ -83,6 +86,10 @@ const FileComponent = (props: FileComponentProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  // For the image viewer
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+  const [imageSrc, setImageSrc] = useState('');
+  const imageCache = useRef(new Map<string, string>()); // Woah this speeds up reopens by a LOT
 
   useEffect(() => {
     const fetchOwnerUserName = async () => {
@@ -117,6 +124,35 @@ const FileComponent = (props: FileComponentProps) => {
   }, [props.lastModifiedBy]);
 
   const open = Boolean(anchorEl);
+
+  const handleImageClick = async () => {
+    if (!props.fileType.startsWith('image/')) return;
+
+    // Check if image is already cached
+    if (imageCache.current.has(props.gcsKey)) {
+      setImageSrc(imageCache.current.get(props.gcsKey) as string);
+      setIsImageViewerOpen(true);
+      return;
+    }
+
+    try {
+      const imageBlob = await getImageBlobGcskey(props.gcsKey, props.fileType);
+      const objectUrl = URL.createObjectURL(imageBlob);
+
+      // Store in cache
+      imageCache.current.set(props.gcsKey, objectUrl);
+
+      setImageSrc(objectUrl);
+      setIsImageViewerOpen(true);
+    } catch (err) {
+      console.error('Error fetching image from server:', err);
+      alert('Error fetching image');
+    }
+  };
+
+  const handleCloseImageViewer = () => {
+    setIsImageViewerOpen(false);
+  };
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -167,6 +203,11 @@ const FileComponent = (props: FileComponentProps) => {
           '&:hover': {
             backgroundColor: '#e0e0e0',
           },
+        }}
+        onClick={() => {
+          if (props.fileType.startsWith('image/')) {
+            handleImageClick();
+          }
         }}
       >
         {getFileIcon(props.fileType)}
@@ -339,6 +380,11 @@ const FileComponent = (props: FileComponentProps) => {
         onClose={() => setIsPermissionsDialogOpen(false)}
         fileId={props.id}
         folderId={null}
+      />
+      <ImageViewerDialog
+        open={isImageViewerOpen}
+        onClose={handleCloseImageViewer}
+        imageSrc={imageSrc}
       />
     </div>
   );

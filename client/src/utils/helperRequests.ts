@@ -3,6 +3,24 @@ import { FileComponentProps } from '../components/File';
 import { useLocation } from 'react-router-dom';
 import { useState } from 'react';
 
+export async function getImageBlobGcskey(
+  gcsKey: string,
+  fileType: string,
+): Promise<Blob> {
+  try {
+    const response = await axios.post(
+      `http://localhost:5001/api/file/image/view`,
+      { gcsKey, fileType },
+      { responseType: 'blob' },
+    );
+    const imageBlob = response.data;
+    return imageBlob;
+  } catch {
+    console.error('Error fetching image blob');
+    return new Blob();
+  }
+}
+
 export async function getUsernameById(id: string): Promise<string> {
   try {
     const response = await axios.get(`http://localhost:5001/api/user/`, {

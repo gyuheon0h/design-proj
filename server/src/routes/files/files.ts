@@ -490,4 +490,33 @@ fileRouter.patch('/restore/:fileId', authorize, async (req, res) => {
   }
 });
 
+fileRouter.post('/image/view', async (req, res) => {
+  try {
+    const { gcsKey, fileType } = req.body;
+    console.log(gcsKey, fileType);
+
+    if (!gcsKey || !fileType) {
+      return res.status(400).json({
+        error: 'Missing required query parameters: gcsKey, fileType',
+      });
+    }
+
+    if (!String(fileType).startsWith('image/')) {
+      return res.status(400).json({ error: 'Not an image file' });
+    }
+
+    // stream from GCS
+    const readStream = StorageService.getFileStream(String(gcsKey));
+
+    // set Content-Type header
+    res.setHeader('Content-Type', String(fileType));
+
+    // send file
+    readStream.pipe(res);
+  } catch (error) {
+    console.error('Error streaming file from GCS:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default fileRouter;
