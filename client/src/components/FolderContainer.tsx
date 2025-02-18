@@ -143,6 +143,20 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     }
   };
 
+  const handleMoveFolder = async (folderId: string, parentFolderId: string) => {
+    try {
+      await axios.patch(
+        `http://localhost:5001/api/folder/move/${folderId}`,
+        { parentFolderId },
+        { withCredentials: true },
+      );
+
+      refreshFolders(currentFolderId);
+    } catch (error) {
+      console.error('Error renaming file:', error);
+    }
+  };
+
   return (
     <Box className="folder-container" sx={{ width: '100%' }}>
       <Box
