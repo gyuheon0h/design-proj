@@ -26,10 +26,6 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   // Drag detection
   const [didDrag, setDidDrag] = useState(false);
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
@@ -114,7 +110,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
           <Fab
             color="primary"
             aria-label="create"
-            onClick={handleMenuOpen}
+            onClick={(e) => setAnchorEl(e.currentTarget)}
             sx={{
               position: 'fixed',
               bottom: '48px',
@@ -131,7 +127,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
       <Menu
         anchorEl={anchorEl}
         open={menuOpen && !didDrag}
-        onClose={() => handleMenuClose}
+        onClose={() => setAnchorEl(null)}
       >
         <MenuItem
           onClick={() => {
