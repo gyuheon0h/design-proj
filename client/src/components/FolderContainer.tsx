@@ -194,8 +194,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
               owner={folder.owner}
               createdAt={folder.createdAt}
               parentFolder={folder.parentFolder}
-              folderChildren={folder.folderChildren}
-              fileChildren={folder.fileChildren}
               isFavorited={folder.isFavorited}
               onClick={() => onFolderClick(folder)}
               handleRenameFolder={handleRenameFolder}

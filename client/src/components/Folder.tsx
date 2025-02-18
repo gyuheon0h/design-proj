@@ -20,8 +20,6 @@ export interface FolderProps {
   owner: string;
   createdAt: Date;
   parentFolder: string | null;
-  folderChildren: string[];
-  fileChildren: string[];
   isFavorited: boolean;
   onClick: (folder: FolderProps) => void;
   handleDeleteFolder: (folderId: string) => Promise<void>;

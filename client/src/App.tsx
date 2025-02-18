@@ -1,6 +1,5 @@
 import './App.css';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { useState } from 'react';
 import Login from './pages/LoginPage';
 import Home from './pages/HomePage';
 import Shared from './pages/SharedPage';

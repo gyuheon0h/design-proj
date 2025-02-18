@@ -13,7 +13,6 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
 import RestoreIcon from '@mui/icons-material/Restore';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
-import FolderZipIcon from '@mui/icons-material/FolderZip';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
@@ -21,13 +20,13 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import ImageIcon from '@mui/icons-material/Image';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import MovieIcon from '@mui/icons-material/Movie';
-import TableChartIcon from '@mui/icons-material/TableChart';
 import { getUsernameById, downloadFile } from '../utils/helperRequests';
 import RenameFileDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors } from '../Styles';
+import FileViewerDialog from './FileViewerDialog';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -82,6 +81,7 @@ const FileComponent = (props: FileComponentProps) => {
   const [modifiedByName, setModifiedByName] = useState<string>('Loading...');
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
+  const [isFileViewerDialogOpen, setIsFileViewerDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
@@ -166,8 +166,10 @@ const FileComponent = (props: FileComponentProps) => {
           transition: 'background-color 0.3s',
           '&:hover': {
             backgroundColor: '#e0e0e0',
+            cursor: 'pointer',
           },
         }}
+        onClick={() => setIsFileViewerDialogOpen(true)}
       >
         {getFileIcon(props.fileType)}
 
@@ -326,6 +328,13 @@ const FileComponent = (props: FileComponentProps) => {
           )}
         </Menu>
       </Card>
+
+      <FileViewerDialog
+        open={isFileViewerDialogOpen}
+        fileId={props.id}
+        fileType={props.fileType}
+        onClose={() => setIsFileViewerDialogOpen(false)}
+      ></FileViewerDialog>
 
       <RenameFileDialog
         open={isRenameDialogOpen}

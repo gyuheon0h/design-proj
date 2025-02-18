@@ -195,6 +195,27 @@ fileRouter.get('/download/:fileId', authorize, async (req, res) => {
   }
 });
 
+fileRouter.get('/:fileId', authorize, async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const file = await FileModel.getById(fileId);
+
+    if (!file) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    const fileStream = await StorageService.getFileStream(file.gcsKey);
+
+    res.setHeader('Content-Type', file.fileType);
+    res.setHeader('Content-Disposition', `inline; filename="${file.name}"`);
+
+    fileStream.pipe(res);
+  } catch (error) {
+    console.error('Error retrieving file:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
 //   try {
 //     const { fileId } = req.params;
