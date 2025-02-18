@@ -26,6 +26,10 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   // Drag detection
   const [didDrag, setDidDrag] = useState(false);
 
+  const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
