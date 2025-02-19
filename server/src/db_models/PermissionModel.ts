@@ -65,6 +65,7 @@ class PermissionModel extends BaseModel<Permission> {
   }
 
   // Get permission rows where folderId is a Folder based on userId
+  // baseTable is Permission
   async getFoldersByUserId(userId: string): Promise<Permission[]> {
     try {
       return await this.getAllByJoin(
