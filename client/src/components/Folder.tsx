@@ -10,7 +10,7 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors } from '../Styles';
-import RenameFileDialog from './RenameDialog';
+import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 
 export interface FolderProps {
@@ -224,7 +224,7 @@ const Folder = (props: FolderProps) => {
       </Box>
 
       {/* Rename Folder Dialog */}
-      <RenameFileDialog
+      <RenameDialog
         open={isRenameDialogOpen}
         fileName={props.name}
         onClose={() => setIsRenameDialogOpen(false)}

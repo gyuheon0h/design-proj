@@ -23,7 +23,7 @@ import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import MovieIcon from '@mui/icons-material/Movie';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import { getUsernameById, downloadFile } from '../utils/helperRequests';
-import RenameFileDialog from './RenameDialog';
+import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -327,7 +327,7 @@ const FileComponent = (props: FileComponentProps) => {
         </Menu>
       </Card>
 
-      <RenameFileDialog
+      <RenameDialog
         open={isRenameDialogOpen}
         fileName={props.name}
         onClose={() => setIsRenameDialogOpen(false)}
