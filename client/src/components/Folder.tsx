@@ -12,6 +12,7 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors } from '../Styles';
 import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
+import MoveDialog from './MoveDialog';
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -34,6 +35,7 @@ const Folder = (props: FolderProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
+  const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const open = Boolean(anchorEl);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -74,8 +76,14 @@ const Folder = (props: FolderProps) => {
   };
 
   const handlePermissionsClick = (event: React.MouseEvent) => {
-    event.stopPropagation();
+    event.stopPropagation(); //TODO: is this needed... the button isnt on top of the folder itself
     setIsPermissionsDialogOpen(true);
+    setAnchorEl(null);
+  };
+
+  const handleMoveClick = (event: React.MouseEvent) => {
+    event.stopPropagation(); //TODO: is this needed...
+    setIsMoveDialogOpen(true);
     setAnchorEl(null);
   };
 
@@ -216,7 +224,13 @@ const Folder = (props: FolderProps) => {
               <Divider sx={{ my: 0.2 }} />,
               <MenuItem onClick={(e) => e.stopPropagation()}>
                 <UploadIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
-                Upload
+                Download
+              </MenuItem>,
+
+              <Divider sx={{ my: 0.2 }} />,
+
+              <MenuItem onClick={handleMoveClick}>
+                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
               </MenuItem>,
             ]
           )}
@@ -236,6 +250,15 @@ const Folder = (props: FolderProps) => {
         onClose={() => setIsPermissionsDialogOpen(false)}
         fileId={null}
         folderId={props.id}
+      />
+
+      <MoveDialog
+        open={isMoveDialogOpen}
+        onClose={() => setIsMoveDialogOpen(false)}
+        fileName={props.name}
+        fileId={props.id}
+        resourceType="folder"
+        parentFolderId={props.parentFolder}
       />
     </Box>
   );

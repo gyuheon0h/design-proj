@@ -58,20 +58,6 @@ const FileContainer: React.FC<FileContainerProps> = ({
     }
   };
 
-  const handleMoveFile = async (fileId: string, parentFolderId: string) => {
-    try {
-      await axios.patch(
-        `http://localhost:5001/api/file/move/${fileId}`,
-        { parentFolderId },
-        { withCredentials: true },
-      );
-
-      refreshFiles(currentFolderId);
-    } catch (error) {
-      console.error('Error renaming file:', error);
-    }
-  };
-
   const handleFavoriteFile = async (fileId: string, owner: string) => {
     const ownerUsername = await getUsernameById(owner);
 

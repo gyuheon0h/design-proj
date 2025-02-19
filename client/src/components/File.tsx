@@ -28,6 +28,7 @@ import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors } from '../Styles';
+import MoveDialog from './MoveDialog';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -82,6 +83,7 @@ const FileComponent = (props: FileComponentProps) => {
   const [modifiedByName, setModifiedByName] = useState<string>('Loading...');
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
+  const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
@@ -133,6 +135,11 @@ const FileComponent = (props: FileComponentProps) => {
 
   const handlePermissionsClick = () => {
     setIsPermissionsDialogOpen(true);
+    handleOptionsClose();
+  };
+
+  const handleMoveClick = () => {
+    setIsMoveDialogOpen(true);
     handleOptionsClose();
   };
 
@@ -322,6 +329,12 @@ const FileComponent = (props: FileComponentProps) => {
                 />{' '}
                 Download
               </MenuItem>,
+
+              <Divider sx={{ my: 0.2 }} />,
+
+              <MenuItem onClick={handleMoveClick}>
+                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
+              </MenuItem>,
             ]
           )}
         </Menu>
@@ -339,6 +352,15 @@ const FileComponent = (props: FileComponentProps) => {
         onClose={() => setIsPermissionsDialogOpen(false)}
         fileId={props.id}
         folderId={null}
+      />
+
+      <MoveDialog
+        open={isMoveDialogOpen}
+        onClose={() => setIsMoveDialogOpen(false)}
+        fileName={props.name}
+        fileId={props.id}
+        resourceType="file"
+        parentFolderId={props.parentFolder}
       />
     </div>
   );
