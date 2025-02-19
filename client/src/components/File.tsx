@@ -206,7 +206,7 @@ const FileComponent = (props: FileComponentProps) => {
           },
         }}
         onClick={() => {
-          handleFileClick();
+          if (props.page !== 'trash') handleFileClick();
         }}
       >
         {getFileIcon(props.fileType)}
