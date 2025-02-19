@@ -3,13 +3,13 @@ import { FileComponentProps } from '../components/File';
 import { useLocation } from 'react-router-dom';
 import { useState } from 'react';
 
-export async function getImageBlobGcskey(
+export async function getBlobGcskey(
   gcsKey: string,
   fileType: string,
 ): Promise<Blob> {
   try {
     const response = await axios.post(
-      `http://localhost:5001/api/file/image/view`,
+      `http://localhost:5001/api/file/view`,
       { gcsKey, fileType },
       { responseType: 'blob' },
     );

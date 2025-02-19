@@ -23,13 +23,13 @@ import MovieIcon from '@mui/icons-material/Movie';
 import {
   getUsernameById,
   downloadFile,
-  getImageBlobGcskey,
+  getBlobGcskey,
 } from '../utils/helperRequests';
 import RenameFileDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import ImageViewerDialog from './ImageViewerDialog';
+import FileViewerDialog from './FileViewerDialog';
 import { colors } from '../Styles';
 
 export interface FileComponentProps {
@@ -86,10 +86,11 @@ const FileComponent = (props: FileComponentProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const fileCache = useRef(new Map<string, string>()); // Woah this speeds up reopens by a LOT
+
   // For the image viewer
-  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
-  const [imageSrc, setImageSrc] = useState('');
-  const imageCache = useRef(new Map<string, string>()); // Woah this speeds up reopens by a LOT
+  const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
+  const [fileSrc, setFileSrc] = useState('');
 
   useEffect(() => {
     const fetchOwnerUserName = async () => {
@@ -125,33 +126,39 @@ const FileComponent = (props: FileComponentProps) => {
 
   const open = Boolean(anchorEl);
 
-  const handleImageClick = async () => {
-    if (!props.fileType.startsWith('image/')) return;
+  const handleFileClick = async () => {
+    // Check if file is already cached
 
-    // Check if image is already cached
-    if (imageCache.current.has(props.gcsKey)) {
-      setImageSrc(imageCache.current.get(props.gcsKey) as string);
-      setIsImageViewerOpen(true);
+    console.log(props.fileType);
+    if (fileCache.current.has(props.gcsKey)) {
+      setFileSrc(fileCache.current.get(props.gcsKey) as string);
+      setIsFileViewerOpen(true);
       return;
     }
 
-    try {
-      const imageBlob = await getImageBlobGcskey(props.gcsKey, props.fileType);
-      const objectUrl = URL.createObjectURL(imageBlob);
+    if (
+      props.fileType.startsWith('image/') ||
+      props.fileType.startsWith('video/')
+    ) {
+      try {
+        const imageBlob = await getBlobGcskey(props.gcsKey, props.fileType);
+        const objectUrl = URL.createObjectURL(imageBlob);
 
-      // Store in cache
-      imageCache.current.set(props.gcsKey, objectUrl);
+        // Store in cache
+        fileCache.current.set(props.gcsKey, objectUrl);
 
-      setImageSrc(objectUrl);
-      setIsImageViewerOpen(true);
-    } catch (err) {
-      console.error('Error fetching image from server:', err);
-      alert('Error fetching image');
+        setFileSrc(objectUrl);
+        setIsFileViewerOpen(true);
+      } catch (err) {
+        console.error('Error fetching image from server:', err);
+        alert('Error fetching image');
+      }
     }
+    return;
   };
 
-  const handleCloseImageViewer = () => {
-    setIsImageViewerOpen(false);
+  const handleCloseFileViewer = () => {
+    setIsFileViewerOpen(false);
   };
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -205,9 +212,7 @@ const FileComponent = (props: FileComponentProps) => {
           },
         }}
         onClick={() => {
-          if (props.fileType.startsWith('image/')) {
-            handleImageClick();
-          }
+          handleFileClick();
         }}
       >
         {getFileIcon(props.fileType)}
@@ -381,10 +386,11 @@ const FileComponent = (props: FileComponentProps) => {
         fileId={props.id}
         folderId={null}
       />
-      <ImageViewerDialog
-        open={isImageViewerOpen}
-        onClose={handleCloseImageViewer}
-        imageSrc={imageSrc}
+      <FileViewerDialog
+        open={isFileViewerOpen}
+        onClose={handleCloseFileViewer}
+        src={fileSrc}
+        fileType={props.fileType}
       />
     </div>
   );

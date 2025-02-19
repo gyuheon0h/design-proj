@@ -490,7 +490,7 @@ fileRouter.patch('/restore/:fileId', authorize, async (req, res) => {
   }
 });
 
-fileRouter.post('/image/view', async (req, res) => {
+fileRouter.post('/view', async (req, res) => {
   try {
     const { gcsKey, fileType } = req.body;
     console.log(gcsKey, fileType);
@@ -499,10 +499,6 @@ fileRouter.post('/image/view', async (req, res) => {
       return res.status(400).json({
         error: 'Missing required query parameters: gcsKey, fileType',
       });
-    }
-
-    if (!String(fileType).startsWith('image/')) {
-      return res.status(400).json({ error: 'Not an image file' });
     }
 
     // stream from GCS
