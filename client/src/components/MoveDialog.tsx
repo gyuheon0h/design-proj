@@ -10,6 +10,7 @@ import {
   ListItemText,
   IconButton,
   CircularProgress,
+  Typography,
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIos';
@@ -63,7 +64,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
     try {
       const res = await axios.post(
         'http://localhost:5001/api/folder/parent',
-        { newParentFolderId: folderId },
+        { folderId: folderId },
         { withCredentials: true },
       );
       setFolders(res.data);
@@ -74,6 +75,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   };
 
   const handleFolderClick = (folderId: string) => {
+    console.log('navigating into ', folderId);
     setFolderHistory((prev) => [...prev, currentFolderId ?? 'root']);
     setCurrentFolderId(folderId);
     setSelectedFolderId(null);
@@ -110,6 +112,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Move "{fileName}"</DialogTitle>
       <DialogContent>
+        <Typography>Current Folder: {selectedFolderId}</Typography>
         {/* Back Button */}
         {folderHistory.length > 0 && (
           <IconButton onClick={handleGoBack}>

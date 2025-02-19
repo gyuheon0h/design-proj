@@ -21,6 +21,8 @@ folderRouter.post(
       }
       const userId = req.user.userId;
 
+      console.log('folderId recieved ', folderId);
+
       // Handle null case properly
       const subfolders = await FolderModel.getSubfoldersByOwner(
         userId,
