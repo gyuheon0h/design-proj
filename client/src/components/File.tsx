@@ -127,12 +127,10 @@ const FileComponent = (props: FileComponentProps) => {
   const open = Boolean(anchorEl);
 
   const handleFileClick = async () => {
-    // Check if file is already cached
+    setIsFileViewerOpen(true); // Open the modal immediately
 
-    console.log(props.fileType);
     if (fileCache.current.has(props.gcsKey)) {
       setFileSrc(fileCache.current.get(props.gcsKey) as string);
-      setIsFileViewerOpen(true);
       return;
     }
 
@@ -144,17 +142,13 @@ const FileComponent = (props: FileComponentProps) => {
         const imageBlob = await getBlobGcskey(props.gcsKey, props.fileType);
         const objectUrl = URL.createObjectURL(imageBlob);
 
-        // Store in cache
         fileCache.current.set(props.gcsKey, objectUrl);
-
-        setFileSrc(objectUrl);
-        setIsFileViewerOpen(true);
+        setFileSrc(objectUrl); // Load the image once fetched
       } catch (err) {
-        console.error('Error fetching image from server:', err);
-        alert('Error fetching image');
+        console.error('Error fetching file from server:', err);
+        alert('Error fetching file');
       }
     }
-    return;
   };
 
   const handleCloseFileViewer = () => {
