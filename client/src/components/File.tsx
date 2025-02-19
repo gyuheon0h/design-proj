@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Card,
   Typography,
@@ -13,7 +13,6 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
 import RestoreIcon from '@mui/icons-material/Restore';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
-import FolderZipIcon from '@mui/icons-material/FolderZip';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
@@ -21,12 +20,16 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import ImageIcon from '@mui/icons-material/Image';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import MovieIcon from '@mui/icons-material/Movie';
-import TableChartIcon from '@mui/icons-material/TableChart';
-import { getUsernameById, downloadFile } from '../utils/helperRequests';
+import {
+  getUsernameById,
+  downloadFile,
+  getBlobGcskey,
+} from '../utils/helperRequests';
 import RenameFileDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import FileViewerDialog from './FileViewerDialog';
 import { colors } from '../Styles';
 
 export interface FileComponentProps {
@@ -83,6 +86,11 @@ const FileComponent = (props: FileComponentProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const fileCache = useRef(new Map<string, string>()); // Woah this speeds up reopens by a LOT
+
+  // For the image viewer
+  const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
+  const [fileSrc, setFileSrc] = useState('');
 
   useEffect(() => {
     const fetchOwnerUserName = async () => {
@@ -117,6 +125,35 @@ const FileComponent = (props: FileComponentProps) => {
   }, [props.lastModifiedBy]);
 
   const open = Boolean(anchorEl);
+
+  const handleFileClick = async () => {
+    setIsFileViewerOpen(true); // Open the modal immediately
+
+    if (fileCache.current.has(props.gcsKey)) {
+      setFileSrc(fileCache.current.get(props.gcsKey) as string);
+      return;
+    }
+
+    if (
+      props.fileType.startsWith('image/') ||
+      props.fileType.startsWith('video/')
+    ) {
+      try {
+        const imageBlob = await getBlobGcskey(props.gcsKey, props.fileType);
+        const objectUrl = URL.createObjectURL(imageBlob);
+
+        fileCache.current.set(props.gcsKey, objectUrl);
+        setFileSrc(objectUrl); // Load the image once fetched
+      } catch (err) {
+        console.error('Error fetching file from server:', err);
+        alert('Error fetching file');
+      }
+    }
+  };
+
+  const handleCloseFileViewer = () => {
+    setIsFileViewerOpen(false);
+  };
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -167,6 +204,9 @@ const FileComponent = (props: FileComponentProps) => {
           '&:hover': {
             backgroundColor: '#e0e0e0',
           },
+        }}
+        onClick={() => {
+          handleFileClick();
         }}
       >
         {getFileIcon(props.fileType)}
@@ -339,6 +379,12 @@ const FileComponent = (props: FileComponentProps) => {
         onClose={() => setIsPermissionsDialogOpen(false)}
         fileId={props.id}
         folderId={null}
+      />
+      <FileViewerDialog
+        open={isFileViewerOpen}
+        onClose={handleCloseFileViewer}
+        src={fileSrc}
+        fileType={props.fileType}
       />
     </div>
   );
