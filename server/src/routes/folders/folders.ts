@@ -445,8 +445,8 @@ folderRouter.patch('/move/:folderId', authorize, async (req, res) => {
     // }
 
     const userId = (req as any).user.userId;
-    const { fileId } = req.params;
-    const folder = await FolderModel.getById(fileId);
+    const { folderId } = req.params;
+    const folder = await FolderModel.getById(folderId);
 
     if (folder?.parentFolder == parentFolderId) {
       console.error('User attempted to move to existing location');
@@ -459,7 +459,7 @@ folderRouter.patch('/move/:folderId', authorize, async (req, res) => {
       return res.status(404).json({ message: 'Folder not found' });
     }
 
-    const fileMetadata = await FolderModel.updateFolderMetadata(fileId, {
+    const fileMetadata = await FolderModel.updateFolderMetadata(folderId, {
       parentFolder: parentFolderId,
     });
 
