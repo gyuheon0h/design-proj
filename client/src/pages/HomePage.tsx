@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography';
 import { typography } from '../Styles';
 import CreateButton from '../components/CreateButton';
 import { useUser } from '../context/UserContext';
+import ShareAction from '../components/ShareAction';
 
 const Home = () => {
   const location = useLocation();
@@ -112,6 +113,13 @@ const Home = () => {
         >
           Your File Storage:
         </Typography>
+        <ShareAction
+          id="kefgcfkj"
+          name="sample"
+          allUsers={['User1', 'User2']}
+          open={true}
+          onClose={() => {}}
+        />
 
         {/* Search Bar */}
         <SearchBar location="Storage" />
