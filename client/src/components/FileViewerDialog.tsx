@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, CircularProgress, Box } from '@mui/material';
-import { isFileTypeText } from '../utils/clientHelpers';
+import {
+  isSupportedFileTypeText,
+  isSupportedFileTypeVideo,
+} from '../utils/clientHelpers';
 
 interface FileViewerDialogProps {
   open: boolean;
@@ -20,21 +23,16 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
   const [textContent, setTextContent] = useState<string | null>(null);
 
   const isImage = fileType.startsWith('image/');
-  const isVideo = fileType.startsWith('video/');
+  const isVideo = isSupportedFileTypeVideo(fileType);
   const isPDF = fileType === 'application/pdf';
-  // const isWordDoc =
-  //   fileType === 'application/msword' ||
-  //   fileType ===
-  //     'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-
-  const isText = isFileTypeText(fileType);
+  const isText = isSupportedFileTypeText(fileType);
 
   useEffect(() => {
     if (open) {
       setLoading(true);
       setTextContent(null);
 
-      if (isFileTypeText(fileType) && !isPDF) {
+      if (isSupportedFileTypeText(fileType) && !isPDF) {
         fetch(src)
           .then((response) => response.text())
           .then((text) => {
@@ -48,7 +46,16 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogContent sx={{ textAlign: 'center', position: 'relative' }}>
+      <DialogContent
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          textAlign: 'center',
+          position: 'relative',
+          height: '80vh',
+        }}
+      >
         {loading && (
           <Box
             sx={{
@@ -68,7 +75,10 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
             alt="preview"
             style={{
               maxWidth: '100%',
-              maxHeight: '80vh',
+              maxHeight: '100%',
+              width: 'auto',
+              height: 'auto',
+              margin: 'auto',
               display: loading ? 'none' : 'block',
             }}
             onLoad={() => setLoading(false)}
@@ -84,7 +94,10 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
             autoPlay
             style={{
               maxWidth: '100%',
-              maxHeight: '80vh',
+              maxHeight: '100%',
+              width: 'auto',
+              height: 'auto',
+              margin: 'auto',
               display: loading ? 'none' : 'block',
             }}
             onLoadedData={() => setLoading(false)}
@@ -107,21 +120,6 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
           />
         )}
 
-        {/* {isWordDoc && (
-          <iframe
-            src={`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(
-              src,
-            )}`}
-            title="Word Document Viewer"
-            style={{
-              width: '100%',
-              height: '80vh',
-              display: loading ? 'none' : 'block',
-            }}
-            onLoad={() => setLoading(false)}
-          />
-        )} */}
-
         {isText && textContent && (
           <pre
             style={{
@@ -139,12 +137,9 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
           </pre>
         )}
 
-        {!isImage &&
-          !isVideo &&
-          !isPDF &&
-          !isText &&
-          // !isWordDoc &&
-          !loading && <p>Unsupported file type</p>}
+        {!isImage && !isVideo && !isPDF && !isText && !loading && (
+          <p>Unsupported file type</p>
+        )}
       </DialogContent>
     </Dialog>
   );

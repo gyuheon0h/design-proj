@@ -31,7 +31,10 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FileViewerDialog from './FileViewerDialog';
 import { colors } from '../Styles';
-import { isFileTypeText } from '../utils/clientHelpers';
+import {
+  isSupportedFileTypeText,
+  isSupportedFileTypeVideo,
+} from '../utils/clientHelpers';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -128,24 +131,21 @@ const FileComponent = (props: FileComponentProps) => {
   const open = Boolean(anchorEl);
 
   const handleFileClick = async () => {
-    setIsFileViewerOpen(true); // Open the modal immediately
-
-    if (fileCache.current.has(props.gcsKey)) {
-      setFileSrc(fileCache.current.get(props.gcsKey) as string);
-      return;
-    }
-    console.log(props.fileType);
     if (
       props.fileType.startsWith('image/') ||
-      props.fileType.startsWith('video/') ||
+      isSupportedFileTypeVideo(props.fileType) ||
       props.fileType.startsWith('application/pdf') ||
-      // props.fileType.startsWith('application/msword') || // .doc
-      // props.fileType.startsWith(
-      //   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      // ) || // .docx
-      props.fileType.startsWith('application/rtf') || // Rich Text Format
-      isFileTypeText(props.fileType)
+      isSupportedFileTypeText(props.fileType)
     ) {
+      console.log('WHAT THE FUCK');
+      setIsFileViewerOpen(true); // Open the modal immediately
+
+      if (fileCache.current.has(props.gcsKey)) {
+        setFileSrc(fileCache.current.get(props.gcsKey) as string);
+        return;
+      }
+      console.log(props.fileType);
+
       try {
         const blob = await getBlobGcskey(props.gcsKey, props.fileType);
         const objectUrl = URL.createObjectURL(blob);
