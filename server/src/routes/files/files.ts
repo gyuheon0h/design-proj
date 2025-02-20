@@ -313,11 +313,11 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
 fileRouter.patch('/move/:fileId', authorize, async (req, res) => {
   try {
     const { parentFolderId } = req.body;
-    if (!parentFolderId) {
-      return res
-        .status(400)
-        .json({ message: 'No new parentFolderId provided' });
-    }
+    // if (!parentFolderId) {
+    //   return res
+    //     .status(400)
+    //     .json({ message: 'No new parentFolderId provided' });
+    // }
 
     const userId = (req as any).user.userId;
     const { fileId } = req.params;
@@ -325,6 +325,13 @@ fileRouter.patch('/move/:fileId', authorize, async (req, res) => {
 
     if (!file) {
       return res.status(404).json({ message: 'File not found' });
+    }
+
+    if (file?.parentFolder == parentFolderId) {
+      console.error('User attempted to move to existing location');
+      return res
+        .status(400)
+        .json({ message: 'No new parentFolderId provided' });
     }
 
     const fileMetadata = await FileModel.updateFileMetadata(fileId, {

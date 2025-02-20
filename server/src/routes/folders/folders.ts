@@ -438,17 +438,24 @@ folderRouter.patch('/rename/:folderId', authorize, async (req, res) => {
 folderRouter.patch('/move/:folderId', authorize, async (req, res) => {
   try {
     const { parentFolderId } = req.body;
-    if (!parentFolderId) {
+    // if (!parentFolderId) {
+    //   return res
+    //     .status(400)
+    //     .json({ message: 'No new parentFolderId provided' });
+    // }
+
+    const userId = (req as any).user.userId;
+    const { fileId } = req.params;
+    const folder = await FolderModel.getById(fileId);
+
+    if (folder?.parentFolder == parentFolderId) {
+      console.error('User attempted to move to existing location');
       return res
         .status(400)
         .json({ message: 'No new parentFolderId provided' });
     }
 
-    const userId = (req as any).user.userId;
-    const { fileId } = req.params;
-    const file = await FolderModel.getById(fileId);
-
-    if (!file) {
+    if (!folder) {
       return res.status(404).json({ message: 'Folder not found' });
     }
 

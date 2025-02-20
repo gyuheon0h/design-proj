@@ -39,63 +39,84 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   parentFolderId,
   onClose,
 }) => {
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(
-    parentFolderId,
-  );
+  const [currentParentFolderId, setCurrentParentFolderId] = useState<
+    string | null
+  >(null);
   const [folders, setFolders] = useState<FolderProps[]>([]);
   const [folderHistory, setFolderHistory] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
 
+  // reset states when opening dialog
   useEffect(() => {
     if (open) {
-      fetchSubFolders(currentFolderId);
-      setFolderHistory([]);
-      setSelectedFolderId(null);
+      setCurrentParentFolderId(null); //set to root directory
+      setFolderHistory([]); // reset history
+      setSelectedFolderId(null); // automatically select the root directory
+      fetchSubFolders(null); // load subfolders of root directory
     }
   }, [open]);
 
+  // fetch subfolders whenever the current parent folder changes
   useEffect(() => {
-    fetchSubFolders(currentFolderId);
-  }, [currentFolderId]);
+    if (currentParentFolderId !== undefined) {
+      fetchSubFolders(currentParentFolderId);
 
+      // automatically select the root directory when at the root
+      if (currentParentFolderId === null) {
+        setSelectedFolderId(null);
+      }
+    }
+  }, [currentParentFolderId]);
+
+  // fetch subfolders for the given parent folder ID
   const fetchSubFolders = async (folderId: string | null) => {
     setLoading(true);
     try {
       const res = await axios.post(
         'http://localhost:5001/api/folder/parent',
-        { folderId: folderId },
+        { folderId: folderId ?? null }, // ensure null is passed for root
         { withCredentials: true },
       );
       setFolders(res.data);
     } catch (error) {
       console.error('Error fetching folders:', error);
+      alert('Failed to load folders. Please try again.');
     }
     setLoading(false);
   };
 
-  const handleFolderClick = (folderId: string) => {
-    console.log('navigating into ', folderId);
-    setFolderHistory((prev) => [...prev, currentFolderId ?? 'root']);
-    setCurrentFolderId(folderId);
-    setSelectedFolderId(null);
-  };
-
-  const handleGoBack = () => {
-    if (folderHistory.length > 0) {
-      const lastFolder = folderHistory.pop();
-      setFolderHistory([...folderHistory]);
-      setCurrentFolderId(lastFolder ?? null);
-      setSelectedFolderId(null);
-    }
-  };
-
-  const handleSelectFolder = (folderId: string) => {
+  // select the folder without navigating into it
+  const handleSelectFolder = (event: React.MouseEvent, folderId: string) => {
+    event.stopPropagation();
     setSelectedFolderId(folderId);
   };
 
+  // navigate into the clicked folder and select it
+  const handleGoIntoFolder = (event: React.MouseEvent, folderId: string) => {
+    event.stopPropagation();
+    console.log('Navigating into:', folderId);
+    setFolderHistory((prev) => [...prev, folderId]);
+    setCurrentParentFolderId(folderId);
+    setSelectedFolderId(folderId);
+  };
+
+  // go back to the previous folder
+  const handleGoBack = () => {
+    if (folderHistory.length > 0) {
+      const newHistory = [...folderHistory];
+      newHistory.pop();
+      const previousFolder =
+        newHistory.length > 0 ? newHistory[newHistory.length - 1] : null;
+      setFolderHistory(newHistory);
+      setCurrentParentFolderId(previousFolder);
+      setSelectedFolderId(previousFolder);
+    }
+  };
+
+  // move the file to the selected folder
   const handleMove = async () => {
-    if (!selectedFolderId) return;
+    if (selectedFolderId === parentFolderId) return;
     try {
       await axios.patch(
         `http://localhost:5001/api/${resourceType}/move/${fileId}`,
@@ -104,15 +125,30 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
       );
     } catch (error) {
       console.error('Error moving file:', error);
+      alert('Failed to move file. Please try again.');
     }
+    handleClose();
+  };
+
+  // close the dialog and reset state
+  const handleClose = () => {
+    setCurrentParentFolderId(null);
+    setSelectedFolderId(null);
+    setFolderHistory([]);
     onClose();
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
       <DialogTitle>Move "{fileName}"</DialogTitle>
       <DialogContent>
-        <Typography>Current Folder: {selectedFolderId}</Typography>
+        <Typography>
+          Current Folder:{' '}
+          {currentParentFolderId === null
+            ? 'Root Directory'
+            : currentParentFolderId}
+        </Typography>
+
         {/* Back Button */}
         {folderHistory.length > 0 && (
           <IconButton onClick={handleGoBack}>
@@ -125,11 +161,11 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           <CircularProgress sx={{ display: 'block', margin: '20px auto' }} />
         ) : (
           <List>
+            {/* Render Subfolders */}
             {folders.map((folder) => (
               <ListItem
                 key={folder.id}
                 component="div"
-                onClick={() => handleFolderClick(folder.id)}
                 sx={{
                   cursor: 'pointer',
                   display: 'flex',
@@ -141,28 +177,31 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
                       : 'transparent',
                 }}
               >
+                {/* Select Folder (Highlight Only) */}
                 <ListItemText
                   primary={folder.name}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSelectFolder(folder.id);
-                  }}
+                  onClick={(e) => handleSelectFolder(e, folder.id)}
+                  sx={{ cursor: 'pointer' }}
                 />
-                <ArrowForwardIosIcon />
+
+                {/* Navigate Into Folder */}
+                <IconButton onClick={(e) => handleGoIntoFolder(e, folder.id)}>
+                  <ArrowForwardIosIcon />
+                </IconButton>
               </ListItem>
             ))}
           </List>
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        <Button onClick={handleClose} color="primary">
           Cancel
         </Button>
         <Button
           onClick={handleMove}
           color="primary"
           variant="contained"
-          disabled={!selectedFolderId || selectedFolderId === parentFolderId}
+          disabled={!selectedFolderId && parentFolderId === null}
         >
           Move
         </Button>
