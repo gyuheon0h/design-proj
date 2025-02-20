@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { AuthenticatedRequest, authorize } from '../../middleware/authorize';
 import UserModel from '../../db_models/UserModel';
 import jwt from 'jsonwebtoken';
+import PermissionModel from '../../db_models/PermissionModel';
+import FileModel from '../../db_models/FileModel';
+import StorageService from '../../storage';
 
 const settingsRouter = Router();
 
@@ -90,16 +93,22 @@ settingsRouter.delete('/delete-account', authorize, async (req: AuthenticatedReq
     }
 
     const userId = req.user.userId;
-    const success = await UserModel.delete(userId);
 
-    if (!success) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    const userFiles = await FileModel.getFilesByOwner(userId);
+    await UserModel.hardDeleteOnCondition('id', userId);
+    await PermissionModel.hardDeleteOnCondition('userId', userId);
+    await FileModel.hardDeleteOnCondition('owner', userId);
 
+    // Remove actual files from GCP Storage -> delete. 
+    for (const file of userFiles) {
+      await StorageService.deleteFile(file.gcsKey);
+    } 
+
+    // Clear session
     res.clearCookie('authToken', {
       httpOnly: true,
       secure: false,
-      sameSite: 'strict'
+      sameSite: 'strict',
     });
 
     return res.json({ message: 'Account deleted successfully' });
@@ -107,6 +116,8 @@ settingsRouter.delete('/delete-account', authorize, async (req: AuthenticatedReq
     console.error('Error deleting account:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
+
 });
+
 
 export default settingsRouter;

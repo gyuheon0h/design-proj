@@ -1,39 +1,82 @@
-import Divider from '@mui/material/Divider';
-import SearchBar from '../components/SearchBar';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import { typography } from '../Styles';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { FolderProps } from '../components/Folder';
 import axios from 'axios';
-import FileContainer from '../components/FileContainer';
-import FolderContainer from '../components/FolderContainer';
 import { useUser } from '../context/UserContext';
+import { FileComponentProps } from '../components/File';
+import Box from '@mui/material/Box';
+import {
+  applyFilters,
+  fetchFolderNames,
+  useFilters,
+  useFolderPath,
+} from '../utils/helperRequests';
+import { Permission } from '../interfaces/Permission';
+import Header from '../components/HeaderComponent';
+import ContentComponent from '../components/Content';
 
 const Shared = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const userContext = useUser();
+  const { folderPath, currentFolderId } = useFolderPath('/shared');
 
-  const folderPath = location.pathname
-    .replace('/shared', '')
-    .split('/')
-    .filter(Boolean);
-  const currentFolderId = folderPath.length
-    ? folderPath[folderPath.length - 1]
-    : null;
+  // Local state for search query
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [folders, setFolders] = useState<FolderProps[]>([]);
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState<FileComponentProps[]>([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
-  const itemsPerPage = 5;
+  const [, setTopLevelPerms] = useState<Permission[]>([]); // Might need to have to display later
+
+  // for filtering
+  const {
+    filters,
+    setFileTypeFilter,
+    setCreatedAtFilter,
+    setModifiedAtFilter,
+    filteredFiles,
+    setFilteredFiles,
+  } = useFilters();
 
   useEffect(() => {
     fetchData(currentFolderId);
-    fetchFolderNames(folderPath);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFolderId]);
+  }, [currentFolderId, filters]);
+
+  // for filtering on frontend
+  useEffect(() => {
+    // Filter folders and files based on the selected filters
+    setFilteredFiles(
+      applyFilters(
+        files,
+        filters.fileType,
+        filters.createdAt,
+        filters.modifiedAt,
+      ),
+    );
+  }, [files, filters, setFilteredFiles]);
+
+  useEffect(() => {
+    const fetchNames = async () => {
+      const names = await fetchFolderNames(folderPath);
+
+      setFolderNames((prevNames) => {
+        const isDifferent = folderPath.some(
+          (id) => prevNames[id] !== names[id],
+        );
+        return isDifferent ? { ...prevNames, ...names } : prevNames;
+      });
+    };
+
+    fetchNames();
+  }, [folderPath]);
+
+  //TODO: wat is this doing
+  // useEffect(() => {
+  //   fetchData(currentFolderId);
+  //   fetchFolderNames(folderPath);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [currentFolderId]);
 
   const fetchData = async (folderId: string | null) => {
     try {
@@ -41,7 +84,7 @@ const Shared = () => {
 
       if (!folderId) {
         console.log('in shared page');
-        [foldersRes, filesRes] = await Promise.all([
+        const [sharedFolders, sharedFiles] = await Promise.all([
           axios.get('http://localhost:5001/api/folder/shared', {
             withCredentials: true,
           }),
@@ -49,42 +92,33 @@ const Shared = () => {
             withCredentials: true,
           }),
         ]);
+        foldersRes = sharedFolders.data.folders;
+        filesRes = sharedFiles.data.files;
+        setTopLevelPerms(sharedFiles.data.permissions);
+        console.log(foldersRes, filesRes);
       } else {
         console.log('in nested shared page');
-        [foldersRes, filesRes] = await Promise.all([
+        const [sharedFolders, sharedFiles] = await Promise.all([
           axios.post(
-            'http://localhost:5001/api/folder/parent',
+            'http://localhost:5001/api/folder/parent/shared',
             { folderId },
             { withCredentials: true },
           ),
           axios.post(
-            'http://localhost:5001/api/file/folder',
+            'http://localhost:5001/api/file/folder/shared',
             { folderId },
             { withCredentials: true },
           ),
         ]);
+        foldersRes = sharedFolders.data;
+        filesRes = sharedFiles.data;
       }
 
-      setFolders(foldersRes.data);
-      setFiles(filesRes.data);
+      setFolders(foldersRes);
+      setFiles(filesRes);
+      console.log(foldersRes, filesRes);
     } catch (error) {
       console.error('Error fetching data:', error);
-    }
-  };
-
-  const fetchFolderNames = async (folderIds: string[]) => {
-    try {
-      const nameRequests = folderIds.map((id) =>
-        axios.get(`http://localhost:5001/api/folder/foldername/${id}`),
-      );
-      const nameResponses = await Promise.all(nameRequests);
-      const newFolderNames: { [key: string]: string } = {};
-      folderIds.forEach((id, index) => {
-        newFolderNames[id] = nameResponses[index].data;
-      });
-      setFolderNames((prevNames) => ({ ...prevNames, ...newFolderNames }));
-    } catch (error) {
-      console.error('Error fetching folder names:', error);
     }
   };
 
@@ -96,95 +130,39 @@ const Shared = () => {
     navigate(`/shared/${folderPath.slice(0, index + 1).join('/')}`);
   };
 
+  // Handle search input
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleFetchData = () => fetchData(currentFolderId);
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Sticky Header Section with Title, Breadcrumb, and Search Bar */}
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          left: 0,
-          backgroundColor: 'white',
-          zIndex: 1000,
-          padding: '15px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-        }}
-      >
-        {/* Title */}
-        <Typography
-          variant="h1"
-          sx={{
-            fontWeight: 'bold',
-            fontFamily: typography.fontFamily,
-            fontSize: typography.fontSize.extraLarge,
-            color: '#161C94',
-            marginLeft: '10px',
-            paddingTop: '25px',
-            paddingBottom: '30px',
-          }}
-        >
-          Shared with you:
-        </Typography>
-
-        {/* Search Bar */}
-        <SearchBar location="Shared" />
-
-        {/* Breadcrumb Navigation */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '14px',
-          }}
-        >
-          {['Shared', ...folderPath].map((crumb, index) => (
-            <span
-              key={index}
-              onClick={() => handleBreadcrumbClick(index - 1)}
-              style={{
-                cursor: 'pointer',
-                color: '#161C94',
-                fontWeight: 'bold',
-                marginLeft: '10px',
-              }}
-            >
-              {index === 0 ? 'Shared' : folderNames[crumb] || ''}
-              {index < folderPath.length ? ' / ' : ''}
-            </span>
-          ))}
-        </Box>
-      </Box>
+      <Header
+        title="Shared With Me:"
+        location="Shared"
+        folderPath={folderPath}
+        folderNames={folderNames}
+        handleBreadcrumbClick={handleBreadcrumbClick}
+        handleSearch={handleSearch}
+        setFileTypeFilter={setFileTypeFilter}
+        setCreatedAtFilter={setCreatedAtFilter}
+        setModifiedAtFilter={setModifiedAtFilter}
+      />
 
       {/* Scrollable Content */}
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', padding: '20px' }}>
-        <div style={{ marginLeft: '10px' }}>
-          <FolderContainer
-            folders={folders}
-            onFolderClick={handleFolderClick}
-            currentFolderId={currentFolderId}
-            refreshFolders={fetchData}
-            itemsPerPage={itemsPerPage}
-            username={userContext?.username || ''}
-            page={'shared'}
-          />
-        </div>
-
-        <Divider style={{ margin: '20px 0' }} />
-
-        {/* Files Section */}
-        <div style={{ marginLeft: '10px' }}>
-          <FileContainer
-            files={files}
-            currentFolderId={currentFolderId}
-            refreshFiles={fetchData}
-            username={userContext?.username || ''}
-            page={'shared'}
-          />
-        </div>
-      </Box>
+      <ContentComponent
+        page="shared"
+        folders={folders}
+        files={filteredFiles}
+        onFolderClick={handleFolderClick}
+        currentFolderId={currentFolderId}
+        fetchData={handleFetchData}
+        username={userContext?.username || ''}
+        searchQuery={searchQuery}
+      />
     </Box>
   );
 };

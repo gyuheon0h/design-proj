@@ -1,52 +1,95 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import SearchBar from '../components/SearchBar';
+import { useNavigate } from 'react-router-dom';
 import { FolderProps } from '../components/Folder';
-import FileContainer from '../components/FileContainer';
-import Divider from '@mui/material/Divider';
 import axios from 'axios';
-import FolderContainer from '../components/FolderContainer';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import { typography } from '../Styles';
 import CreateButton from '../components/CreateButton';
 import { useUser } from '../context/UserContext';
-import ShareAction from '../components/ShareAction';
+import { FileComponentProps } from '../components/File';
+import {
+  applyFilters,
+  fetchFolderNames,
+  useFilters,
+  useFolderPath,
+} from '../utils/helperRequests';
+import Header from '../components/HeaderComponent';
+import ContentComponent from '../components/Content';
 
 const Home = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const userContext = useUser();
+  const { folderPath, currentFolderId } = useFolderPath('/home');
 
-  const folderPath = location.pathname
-    .replace('/home', '')
-    .split('/')
-    .filter(Boolean);
-  const currentFolderId = folderPath.length
-    ? folderPath[folderPath.length - 1]
-    : null;
+  // Local state for search query to allow manual search as well
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [folders, setFolders] = useState<FolderProps[]>([]);
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState<FileComponentProps[]>([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
-  const itemsPerPage = 5;
+
+  // for filtering
+  const {
+    filters,
+    setFileTypeFilter,
+    setCreatedAtFilter,
+    setModifiedAtFilter,
+    filteredFiles,
+    setFilteredFiles,
+  } = useFilters();
 
   useEffect(() => {
     fetchData(currentFolderId);
-    fetchFolderNames(folderPath);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFolderId]);
+  }, [currentFolderId, filters]);
+
+  // for filtering on frontend
+  useEffect(() => {
+    // Filter folders and files based on the selected filters
+    setFilteredFiles(
+      applyFilters(
+        files,
+        filters.fileType,
+        filters.createdAt,
+        filters.modifiedAt,
+      ),
+    );
+  }, [files, filters, setFilteredFiles]);
+
+  // TODO: abstract this logic out???
+  useEffect(() => {
+    const fetchNames = async () => {
+      const names = await fetchFolderNames(folderPath);
+
+      setFolderNames((prevNames) => {
+        const isDifferent = folderPath.some(
+          (id) => prevNames[id] !== names[id],
+        );
+        return isDifferent ? { ...prevNames, ...names } : prevNames;
+      });
+    };
+
+    fetchNames();
+  }, [folderPath]); // Separate effect for folder names
 
   const fetchData = async (folderId: string | null) => {
+    const queryParams = new URLSearchParams();
+    if (folderId) queryParams.append('folderId', folderId);
+    if (filters.fileType) queryParams.append('fileType', filters.fileType);
+    if (filters.createdAt) queryParams.append('createdAt', filters.createdAt);
+    if (filters.modifiedAt)
+      queryParams.append('lastModifiedAt', filters.modifiedAt);
+
     try {
       const [foldersRes, filesRes] = await Promise.all([
         axios.post(
-          'http://localhost:5001/api/folder/parent',
+          // 'http://localhost:5001/api/folder/parent',
+          `http://localhost:5001/api/folder/parent?${queryParams.toString()}`,
           { folderId },
           { withCredentials: true },
         ),
         axios.post(
-          'http://localhost:5001/api/file/folder',
+          // 'http://localhost:5001/api/file/folder',
+          `http://localhost:5001/api/file/folder?${queryParams.toString()}`,
           { folderId },
           { withCredentials: true },
         ),
@@ -58,22 +101,6 @@ const Home = () => {
     }
   };
 
-  const fetchFolderNames = async (folderIds: string[]) => {
-    try {
-      const nameRequests = folderIds.map((id) =>
-        axios.get(`http://localhost:5001/api/folder/foldername/${id}`),
-      );
-      const nameResponses = await Promise.all(nameRequests);
-      const newFolderNames: { [key: string]: string } = {};
-      folderIds.forEach((id, index) => {
-        newFolderNames[id] = nameResponses[index].data;
-      });
-      setFolderNames((prevNames) => ({ ...prevNames, ...newFolderNames }));
-    } catch (error) {
-      console.error('Error fetching folder names:', error);
-    }
-  };
-
   const handleFolderClick = (folder: FolderProps) => {
     navigate(`/home/${[...folderPath, folder.id].join('/')}`);
   };
@@ -82,106 +109,41 @@ const Home = () => {
     navigate(`/home/${folderPath.slice(0, index + 1).join('/')}`);
   };
 
+  // Handle local search input
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleFetchData = () => fetchData(currentFolderId);
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Sticky Header Section with Title, Breadcrumb, and Search Bar */}
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          left: 0,
-          backgroundColor: 'white',
-          zIndex: 1000,
-          padding: '15px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-        }}
-      >
-        {/* Title */}
-        <Typography
-          variant="h1"
-          sx={{
-            fontWeight: 'bold',
-            fontFamily: typography.fontFamily,
-            fontSize: typography.fontSize.extraLarge,
-            color: '#161C94',
-            marginLeft: '10px',
-            paddingTop: '25px',
-            paddingBottom: '30px',
-          }}
-        >
-          Your File Storage:
-        </Typography>
-        <ShareAction
-          id="kefgcfkj"
-          name="sample"
-          allUsers={['User1', 'User2']}
-          open={true}
-          onClose={() => {}}
-        />
-
-        {/* Search Bar */}
-        <SearchBar location="Storage" />
-
-        {/* Breadcrumb Navigation */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '14px',
-          }}
-        >
-          {['Home', ...folderPath].map((crumb, index) => (
-            <span
-              key={index}
-              onClick={() => handleBreadcrumbClick(index - 1)}
-              style={{
-                cursor: 'pointer',
-                color: '#161C94',
-                fontWeight: 'bold',
-                marginLeft: '10px',
-              }}
-            >
-              {index === 0 ? 'Home' : folderNames[crumb] || ''}
-              {index < folderPath.length ? ' / ' : ''}
-            </span>
-          ))}
-        </Box>
-      </Box>
+      <Header
+        title="Your File Storage:"
+        location="Home"
+        folderPath={folderPath}
+        folderNames={folderNames}
+        handleBreadcrumbClick={handleBreadcrumbClick}
+        handleSearch={handleSearch}
+        setFileTypeFilter={setFileTypeFilter}
+        setCreatedAtFilter={setCreatedAtFilter}
+        setModifiedAtFilter={setModifiedAtFilter}
+      />
 
       {/* Scrollable Content */}
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', padding: '20px' }}>
-        <div style={{ marginLeft: '10px' }}>
-          <FolderContainer
-            page="home"
-            folders={folders}
-            onFolderClick={handleFolderClick}
-            currentFolderId={currentFolderId}
-            refreshFolders={fetchData}
-            itemsPerPage={itemsPerPage}
-            username={userContext?.username || ''}
-          />
-        </div>
-
-        <Divider style={{ margin: '20px 0' }} />
-
-        {/* Files Section */}
-        <div style={{ marginLeft: '10px' }}>
-          <FileContainer
-            page={'home'}
-            files={files}
-            currentFolderId={currentFolderId}
-            refreshFiles={fetchData}
-            username={userContext?.username || ''}
-          />
-        </div>
-      </Box>
-      <CreateButton
+      <ContentComponent
+        page="home"
+        folders={folders}
+        files={filteredFiles}
+        onFolderClick={handleFolderClick}
         currentFolderId={currentFolderId}
-        refresh={fetchData}
-      ></CreateButton>
+        fetchData={handleFetchData}
+        username={userContext?.username || ''}
+        searchQuery={searchQuery}
+      />
+
+      <CreateButton currentFolderId={currentFolderId} refresh={fetchData} />
     </Box>
   );
 };

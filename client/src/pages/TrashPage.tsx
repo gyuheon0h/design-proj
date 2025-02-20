@@ -1,20 +1,50 @@
-import Divider from '@mui/material/Divider';
-import SearchBar from '../components/SearchBar';
+import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import { typography } from '../Styles';
-import { useEffect, useState } from 'react';
-import { FolderProps } from '../components/Folder';
 import axios from 'axios';
-import FolderContainer from '../components/FolderContainer';
-import FileContainer from '../components/FileContainer';
 import { useUser } from '../context/UserContext';
+import { FileComponentProps } from '../components/File';
+import { FolderProps } from '../components/Folder';
+import Header from '../components/HeaderComponent';
+import ContentComponent from '../components/Content';
+import { applyFilters, useFilters } from '../utils/helperRequests';
 
 const Trash = () => {
   const userContext = useUser();
 
+  // Local state for search query
+  const [searchQuery, setSearchQuery] = useState('');
+
   const [folders, setFolders] = useState<FolderProps[]>([]);
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState<FileComponentProps[]>([]);
+
+  // for filtering
+  const {
+    filters,
+    setFileTypeFilter,
+    setCreatedAtFilter,
+    setModifiedAtFilter,
+    filteredFiles,
+    setFilteredFiles,
+  } = useFilters();
+
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
+
+  // for filtering on frontend
+  useEffect(() => {
+    // Filter folders and files based on the selected filters
+    setFilteredFiles(
+      applyFilters(
+        files,
+        filters.fileType,
+        filters.createdAt,
+        filters.modifiedAt,
+      ),
+    );
+  }, [files, filters, setFilteredFiles]);
+
   const fetchData = async () => {
     try {
       const [foldersRes, filesRes] = await Promise.all([
@@ -31,81 +61,38 @@ const Trash = () => {
       console.error('Error fetching data:', error);
     }
   };
-  useEffect(() => {
-    fetchData();
-  }, []);
 
-  console.log(folders, files);
+  // Handle search input
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Sticky Header Section with Title and Search Bar */}
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          left: 0,
-          backgroundColor: 'white',
-          zIndex: 1000,
-          padding: '15px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-        }}
-      >
-        {/* Title */}
-        <Typography
-          variant="h1"
-          sx={{
-            fontWeight: 'bold',
-            fontFamily: typography.fontFamily,
-            fontSize: typography.fontSize.extraLarge,
-            color: '#161C94',
-            marginLeft: '10px',
-            paddingTop: '25px',
-            paddingBottom: '30px',
-          }}
-        >
-          Trash Bin:
-        </Typography>
-
-        {/* Search Bar */}
-        <SearchBar location="Trash" />
-      </Box>
+      {/* Sticky Header Section with Title, Search Bar */}
+      <Header
+        title="Trash Bin:"
+        location="Trash Bin"
+        folderPath={[]}
+        folderNames={{}}
+        handleBreadcrumbClick={() => {}}
+        handleSearch={handleSearch}
+        setFileTypeFilter={setFileTypeFilter}
+        setCreatedAtFilter={setCreatedAtFilter}
+        setModifiedAtFilter={setModifiedAtFilter}
+      />
 
       {/* Scrollable Content */}
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', padding: '20px' }}>
-        {/* Folders Section */}
-        <Box sx={{ marginLeft: '10px' }}>
-          <div style={{ marginLeft: '10px' }}>
-            <FolderContainer
-              page={'trash'}
-              folders={folders}
-              onFolderClick={() => {
-                alert('You cannot view folders in the trash bin.');
-              }}
-              currentFolderId={null}
-              refreshFolders={fetchData}
-              itemsPerPage={5}
-              username={userContext?.username || ''}
-            />
-          </div>
-
-          <Divider style={{ margin: '20px 0' }} />
-
-          {/* Files Section */}
-          <div style={{ marginLeft: '10px' }}>
-            <FileContainer
-              page={'trash'}
-              files={files}
-              currentFolderId={null}
-              refreshFiles={fetchData}
-              username={userContext?.username || ''}
-            />
-          </div>
-        </Box>
-
-        <Divider sx={{ margin: '20px 0' }} />
-      </Box>
+      <ContentComponent
+        page="trash"
+        folders={folders}
+        files={filteredFiles}
+        onFolderClick={() => alert('You cannot view folders in the trash bin.')}
+        currentFolderId={null}
+        fetchData={fetchData}
+        username={userContext?.username || ''}
+        searchQuery={searchQuery}
+      />
     </Box>
   );
 };

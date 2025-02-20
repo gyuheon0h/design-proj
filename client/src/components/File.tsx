@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Card,
   Typography,
@@ -13,23 +13,26 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
 import RestoreIcon from '@mui/icons-material/Restore';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ImageIcon from '@mui/icons-material/Image';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import MovieIcon from '@mui/icons-material/Movie';
-import TableChartIcon from '@mui/icons-material/TableChart';
 import {
   getUsernameById,
   downloadFile,
-} from '../miscellHelpers/helperRequests';
+  getBlobGcskey,
+} from '../utils/helperRequests';
 import RenameFileDialog from './RenameDialog';
+import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import FileViewerDialog from './FileViewerDialog';
 import { colors } from '../Styles';
 
-interface FileComponentProps {
+export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
   id: string;
   name: string;
@@ -48,28 +51,29 @@ interface FileComponentProps {
 }
 
 const getFileIcon = (fileType: string) => {
-  fileType = fileType.toLowerCase();
-  console.log(fileType);
-  switch (fileType) {
-    case 'csv':
-      return <TableChartIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'txt':
+  const lowerCaseType = fileType.trim().toLowerCase();
+  const mimeType = lowerCaseType.split('/')[0];
+
+  switch (mimeType) {
+    case 'text':
       return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'pdf':
+    case 'application':
+      if (lowerCaseType === 'application/json')
+        return (
+          <EditNoteIcon
+            sx={{ fontSize: 30, marginRight: '10px', color: 'blue' }}
+          />
+        );
       return (
         <InsertDriveFileIcon
           sx={{ fontSize: 30, marginRight: '10px', color: 'red' }}
         />
       );
-    case 'photo':
+    case 'image':
       return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'image/jpg':
-      return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'png':
-      return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'mp3':
+    case 'audio':
       return <MusicNoteIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-    case 'mp4':
+    case 'video':
       return <MovieIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
     default:
       return <InsertDriveFileIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
@@ -78,8 +82,15 @@ const getFileIcon = (fileType: string) => {
 
 const FileComponent = (props: FileComponentProps) => {
   const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
+  const [modifiedByName, setModifiedByName] = useState<string>('Loading...');
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const fileCache = useRef(new Map<string, string>()); // Woah this speeds up reopens by a LOT
+
+  // For the image viewer
+  const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
+  const [fileSrc, setFileSrc] = useState('');
 
   useEffect(() => {
     const fetchOwnerUserName = async () => {
@@ -97,7 +108,52 @@ const FileComponent = (props: FileComponentProps) => {
     fetchOwnerUserName();
   }, [props.owner]);
 
+  useEffect(() => {
+    const fetchModifiedByName = async () => {
+      if (props.lastModifiedBy) {
+        try {
+          const username = await getUsernameById(props.lastModifiedBy);
+          setModifiedByName(username || 'Unknown');
+        } catch (error) {
+          console.error('Error fetching username:', error);
+          setModifiedByName('Unknown');
+        }
+      }
+    };
+
+    fetchModifiedByName();
+  }, [props.lastModifiedBy]);
+
   const open = Boolean(anchorEl);
+
+  const handleFileClick = async () => {
+    setIsFileViewerOpen(true); // Open the modal immediately
+
+    if (fileCache.current.has(props.gcsKey)) {
+      setFileSrc(fileCache.current.get(props.gcsKey) as string);
+      return;
+    }
+
+    if (
+      props.fileType.startsWith('image/') ||
+      props.fileType.startsWith('video/')
+    ) {
+      try {
+        const imageBlob = await getBlobGcskey(props.gcsKey, props.fileType);
+        const objectUrl = URL.createObjectURL(imageBlob);
+
+        fileCache.current.set(props.gcsKey, objectUrl);
+        setFileSrc(objectUrl); // Load the image once fetched
+      } catch (err) {
+        console.error('Error fetching file from server:', err);
+        alert('Error fetching file');
+      }
+    }
+  };
+
+  const handleCloseFileViewer = () => {
+    setIsFileViewerOpen(false);
+  };
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -109,6 +165,11 @@ const FileComponent = (props: FileComponentProps) => {
 
   const handleRenameClick = () => {
     setIsRenameDialogOpen(true);
+    handleOptionsClose();
+  };
+
+  const handlePermissionsClick = () => {
+    setIsPermissionsDialogOpen(true);
     handleOptionsClose();
   };
 
@@ -143,6 +204,9 @@ const FileComponent = (props: FileComponentProps) => {
           '&:hover': {
             backgroundColor: '#e0e0e0',
           },
+        }}
+        onClick={() => {
+          if (props.page !== 'trash') handleFileClick();
         }}
       >
         {getFileIcon(props.fileType)}
@@ -187,7 +251,7 @@ const FileComponent = (props: FileComponentProps) => {
           </Tooltip>
 
           <Tooltip
-            title={`Last Modified: ${formattedLastModifiedDate} by ${props.lastModifiedBy || ownerUserName}`}
+            title={`Last Modified: ${formattedLastModifiedDate} by ${modifiedByName || ownerUserName}`}
             arrow
           >
             <Typography
@@ -201,7 +265,7 @@ const FileComponent = (props: FileComponentProps) => {
               }}
             >
               Last Modified: {formattedLastModifiedDate} by{' '}
-              {props.lastModifiedBy || ownerUserName}
+              {modifiedByName || ownerUserName}
             </Typography>
           </Tooltip>
         </Box>
@@ -222,13 +286,19 @@ const FileComponent = (props: FileComponentProps) => {
           {props.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
         </IconButton>
 
-        <IconButton onClick={handleOptionsClick}>
+        <IconButton
+          onClick={(e) => {
+            handleOptionsClick(e);
+            e.stopPropagation();
+          }}
+        >
           <MoreHorizIcon />
         </IconButton>
 
         <Menu
           anchorEl={anchorEl}
           open={open}
+          onClick={(event) => event.stopPropagation()}
           onClose={handleOptionsClose}
           PaperProps={{
             sx: {
@@ -239,7 +309,6 @@ const FileComponent = (props: FileComponentProps) => {
           {props.page === 'trash' ? (
             <MenuItem
               onClick={() => {
-                console.log('Restoring file...');
                 handleRestoreFile();
                 handleOptionsClose();
               }}
@@ -247,9 +316,21 @@ const FileComponent = (props: FileComponentProps) => {
               <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
               Restore
             </MenuItem>
+          ) : props.page === 'shared' ? (
+            <MenuItem
+              onClick={() => {
+                downloadFile(props.id, props.name);
+                handleOptionsClose();
+              }}
+            >
+              <InsertDriveFileIcon
+                sx={{ fontSize: '20px', marginRight: '9px' }}
+              />{' '}
+              Download
+            </MenuItem>
           ) : (
             [
-              <MenuItem onClick={handleOptionsClose}>
+              <MenuItem onClick={handlePermissionsClick}>
                 <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
               </MenuItem>,
 
@@ -297,6 +378,19 @@ const FileComponent = (props: FileComponentProps) => {
         fileName={props.name}
         onClose={() => setIsRenameDialogOpen(false)}
         onRename={handleRenameFile}
+      />
+
+      <PermissionDialog
+        open={isPermissionsDialogOpen}
+        onClose={() => setIsPermissionsDialogOpen(false)}
+        fileId={props.id}
+        folderId={null}
+      />
+      <FileViewerDialog
+        open={isFileViewerOpen}
+        onClose={handleCloseFileViewer}
+        src={fileSrc}
+        fileType={props.fileType}
       />
     </div>
   );

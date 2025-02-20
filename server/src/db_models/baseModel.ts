@@ -44,6 +44,41 @@ class BaseModel<T> {
     return result.rows as T[];
   }
 
+  //TODO: im wondering if the other getMethods such as getAllByOwnerAndColumn can use this instead
+  /**
+   * Get a single record by multiple column values, optionally including soft-deleted
+   */
+  protected async getOneByMultipleColumns(
+    conditions: Partial<T>,
+    includeDeleted = false,
+  ): Promise<T | null> {
+    const keys = Object.keys(conditions) as (keyof T)[];
+
+    if (keys.length === 0) {
+      throw new Error('No conditions provided for getOneByMultipleColumns');
+    }
+
+    // build "columnName = $1 AND columnName2 = $2 ..." from the keys
+    const whereClauses = keys
+      .map((col, i) => `"${String(col)}" = $${i + 1}`)
+      .join(' AND ');
+    const values = keys.map((col) => conditions[col]) as T[keyof T][];
+
+    // optionally exclude soft-deleted rows
+    const deletedClause = includeDeleted ? '' : ' AND "deletedAt" IS NULL';
+
+    const query = `
+        SELECT *
+        FROM "${this.table}"
+        WHERE ${whereClauses}
+        ${deletedClause}
+        LIMIT 1
+      `;
+
+    const result = await pool.query(query, values);
+    return (result.rows[0] as T) ?? null;
+  }
+
   async getAllByOwnerAndColumn<K extends keyof T>(
     ownerId: string,
     column: K,
@@ -138,6 +173,26 @@ class BaseModel<T> {
       `SELECT * FROM "${this.table}" WHERE "owner" = $1 AND "deletedAt" IS NOT NULL`,
       [ownerId],
     );
+    return result.rows as T[];
+  }
+
+  protected async getAllByJoin<K extends keyof T>(
+    joinTable: string,
+    onCondition: string,
+    column: K,
+    value: T[K],
+    checkJoinTableDeletedAt = true,
+  ): Promise<T[]> {
+    const query = `
+    SELECT baseTable.*
+    FROM "${this.table}" baseTable
+    JOIN "${joinTable}" joinTbl ON ${onCondition}
+    WHERE baseTable."${String(column)}" = $1
+      AND baseTable."deletedAt" IS NULL
+      ${checkJoinTableDeletedAt ? `AND joinTbl."deletedAt" IS NULL` : ''}
+  `;
+
+    const result = await pool.query(query, [value]);
     return result.rows as T[];
   }
 }

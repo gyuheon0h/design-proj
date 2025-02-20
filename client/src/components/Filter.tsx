@@ -6,9 +6,15 @@ interface FilterProps {
   label: string;
   icon: React.ReactNode;
   options: string[];
+  onFilterChange: (label: string, value: string) => void; // Callback for filter changes
 }
 
-const Filter: React.FC<FilterProps> = ({ label, icon, options }) => {
+const Filter: React.FC<FilterProps> = ({
+  label,
+  icon,
+  options,
+  onFilterChange,
+}) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -17,6 +23,12 @@ const Filter: React.FC<FilterProps> = ({ label, icon, options }) => {
   };
 
   const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  // for filtering
+  const handleMenuItemClick = (option: string) => {
+    onFilterChange(label, option); // notify parent of the selected filter
     setAnchorEl(null);
   };
 
@@ -46,7 +58,18 @@ const Filter: React.FC<FilterProps> = ({ label, icon, options }) => {
 
       <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
         {options.map((option, index) => (
-          <MenuItem key={index} onClick={handleClose}>
+          <MenuItem
+            key={index}
+            onClick={() => handleMenuItemClick(option)}
+            // Make reset button red and bold
+            sx={{
+              color: option === 'Reset' ? 'red' : 'inherit',
+              fontWeight: option === 'Reset' ? 'bold' : 'normal',
+              '&:hover': {
+                backgroundColor: option === 'Reset' ? '#ffcccc' : 'lightgrey',
+              },
+            }}
+          >
             {option}
           </MenuItem>
         ))}
