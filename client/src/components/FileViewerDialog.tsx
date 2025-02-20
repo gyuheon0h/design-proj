@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, CircularProgress, Box } from '@mui/material';
+import { isFileTypeText } from '../utils/clientHelpers';
 
 interface FileViewerDialogProps {
   open: boolean;
@@ -16,21 +17,38 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-
-  // Reset loading state when the dialog opens
-  useEffect(() => {
-    if (open) {
-      setLoading(true);
-    }
-  }, [open, src]);
+  const [textContent, setTextContent] = useState<string | null>(null);
 
   const isImage = fileType.startsWith('image/');
   const isVideo = fileType.startsWith('video/');
+  const isPDF = fileType === 'application/pdf';
+  // const isWordDoc =
+  //   fileType === 'application/msword' ||
+  //   fileType ===
+  //     'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+  const isText = isFileTypeText(fileType);
+
+  useEffect(() => {
+    if (open) {
+      setLoading(true);
+      setTextContent(null);
+
+      if (isFileTypeText(fileType) && !isPDF) {
+        fetch(src)
+          .then((response) => response.text())
+          .then((text) => {
+            setTextContent(text);
+            setLoading(false);
+          })
+          .catch(() => setLoading(false));
+      }
+    }
+  }, [open, src, fileType, isPDF]);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md">
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogContent sx={{ textAlign: 'center', position: 'relative' }}>
-        {/* Show a loading spinner while the file is being fetched */}
         {loading && (
           <Box
             sx={{
@@ -44,7 +62,6 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
           </Box>
         )}
 
-        {/* Image Viewer */}
         {isImage && (
           <img
             src={src}
@@ -59,7 +76,6 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
           />
         )}
 
-        {/* Video Viewer with fix for hanging issue */}
         {isVideo && (
           <video
             key={src}
@@ -78,8 +94,57 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
           </video>
         )}
 
-        {/* If the file type is unsupported */}
-        {!isImage && !isVideo && !loading && <p>Unsupported file type</p>}
+        {isPDF && (
+          <iframe
+            src={src}
+            title="PDF Viewer"
+            style={{
+              width: '100%',
+              height: '80vh',
+              display: loading ? 'none' : 'block',
+            }}
+            onLoad={() => setLoading(false)}
+          />
+        )}
+
+        {/* {isWordDoc && (
+          <iframe
+            src={`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(
+              src,
+            )}`}
+            title="Word Document Viewer"
+            style={{
+              width: '100%',
+              height: '80vh',
+              display: loading ? 'none' : 'block',
+            }}
+            onLoad={() => setLoading(false)}
+          />
+        )} */}
+
+        {isText && textContent && (
+          <pre
+            style={{
+              width: '100%',
+              height: '80vh',
+              overflow: 'auto',
+              whiteSpace: 'pre-wrap',
+              wordWrap: 'break-word',
+              backgroundColor: '#f4f4f4',
+              padding: '10px',
+              borderRadius: '5px',
+            }}
+          >
+            {textContent}
+          </pre>
+        )}
+
+        {!isImage &&
+          !isVideo &&
+          !isPDF &&
+          !isText &&
+          // !isWordDoc &&
+          !loading && <p>Unsupported file type</p>}
       </DialogContent>
     </Dialog>
   );

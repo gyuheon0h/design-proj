@@ -493,7 +493,6 @@ fileRouter.patch('/restore/:fileId', authorize, async (req, res) => {
 fileRouter.post('/view', async (req, res) => {
   try {
     const { gcsKey, fileType } = req.body;
-    console.log(gcsKey, fileType);
 
     if (!gcsKey || !fileType) {
       return res.status(400).json({

@@ -53,7 +53,6 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   };
 
   const handleDrag = (e: DraggableEvent, data: DraggableData) => {
-    console.log('Dragging');
     setDidDrag(true);
   };
 

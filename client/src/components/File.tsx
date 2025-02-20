@@ -31,6 +31,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FileViewerDialog from './FileViewerDialog';
 import { colors } from '../Styles';
+import { isFileTypeText } from '../utils/clientHelpers';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -133,17 +134,23 @@ const FileComponent = (props: FileComponentProps) => {
       setFileSrc(fileCache.current.get(props.gcsKey) as string);
       return;
     }
-
+    console.log(props.fileType);
     if (
       props.fileType.startsWith('image/') ||
-      props.fileType.startsWith('video/')
+      props.fileType.startsWith('video/') ||
+      props.fileType.startsWith('application/pdf') ||
+      // props.fileType.startsWith('application/msword') || // .doc
+      // props.fileType.startsWith(
+      //   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      // ) || // .docx
+      props.fileType.startsWith('application/rtf') || // Rich Text Format
+      isFileTypeText(props.fileType)
     ) {
       try {
-        const imageBlob = await getBlobGcskey(props.gcsKey, props.fileType);
-        const objectUrl = URL.createObjectURL(imageBlob);
-
+        const blob = await getBlobGcskey(props.gcsKey, props.fileType);
+        const objectUrl = URL.createObjectURL(blob);
         fileCache.current.set(props.gcsKey, objectUrl);
-        setFileSrc(objectUrl); // Load the image once fetched
+        setFileSrc(objectUrl);
       } catch (err) {
         console.error('Error fetching file from server:', err);
         alert('Error fetching file');

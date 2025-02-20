@@ -83,7 +83,6 @@ const Shared = () => {
       let foldersRes, filesRes;
 
       if (!folderId) {
-        console.log('in shared page');
         const [sharedFolders, sharedFiles] = await Promise.all([
           axios.get('http://localhost:5001/api/folder/shared', {
             withCredentials: true,
@@ -95,9 +94,7 @@ const Shared = () => {
         foldersRes = sharedFolders.data.folders;
         filesRes = sharedFiles.data.files;
         setTopLevelPerms(sharedFiles.data.permissions);
-        console.log(foldersRes, filesRes);
       } else {
-        console.log('in nested shared page');
         const [sharedFolders, sharedFiles] = await Promise.all([
           axios.post(
             'http://localhost:5001/api/folder/parent/shared',
@@ -116,7 +113,6 @@ const Shared = () => {
 
       setFolders(foldersRes);
       setFiles(filesRes);
-      console.log(foldersRes, filesRes);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
