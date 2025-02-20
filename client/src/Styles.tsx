@@ -2,53 +2,59 @@ import { createTheme } from '@mui/material/styles';
 
 // Color scheme
 export const colors = {
-    darkBlue: '#161C94', 
-    lightBlue: '#BBD6F5', 
-    darkGrey: '#999AA5',
-    hover: '#a9c8eb', 
-    white: '#FFFFFF',
-    active: '#FFFFFF', 
-    black: '#000000', 
+  darkBlue: '#161C94',
+  lightBlue: '#BBD6F5',
+  darkGrey: '#666A75',
+  hover: '#8AB8E6',
+  white: '#FFFFFF',
+  active: '#F5F7FB',
+  black: '#000000',
 };
 
 // Typography
 export const typography = {
-    fontFamily: 'Kurale, serif',
-    secondaryFontFamily: '"Annapurna SIL", serif',
-    fontSize: {
-        small: 12,
-        medium: 16,
-        large: 20,
-        extraLarge: 24,
-    },
+  // fontFamily: 'Kurale, serif',
+  // secondaryFontFamily: '"Annapurna SIL", serif',
+  fontFamily: '"Montserrat", sans-serif',
+  secondaryFontFamily: '"Nunito", sans-serif',
+  fontSize: {
+    small: 12,
+    medium: 16,
+    large: 20,
+    extraLarge: 24,
+  },
 };
 
+// Drawer styles
 export const drawerStyles = {
+  width: 260,
+  paper: {
     width: 260,
-    paper: {
-        width: 260,
-        boxSizing: 'border-box',
-        backgroundColor: colors.lightBlue, 
-        padding: '10px',
-    },
+    boxSizing: 'border-box',
+    backgroundColor: colors.lightBlue,
+    padding: '12px',
+    borderRight: `2px solid ${colors.darkGrey}`,
+  },
 };
 
+// Active Page styles
 export const activePageStyles = {
-    backgroundColor: colors.active,
-    color: colors.darkBlue, 
+  backgroundColor: colors.active,
+  color: colors.darkBlue,
+  fontWeight: 600,
 };
 
-// Global theme
+// Global Theme
 export const theme = createTheme({
   typography: {
-    fontFamily: '"Kurale", serif',
+    fontFamily: typography.fontFamily,
     allVariants: {
-      fontFamily: '"Kurale", serif',  
-      fontSize: typography.fontSize.medium,  
+      fontFamily: typography.fontFamily,
+      fontSize: typography.fontSize.medium,
     },
-    h1: { fontSize: typography.fontSize.extraLarge },
-    h2: { fontSize: typography.fontSize.large },
-    h3: { fontSize: typography.fontSize.medium },
+    h1: { fontSize: typography.fontSize.extraLarge, fontWeight: 700 },
+    h2: { fontSize: typography.fontSize.large, fontWeight: 600 },
+    h3: { fontSize: typography.fontSize.medium, fontWeight: 500 },
     body1: { fontSize: typography.fontSize.medium },
     body2: { fontSize: typography.fontSize.small },
   },
@@ -61,6 +67,7 @@ export const theme = createTheme({
     },
     background: {
       default: colors.white,
+      paper: '#F8FAFC',
     },
     text: {
       primary: colors.darkBlue,

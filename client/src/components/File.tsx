@@ -286,13 +286,19 @@ const FileComponent = (props: FileComponentProps) => {
           {props.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
         </IconButton>
 
-        <IconButton onClick={handleOptionsClick}>
+        <IconButton
+          onClick={(e) => {
+            handleOptionsClick(e);
+            e.stopPropagation();
+          }}
+        >
           <MoreHorizIcon />
         </IconButton>
 
         <Menu
           anchorEl={anchorEl}
           open={open}
+          onClick={(event) => event.stopPropagation()}
           onClose={handleOptionsClose}
           PaperProps={{
             sx: {

@@ -22,7 +22,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import React, { useState } from 'react';
 import { useUser } from '../context/UserContext';
 import { Settings as SettingsIcon } from '@mui/icons-material';
-import { colors, drawerStyles, activePageStyles } from '../Styles';
+import { colors, drawerStyles, activePageStyles, typography } from '../Styles';
 import SettingsDialog from './SettingsDialog';
 
 const AccountMenu = () => {
@@ -41,7 +41,7 @@ const AccountMenu = () => {
 
   const handleLogout = () => {
     try {
-      document.cookie.split(';').forEach(cookie => {
+      document.cookie.split(';').forEach((cookie) => {
         const [name] = cookie.split('=');
         document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
       });
@@ -89,7 +89,7 @@ const AccountMenu = () => {
           </ListItemIcon>
           Logout
         </MenuItem>
-        <MenuItem 
+        <MenuItem
           onClick={() => {
             handleClose();
             setSettingsOpen(true);
@@ -101,8 +101,8 @@ const AccountMenu = () => {
           Settings
         </MenuItem>
       </Menu>
-      
-      <SettingsDialog 
+
+      <SettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
       />
@@ -139,14 +139,7 @@ const NavigationDrawer = () => {
           alt="Owl Logo"
           sx={{ width: 64, height: 64 }}
         />
-        <Typography
-          variant="h1"
-          sx={{
-            fontWeight: 700,
-            fontFamily: '"Kurale", serif',
-            color: colors.darkBlue,
-          }}
-        >
+        <Typography variant="h1" sx={{ fontFamily: typography.fontFamily }}>
           Owl Share
         </Typography>
       </Box>
