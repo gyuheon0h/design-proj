@@ -8,6 +8,8 @@ import {
   Divider,
   Box,
   Tooltip,
+  Modal,
+  Fade,
 } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
@@ -393,12 +395,19 @@ const FileComponent = (props: FileComponentProps) => {
         fileId={props.id}
         folderId={null}
       />
-      <FileViewerDialog
-        open={isFileViewerOpen}
-        onClose={handleCloseFileViewer}
-        src={fileSrc}
-        fileType={props.fileType}
-      />
+
+      <Modal open={isFileViewerOpen} onClose={handleCloseFileViewer}>
+        <Fade in={isFileViewerOpen} timeout={300}>
+          <Box>
+            <FileViewerDialog
+              open={isFileViewerOpen}
+              onClose={handleCloseFileViewer}
+              src={fileSrc}
+              fileType={props.fileType}
+            />
+          </Box>
+        </Fade>
+      </Modal>
     </div>
   );
 };

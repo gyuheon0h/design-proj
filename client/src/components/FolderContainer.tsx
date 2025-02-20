@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Slider } from '@mui/material';
+import { Box, Button, Grow, Slider } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import Folder, { FolderProps } from './Folder';
 import axios from 'axios';
@@ -186,27 +186,26 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
           }}
         >
           {visibleFolders.map((folder) => (
-            <Folder
-              page={page}
-              key={folder.id}
-              id={folder.id}
-              name={folder.name}
-              owner={folder.owner}
-              createdAt={folder.createdAt}
-              parentFolder={folder.parentFolder}
-              folderChildren={folder.folderChildren}
-              fileChildren={folder.fileChildren}
-              isFavorited={folder.isFavorited}
-              onClick={() => onFolderClick(folder)}
-              handleRenameFolder={handleRenameFolder}
-              handleDeleteFolder={handleDeleteFolder}
-              handleFavoriteFolder={() =>
-                handleFavoriteFolder(folder.id, folder.owner)
-              }
-              handleRestoreFolder={() =>
-                handleRestoreFolder(folder.id, folder.owner)
-              }
-            />
+             <Grow in={true} timeout={500} key={`${folder.id}-${searchQuery}`}> 
+             <div> 
+               <Folder
+                 page={page}
+                 id={folder.id}
+                 name={folder.name}
+                 owner={folder.owner}
+                 createdAt={folder.createdAt}
+                 parentFolder={folder.parentFolder}
+                 folderChildren={folder.folderChildren}
+                 fileChildren={folder.fileChildren}
+                 isFavorited={folder.isFavorited}
+                 onClick={() => onFolderClick(folder)}
+                 handleRenameFolder={handleRenameFolder}
+                 handleDeleteFolder={handleDeleteFolder}
+                 handleFavoriteFolder={() => handleFavoriteFolder(folder.id, folder.owner)}
+                 handleRestoreFolder={() => handleRestoreFolder(folder.id, folder.owner)}
+               />
+             </div>
+           </Grow>
           ))}
         </Box>
 
