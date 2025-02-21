@@ -74,8 +74,8 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
             src={src}
             alt="preview"
             style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
+              maxWidth: '80vh',
+              maxHeight: '100vh',
               width: 'auto',
               height: 'auto',
               margin: 'auto',
@@ -93,8 +93,8 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
             controls
             autoPlay
             style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
+              maxWidth: '80vh',
+              maxHeight: '100vh',
               width: 'auto',
               height: 'auto',
               margin: 'auto',
@@ -112,7 +112,7 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
             src={src}
             title="PDF Viewer"
             style={{
-              width: '100%',
+              width: '100vh',
               height: '80vh',
               display: loading ? 'none' : 'block',
             }}
@@ -131,6 +131,8 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
               backgroundColor: '#f4f4f4',
               padding: '10px',
               borderRadius: '5px',
+              textAlign: 'left',
+              fontFamily: 'monospace',
             }}
           >
             {textContent}
