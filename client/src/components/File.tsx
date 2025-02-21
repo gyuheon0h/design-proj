@@ -20,15 +20,12 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import ImageIcon from '@mui/icons-material/Image';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import MovieIcon from '@mui/icons-material/Movie';
-import TableChartIcon from '@mui/icons-material/TableChart';
-import { getUsernameById, downloadFile } from '../utils/helperRequests';
 import RenameDialog from './RenameDialog';
 import {
   getUsernameById,
   downloadFile,
   getBlobGcskey,
 } from '../utils/helperRequests';
-import RenameFileDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
