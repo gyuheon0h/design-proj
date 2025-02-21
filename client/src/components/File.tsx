@@ -135,8 +135,9 @@ const FileComponent = (props: FileComponentProps) => {
   const handleFileClick = async () => {
     if (
       props.fileType.startsWith('image/') ||
-      isSupportedFileTypeVideo(props.fileType) ||
       props.fileType.startsWith('application/pdf') ||
+      props.fileType.startsWith('audio/') ||
+      isSupportedFileTypeVideo(props.fileType) ||
       isSupportedFileTypeText(props.fileType)
     ) {
       setIsFileViewerOpen(true); // Open the modal immediately

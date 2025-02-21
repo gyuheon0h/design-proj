@@ -20,12 +20,14 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
 
   const isImage = fileType.startsWith('image/');
   const isVideo = isSupportedFileTypeVideo(fileType);
   const isPDF = fileType === 'application/pdf';
   const isText = isSupportedFileTypeText(fileType);
+  const isAudio = fileType.startsWith('audio/');
 
   useEffect(() => {
     if (open) {
@@ -139,7 +141,24 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
           </pre>
         )}
 
-        {!isImage && !isVideo && !isPDF && !isText && !loading && (
+        {isAudio && (
+          <audio
+            key={src}
+            ref={audioRef}
+            controls
+            autoPlay
+            style={{
+              width: '100%',
+              display: loading ? 'none' : 'block',
+            }}
+            onLoadedData={() => setLoading(false)}
+          >
+            <source src={src} type={fileType} />
+            Your browser does not support the audio tag.
+          </audio>
+        )}
+
+        {!isImage && !isVideo && !isPDF && !isText && !isAudio && !loading && (
           <p>Unsupported file type</p>
         )}
       </DialogContent>
