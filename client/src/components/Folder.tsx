@@ -77,13 +77,13 @@ const Folder = (props: FolderProps) => {
   };
 
   const handlePermissionsClick = (event: React.MouseEvent) => {
-    event.stopPropagation(); //TODO: is this needed... the button isnt on top of the folder itself
+    event.stopPropagation();
     setIsPermissionsDialogOpen(true);
     setAnchorEl(null);
   };
 
   const handleMoveClick = (event: React.MouseEvent) => {
-    event.stopPropagation(); //TODO: is this needed...
+    event.stopPropagation();
     setIsMoveDialogOpen(true);
     setAnchorEl(null);
   };
