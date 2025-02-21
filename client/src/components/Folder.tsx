@@ -54,7 +54,8 @@ const Folder = (props: FolderProps) => {
   };
 
   const handleFolderClick = () => {
-    if (isRenameDialogOpen || isPermissionsDialogOpen) return;
+    if (isRenameDialogOpen || isPermissionsDialogOpen || isMoveDialogOpen)
+      return;
     props.onClick(props);
   };
 
