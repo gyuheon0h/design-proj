@@ -137,14 +137,12 @@ const FileComponent = (props: FileComponentProps) => {
       props.fileType.startsWith('application/pdf') ||
       isSupportedFileTypeText(props.fileType)
     ) {
-      console.log('WHAT THE FUCK');
       setIsFileViewerOpen(true); // Open the modal immediately
 
       if (fileCache.current.has(props.gcsKey)) {
         setFileSrc(fileCache.current.get(props.gcsKey) as string);
         return;
       }
-      console.log(props.fileType);
 
       try {
         const blob = await getBlobGcskey(props.gcsKey, props.fileType);
