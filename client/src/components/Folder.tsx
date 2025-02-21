@@ -189,7 +189,7 @@ const Folder = (props: FolderProps) => {
               Restore
             </MenuItem>
           ) : props.page === 'shared' ? (
-            <></>
+            []
           ) : (
             [
               <MenuItem onClick={handlePermissionsClick}>
