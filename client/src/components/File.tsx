@@ -226,11 +226,12 @@ const FileComponent = (props: FileComponentProps) => {
 
         <Box
           sx={{
-            display: 'flex',
+            display: 'grid',
+            gridTemplateColumns: '3fr 2fr 2fr',
             alignItems: 'center',
             flexGrow: 1,
             overflow: 'hidden',
-            justifyContent: 'space-around',
+            gap: '20px',
           }}
         >
           <Tooltip title={props.name} arrow>
