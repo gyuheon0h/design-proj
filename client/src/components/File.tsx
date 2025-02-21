@@ -20,17 +20,18 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import ImageIcon from '@mui/icons-material/Image';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import MovieIcon from '@mui/icons-material/Movie';
+import RenameDialog from './RenameDialog';
 import {
   getUsernameById,
   downloadFile,
   getBlobGcskey,
 } from '../utils/helperRequests';
-import RenameFileDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FileViewerDialog from './FileViewerDialog';
 import { colors } from '../Styles';
+import MoveDialog from './MoveDialog';
 import {
   isSupportedFileTypeText,
   isSupportedFileTypeVideo,
@@ -89,6 +90,7 @@ const FileComponent = (props: FileComponentProps) => {
   const [modifiedByName, setModifiedByName] = useState<string>('Loading...');
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
+  const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const fileCache = useRef(new Map<string, string>()); // Woah this speeds up reopens by a LOT
 
@@ -175,6 +177,11 @@ const FileComponent = (props: FileComponentProps) => {
 
   const handlePermissionsClick = () => {
     setIsPermissionsDialogOpen(true);
+    handleOptionsClose();
+  };
+
+  const handleMoveClick = () => {
+    setIsMoveDialogOpen(true);
     handleOptionsClose();
   };
 
@@ -373,12 +380,18 @@ const FileComponent = (props: FileComponentProps) => {
                 />{' '}
                 Download
               </MenuItem>,
+
+              <Divider sx={{ my: 0.2 }} />,
+
+              <MenuItem onClick={handleMoveClick}>
+                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
+              </MenuItem>,
             ]
           )}
         </Menu>
       </Card>
 
-      <RenameFileDialog
+      <RenameDialog
         open={isRenameDialogOpen}
         fileName={props.name}
         onClose={() => setIsRenameDialogOpen(false)}
@@ -390,6 +403,15 @@ const FileComponent = (props: FileComponentProps) => {
         onClose={() => setIsPermissionsDialogOpen(false)}
         fileId={props.id}
         folderId={null}
+      />
+
+      <MoveDialog
+        open={isMoveDialogOpen}
+        onClose={() => setIsMoveDialogOpen(false)}
+        fileName={props.name}
+        fileId={props.id}
+        resourceType="file"
+        parentFolderId={props.parentFolder}
       />
       <FileViewerDialog
         open={isFileViewerOpen}
