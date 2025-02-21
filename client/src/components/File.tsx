@@ -203,6 +203,15 @@ const FileComponent = (props: FileComponentProps) => {
     ? lastModifiedDate.toLocaleDateString()
     : 'Unknown';
 
+  const createdDate = new Date(props.createdAt);
+  const formattedCreatedDate = !isNaN(createdDate.getTime())
+    ? lastModifiedDate.toLocaleDateString()
+    : 'Unknown';
+
+  const dateText = props.lastModifiedBy
+    ? `Last Modified: ${formattedLastModifiedDate} by ${modifiedByName || ownerUserName}`
+    : `Created: ${formattedCreatedDate} by ${ownerUserName}`;
+
   return (
     <div>
       <Card
@@ -264,10 +273,7 @@ const FileComponent = (props: FileComponentProps) => {
             </Typography>
           </Tooltip>
 
-          <Tooltip
-            title={`Last Modified: ${formattedLastModifiedDate} by ${modifiedByName || ownerUserName}`}
-            arrow
-          >
+          <Tooltip title={dateText} arrow>
             <Typography
               variant="body2"
               color="text.secondary"
@@ -278,8 +284,7 @@ const FileComponent = (props: FileComponentProps) => {
                 whiteSpace: 'nowrap',
               }}
             >
-              Last Modified: {formattedLastModifiedDate} by{' '}
-              {modifiedByName || ownerUserName}
+              {dateText}
             </Typography>
           </Tooltip>
         </Box>
