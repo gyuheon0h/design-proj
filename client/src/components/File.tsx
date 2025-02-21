@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Card,
   Typography,
@@ -13,7 +13,6 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
 import RestoreIcon from '@mui/icons-material/Restore';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
-import FolderZipIcon from '@mui/icons-material/FolderZip';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
@@ -24,11 +23,22 @@ import MovieIcon from '@mui/icons-material/Movie';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import { getUsernameById, downloadFile } from '../utils/helperRequests';
 import RenameDialog from './RenameDialog';
+import {
+  getUsernameById,
+  downloadFile,
+  getBlobGcskey,
+} from '../utils/helperRequests';
+import RenameFileDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import FileViewerDialog from './FileViewerDialog';
 import { colors } from '../Styles';
 import MoveDialog from './MoveDialog';
+import {
+  isSupportedFileTypeText,
+  isSupportedFileTypeVideo,
+} from '../utils/clientHelpers';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -85,6 +95,11 @@ const FileComponent = (props: FileComponentProps) => {
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const fileCache = useRef(new Map<string, string>()); // Woah this speeds up reopens by a LOT
+
+  // For the image viewer
+  const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
+  const [fileSrc, setFileSrc] = useState('');
 
   useEffect(() => {
     const fetchOwnerUserName = async () => {
@@ -119,6 +134,38 @@ const FileComponent = (props: FileComponentProps) => {
   }, [props.lastModifiedBy]);
 
   const open = Boolean(anchorEl);
+
+  const handleFileClick = async () => {
+    if (
+      props.fileType.startsWith('image/') ||
+      isSupportedFileTypeVideo(props.fileType) ||
+      props.fileType.startsWith('application/pdf') ||
+      isSupportedFileTypeText(props.fileType)
+    ) {
+      console.log('WHAT THE FUCK');
+      setIsFileViewerOpen(true); // Open the modal immediately
+
+      if (fileCache.current.has(props.gcsKey)) {
+        setFileSrc(fileCache.current.get(props.gcsKey) as string);
+        return;
+      }
+      console.log(props.fileType);
+
+      try {
+        const blob = await getBlobGcskey(props.gcsKey, props.fileType);
+        const objectUrl = URL.createObjectURL(blob);
+        fileCache.current.set(props.gcsKey, objectUrl);
+        setFileSrc(objectUrl);
+      } catch (err) {
+        console.error('Error fetching file from server:', err);
+        alert('Error fetching file');
+      }
+    }
+  };
+
+  const handleCloseFileViewer = () => {
+    setIsFileViewerOpen(false);
+  };
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -174,6 +221,9 @@ const FileComponent = (props: FileComponentProps) => {
           '&:hover': {
             backgroundColor: '#e0e0e0',
           },
+        }}
+        onClick={() => {
+          if (props.page !== 'trash') handleFileClick();
         }}
       >
         {getFileIcon(props.fileType)}
@@ -253,13 +303,19 @@ const FileComponent = (props: FileComponentProps) => {
           {props.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
         </IconButton>
 
-        <IconButton onClick={handleOptionsClick}>
+        <IconButton
+          onClick={(e) => {
+            handleOptionsClick(e);
+            e.stopPropagation();
+          }}
+        >
           <MoreHorizIcon />
         </IconButton>
 
         <Menu
           anchorEl={anchorEl}
           open={open}
+          onClick={(event) => event.stopPropagation()}
           onClose={handleOptionsClose}
           PaperProps={{
             sx: {
@@ -361,6 +417,12 @@ const FileComponent = (props: FileComponentProps) => {
         fileId={props.id}
         resourceType="file"
         parentFolderId={props.parentFolder}
+      />
+      <FileViewerDialog
+        open={isFileViewerOpen}
+        onClose={handleCloseFileViewer}
+        src={fileSrc}
+        fileType={props.fileType}
       />
     </div>
   );
