@@ -20,17 +20,22 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import ImageIcon from '@mui/icons-material/Image';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import MovieIcon from '@mui/icons-material/Movie';
+import RenameDialog from './RenameDialog';
 import {
   getUsernameById,
   downloadFile,
   getBlobGcskey,
 } from '../utils/helperRequests';
-import RenameFileDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FileViewerDialog from './FileViewerDialog';
 import { colors } from '../Styles';
+import MoveDialog from './MoveDialog';
+import {
+  isSupportedFileTypeText,
+  isSupportedFileTypeVideo,
+} from '../utils/clientHelpers';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -85,6 +90,7 @@ const FileComponent = (props: FileComponentProps) => {
   const [modifiedByName, setModifiedByName] = useState<string>('Loading...');
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
+  const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const fileCache = useRef(new Map<string, string>()); // Woah this speeds up reopens by a LOT
 
@@ -127,23 +133,25 @@ const FileComponent = (props: FileComponentProps) => {
   const open = Boolean(anchorEl);
 
   const handleFileClick = async () => {
-    setIsFileViewerOpen(true); // Open the modal immediately
-
-    if (fileCache.current.has(props.gcsKey)) {
-      setFileSrc(fileCache.current.get(props.gcsKey) as string);
-      return;
-    }
-
     if (
       props.fileType.startsWith('image/') ||
-      props.fileType.startsWith('video/')
+      props.fileType.startsWith('application/pdf') ||
+      props.fileType.startsWith('audio/') ||
+      isSupportedFileTypeVideo(props.fileType) ||
+      isSupportedFileTypeText(props.fileType)
     ) {
-      try {
-        const imageBlob = await getBlobGcskey(props.gcsKey, props.fileType);
-        const objectUrl = URL.createObjectURL(imageBlob);
+      setIsFileViewerOpen(true); // Open the modal immediately
 
+      if (fileCache.current.has(props.gcsKey)) {
+        setFileSrc(fileCache.current.get(props.gcsKey) as string);
+        return;
+      }
+
+      try {
+        const blob = await getBlobGcskey(props.gcsKey, props.fileType);
+        const objectUrl = URL.createObjectURL(blob);
         fileCache.current.set(props.gcsKey, objectUrl);
-        setFileSrc(objectUrl); // Load the image once fetched
+        setFileSrc(objectUrl);
       } catch (err) {
         console.error('Error fetching file from server:', err);
         alert('Error fetching file');
@@ -173,6 +181,11 @@ const FileComponent = (props: FileComponentProps) => {
     handleOptionsClose();
   };
 
+  const handleMoveClick = () => {
+    setIsMoveDialogOpen(true);
+    handleOptionsClose();
+  };
+
   const handleRenameFile = (newFileName: string) => {
     props.handleRenameFile(props.id, newFileName);
   };
@@ -189,6 +202,15 @@ const FileComponent = (props: FileComponentProps) => {
   const formattedLastModifiedDate = !isNaN(lastModifiedDate.getTime())
     ? lastModifiedDate.toLocaleDateString()
     : 'Unknown';
+
+  const createdDate = new Date(props.createdAt);
+  const formattedCreatedDate = !isNaN(createdDate.getTime())
+    ? lastModifiedDate.toLocaleDateString()
+    : 'Unknown';
+
+  const dateText = props.lastModifiedBy
+    ? `Last Modified: ${formattedLastModifiedDate} by ${modifiedByName || ownerUserName}`
+    : `Created: ${formattedCreatedDate} by ${ownerUserName}`;
 
   return (
     <div>
@@ -213,11 +235,12 @@ const FileComponent = (props: FileComponentProps) => {
 
         <Box
           sx={{
-            display: 'flex',
+            display: 'grid',
+            gridTemplateColumns: '3fr 2fr 2fr',
             alignItems: 'center',
             flexGrow: 1,
             overflow: 'hidden',
-            justifyContent: 'space-around',
+            gap: '20px',
           }}
         >
           <Tooltip title={props.name} arrow>
@@ -250,10 +273,7 @@ const FileComponent = (props: FileComponentProps) => {
             </Typography>
           </Tooltip>
 
-          <Tooltip
-            title={`Last Modified: ${formattedLastModifiedDate} by ${modifiedByName || ownerUserName}`}
-            arrow
-          >
+          <Tooltip title={dateText} arrow>
             <Typography
               variant="body2"
               color="text.secondary"
@@ -264,8 +284,7 @@ const FileComponent = (props: FileComponentProps) => {
                 whiteSpace: 'nowrap',
               }}
             >
-              Last Modified: {formattedLastModifiedDate} by{' '}
-              {modifiedByName || ownerUserName}
+              {dateText}
             </Typography>
           </Tooltip>
         </Box>
@@ -368,12 +387,18 @@ const FileComponent = (props: FileComponentProps) => {
                 />{' '}
                 Download
               </MenuItem>,
+
+              <Divider sx={{ my: 0.2 }} />,
+
+              <MenuItem onClick={handleMoveClick}>
+                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
+              </MenuItem>,
             ]
           )}
         </Menu>
       </Card>
 
-      <RenameFileDialog
+      <RenameDialog
         open={isRenameDialogOpen}
         fileName={props.name}
         onClose={() => setIsRenameDialogOpen(false)}
@@ -385,6 +410,15 @@ const FileComponent = (props: FileComponentProps) => {
         onClose={() => setIsPermissionsDialogOpen(false)}
         fileId={props.id}
         folderId={null}
+      />
+
+      <MoveDialog
+        open={isMoveDialogOpen}
+        onClose={() => setIsMoveDialogOpen(false)}
+        fileName={props.name}
+        fileId={props.id}
+        resourceType="file"
+        parentFolderId={props.parentFolder}
       />
       <FileViewerDialog
         open={isFileViewerOpen}

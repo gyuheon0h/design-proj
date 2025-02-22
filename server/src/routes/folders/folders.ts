@@ -21,6 +21,8 @@ folderRouter.post(
       }
       const userId = req.user.userId;
 
+      console.log('folderId recieved ', folderId);
+
       // Handle null case properly
       const subfolders = await FolderModel.getSubfoldersByOwner(
         userId,
@@ -425,6 +427,48 @@ folderRouter.patch('/rename/:folderId', authorize, async (req, res) => {
     });
   } catch (error) {
     console.error('Folder rename error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+/**
+ * PATCH /api/files/move/:folderId
+ * Route to move a folder (updates parentFolderId)
+ */
+folderRouter.patch('/move/:folderId', authorize, async (req, res) => {
+  try {
+    const { parentFolderId } = req.body;
+    // if (!parentFolderId) {
+    //   return res
+    //     .status(400)
+    //     .json({ message: 'No new parentFolderId provided' });
+    // }
+
+    const userId = (req as any).user.userId;
+    const { folderId } = req.params;
+    const folder = await FolderModel.getById(folderId);
+
+    if (folder?.parentFolder == parentFolderId) {
+      console.error('User attempted to move to existing location');
+      return res
+        .status(400)
+        .json({ message: 'No new parentFolderId provided' });
+    }
+
+    if (!folder) {
+      return res.status(404).json({ message: 'Folder not found' });
+    }
+
+    const fileMetadata = await FolderModel.updateFolderMetadata(folderId, {
+      parentFolder: parentFolderId,
+    });
+
+    return res.status(200).json({
+      message: 'Folder moved successfully',
+      file: fileMetadata,
+    });
+  } catch (error) {
+    console.error('Folder move error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
