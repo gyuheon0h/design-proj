@@ -2,14 +2,24 @@ import { useUser } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 import SHA256 from 'crypto-js/sha256';
 import { useState } from 'react';
-import { Container, Paper, Typography, TextField, Button, Box, Link } from '@mui/material';
+import {
+  Container,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Box,
+  Link,
+} from '@mui/material';
 import { colors } from '../Styles';
+import ErrorAlert from '../components/ErrorAlert';
 
 const Login = () => {
   const [username, setUsernameInput] = useState('');
   const [password, setPassword] = useState('');
   const { setUsername } = useUser();
   const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,12 +37,12 @@ const Login = () => {
         setUsername(username); // Store in context
         navigate('/home');
       } else {
-        const error = await response.json();
-        alert(`Login failed: ${error.message}`);
+        const errorData = await response.json();
+        setError(`Login failed: ${errorData.message}`);
       }
     } catch (error) {
       console.error('Error during login request:', error);
-      alert('Something went wrong. Please try again.');
+      setError(`Something went wrong: ${error}. Please try again.`);
     }
   };
 
@@ -49,22 +59,22 @@ const Login = () => {
       }}
     >
       <Paper
-        elevation={0} 
+        elevation={0}
         sx={{
           padding: 4,
           width: '100%',
           borderRadius: '16px',
-          backgroundColor: colors.lightBlue, 
+          backgroundColor: colors.lightBlue,
           textAlign: 'center',
         }}
       >
-        <Typography 
-          component="h1" 
-          variant="h5" 
-          sx={{ 
-            fontWeight: 'bold', 
-            color: colors.darkBlue, 
-            fontSize: 24 
+        <Typography
+          component="h1"
+          variant="h5"
+          sx={{
+            fontWeight: 'bold',
+            color: colors.darkBlue,
+            fontSize: 24,
           }}
         >
           Welcome to Owl Share!
@@ -127,12 +137,23 @@ const Login = () => {
             Login
           </Button>
           <Box sx={{ textAlign: 'center', mt: 2 }}>
-            <Link href="/register" variant="body2" sx={{ color: colors.darkBlue, textDecoration: 'underline' }}>
+            <Link
+              href="/register"
+              variant="body2"
+              sx={{ color: colors.darkBlue, textDecoration: 'underline' }}
+            >
               New user? Register here.
             </Link>
           </Box>
         </Box>
       </Paper>
+      {error && (
+        <ErrorAlert
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </Container>
   );
 };

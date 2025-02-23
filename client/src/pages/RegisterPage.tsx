@@ -7,40 +7,27 @@ import {
   TextField,
   Button,
   Box,
-  Snackbar,
-  AlertColor,
-  Alert,
 } from '@mui/material';
 import axios from 'axios';
 import SHA256 from 'crypto-js/sha256';
 import { colors } from '../Styles';
+import ErrorAlert from '../components/ErrorAlert';
 
 const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [openAlert, setOpenAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
-  const [alertSeverity, setAlertSeverity] = useState<AlertColor>('success');
+  const [error, setError] = useState<string | null>(null);
+
   const navigate = useNavigate();
-
-  const handleCloseAlert = () => {
-    setOpenAlert(false);
-  };
-
-  const showAlert = (message: string, severity: AlertColor) => {
-    setAlertMessage(message);
-    setAlertSeverity(severity);
-    setOpenAlert(true);
-  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
       // TODO: add other validations
-      alert('Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
 
@@ -57,18 +44,14 @@ const Register = () => {
       );
 
       if (response.status === 201) {
-        showAlert(
-          'Successfully registered! You will now be redirected to login.',
-          'success',
-        );
         navigate('/');
       } else {
         const errorData = await response;
-        alert(`Error: ${errorData}`);
+        setError(`Registration failed: ${errorData.data}. Please try again.`);
       }
     } catch (error) {
       console.error('Registration error:', error);
-      alert('An unexpected error occurred.');
+      setError(`An unexpected error occurred: ${error}`);
     }
   };
 
@@ -202,22 +185,13 @@ const Register = () => {
           </Button>
         </Box>
       </Paper>
-      <Snackbar
-        open={openAlert}
-        autoHideDuration={6000}
-        onClose={handleCloseAlert}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={handleCloseAlert}
-          severity={alertSeverity}
-          sx={{ width: '100%' }}
-          elevation={6}
-          variant="filled"
-        >
-          {alertMessage}
-        </Alert>
-      </Snackbar>
+      {error && (
+        <ErrorAlert
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </Container>
   );
 };
