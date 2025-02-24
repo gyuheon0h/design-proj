@@ -35,7 +35,7 @@ import MoveDialog from './MoveDialog';
 import {
   isSupportedFileTypeText,
   isSupportedFileTypeVideo,
-} from '../utils/clientHelpers';
+} from '../utils/fileTypeHelpers';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -228,6 +228,7 @@ const FileComponent = (props: FileComponentProps) => {
           },
         }}
         onClick={() => {
+          console.log(props.fileType);
           if (props.page !== 'trash') handleFileClick();
         }}
       >

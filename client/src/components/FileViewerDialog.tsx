@@ -3,7 +3,8 @@ import { Dialog, DialogContent, CircularProgress, Box } from '@mui/material';
 import {
   isSupportedFileTypeText,
   isSupportedFileTypeVideo,
-} from '../utils/clientHelpers';
+} from '../utils/fileTypeHelpers';
+import TextPreview from './FilePreview/TextPreview';
 
 interface FileViewerDialogProps {
   open: boolean;
@@ -123,22 +124,7 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
         )}
 
         {isText && textContent && (
-          <pre
-            style={{
-              width: '100%',
-              height: '80vh',
-              overflow: 'auto',
-              whiteSpace: 'pre-wrap',
-              wordWrap: 'break-word',
-              backgroundColor: '#f4f4f4',
-              padding: '10px',
-              borderRadius: '5px',
-              textAlign: 'left',
-              fontFamily: 'monospace',
-            }}
-          >
-            {textContent}
-          </pre>
+          <TextPreview content={textContent} fileType={fileType} />
         )}
 
         {isAudio && (

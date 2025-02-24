@@ -6,6 +6,7 @@ import StorageService from '../../storage';
 import FileModel from '../../db_models/FileModel';
 import PermissionModel from '../../db_models/PermissionModel';
 import mime from 'mime-types';
+import { inferMimeType } from './fileHelpers';
 
 const fileRouter = Router();
 const upload = multer(); // Using memory storage to keep things minimal (TODO: implement streaming)
@@ -152,6 +153,8 @@ fileRouter.post(
         const inferredMimeType = mime.lookup(originalname);
         if (inferredMimeType) {
           mimetype = inferredMimeType;
+        } else {
+          mimetype = inferMimeType(originalname);
         }
       }
 
