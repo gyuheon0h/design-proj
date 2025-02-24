@@ -3,7 +3,8 @@ import { Dialog, DialogContent, CircularProgress, Box } from '@mui/material';
 import {
   isSupportedFileTypeText,
   isSupportedFileTypeVideo,
-} from '../utils/clientHelpers';
+} from '../utils/fileTypeHelpers';
+import TextPreview from './FilePreview/TextPreview';
 
 interface FileViewerDialogProps {
   open: boolean;
@@ -20,12 +21,14 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
 
   const isImage = fileType.startsWith('image/');
   const isVideo = isSupportedFileTypeVideo(fileType);
   const isPDF = fileType === 'application/pdf';
   const isText = isSupportedFileTypeText(fileType);
+  const isAudio = fileType.startsWith('audio/');
 
   useEffect(() => {
     if (open) {
@@ -74,8 +77,8 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
             src={src}
             alt="preview"
             style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
+              maxWidth: '80vh',
+              maxHeight: '100vh',
               width: 'auto',
               height: 'auto',
               margin: 'auto',
@@ -93,8 +96,8 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
             controls
             autoPlay
             style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
+              maxWidth: '80vh',
+              maxHeight: '100vh',
               width: 'auto',
               height: 'auto',
               margin: 'auto',
@@ -112,7 +115,7 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
             src={src}
             title="PDF Viewer"
             style={{
-              width: '100%',
+              width: '100vh',
               height: '80vh',
               display: loading ? 'none' : 'block',
             }}
@@ -121,23 +124,27 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
         )}
 
         {isText && textContent && (
-          <pre
-            style={{
-              width: '100%',
-              height: '80vh',
-              overflow: 'auto',
-              whiteSpace: 'pre-wrap',
-              wordWrap: 'break-word',
-              backgroundColor: '#f4f4f4',
-              padding: '10px',
-              borderRadius: '5px',
-            }}
-          >
-            {textContent}
-          </pre>
+          <TextPreview content={textContent} fileType={fileType} />
         )}
 
-        {!isImage && !isVideo && !isPDF && !isText && !loading && (
+        {isAudio && (
+          <audio
+            key={src}
+            ref={audioRef}
+            controls
+            autoPlay
+            style={{
+              width: '100%',
+              display: loading ? 'none' : 'block',
+            }}
+            onLoadedData={() => setLoading(false)}
+          >
+            <source src={src} type={fileType} />
+            Your browser does not support the audio tag.
+          </audio>
+        )}
+
+        {!isImage && !isVideo && !isPDF && !isText && !isAudio && !loading && (
           <p>Unsupported file type</p>
         )}
       </DialogContent>

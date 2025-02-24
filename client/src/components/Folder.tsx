@@ -10,8 +10,9 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors } from '../Styles';
-import RenameFileDialog from './RenameDialog';
+import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
+import MoveDialog from './MoveDialog';
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -20,8 +21,6 @@ export interface FolderProps {
   owner: string;
   createdAt: Date;
   parentFolder: string | null;
-  folderChildren: string[];
-  fileChildren: string[];
   isFavorited: boolean;
   onClick: (folder: FolderProps) => void;
   handleDeleteFolder: (folderId: string) => Promise<void>;
@@ -34,6 +33,7 @@ const Folder = (props: FolderProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
+  const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const open = Boolean(anchorEl);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -52,7 +52,8 @@ const Folder = (props: FolderProps) => {
   };
 
   const handleFolderClick = () => {
-    if (isRenameDialogOpen || isPermissionsDialogOpen) return;
+    if (isRenameDialogOpen || isPermissionsDialogOpen || isMoveDialogOpen)
+      return;
     props.onClick(props);
   };
 
@@ -76,6 +77,12 @@ const Folder = (props: FolderProps) => {
   const handlePermissionsClick = (event: React.MouseEvent) => {
     event.stopPropagation();
     setIsPermissionsDialogOpen(true);
+    setAnchorEl(null);
+  };
+
+  const handleMoveClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setIsMoveDialogOpen(true);
     setAnchorEl(null);
   };
 
@@ -189,7 +196,7 @@ const Folder = (props: FolderProps) => {
               Restore
             </MenuItem>
           ) : props.page === 'shared' ? (
-            <></>
+            []
           ) : (
             [
               <MenuItem onClick={handlePermissionsClick}>
@@ -216,7 +223,13 @@ const Folder = (props: FolderProps) => {
               <Divider sx={{ my: 0.2 }} />,
               <MenuItem onClick={(e) => e.stopPropagation()}>
                 <UploadIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
-                Upload
+                Download
+              </MenuItem>,
+
+              <Divider sx={{ my: 0.2 }} />,
+
+              <MenuItem onClick={handleMoveClick}>
+                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
               </MenuItem>,
             ]
           )}
@@ -224,7 +237,7 @@ const Folder = (props: FolderProps) => {
       </Box>
 
       {/* Rename Folder Dialog */}
-      <RenameFileDialog
+      <RenameDialog
         open={isRenameDialogOpen}
         fileName={props.name}
         onClose={() => setIsRenameDialogOpen(false)}
@@ -236,6 +249,15 @@ const Folder = (props: FolderProps) => {
         onClose={() => setIsPermissionsDialogOpen(false)}
         fileId={null}
         folderId={props.id}
+      />
+
+      <MoveDialog
+        open={isMoveDialogOpen}
+        onClose={() => setIsMoveDialogOpen(false)}
+        fileName={props.name}
+        fileId={props.id}
+        resourceType="folder"
+        parentFolderId={props.parentFolder}
       />
     </Box>
   );

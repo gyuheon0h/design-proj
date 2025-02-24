@@ -81,7 +81,6 @@ const StorageService = {
     try {
       const file = bucket.file(filePath);
       await file.delete();
-      console.log(`File deleted: ${filePath}`);
     } catch (error: any) {
       if (error.code === 404) {
         console.warn(`File not found: ${filePath}`);

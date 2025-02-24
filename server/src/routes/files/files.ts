@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import StorageService from '../../storage';
 import FileModel from '../../db_models/FileModel';
 import PermissionModel from '../../db_models/PermissionModel';
+import mime from 'mime-types';
+import { inferMimeType } from './fileHelpers';
 
 const fileRouter = Router();
 const upload = multer(); // Using memory storage to keep things minimal (TODO: implement streaming)
@@ -142,9 +144,19 @@ fileRouter.post(
         return res.status(400).json({ message: 'No file uploaded' });
       }
 
-      const { originalname, buffer, mimetype } = req.file;
+      let { originalname, buffer, mimetype } = req.file;
       const { parentFolder = null, fileName } = req.body;
       const userId = (req as any).user.userId;
+
+      // If the MIME type is 'application/octet-stream', try to infer it
+      if (mimetype === 'application/octet-stream') {
+        const inferredMimeType = mime.lookup(originalname);
+        if (inferredMimeType) {
+          mimetype = inferredMimeType;
+        } else {
+          mimetype = inferMimeType(originalname);
+        }
+      }
 
       // Generate a unique file ID and file pagth
       const fileId = uuidv4();
@@ -302,6 +314,48 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
     });
   } catch (error) {
     console.error('File rename error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+/**
+ * PATCH /api/files/move/:fileId
+ * Route to move a file (updates parentFolderId)
+ */
+fileRouter.patch('/move/:fileId', authorize, async (req, res) => {
+  try {
+    const { parentFolderId } = req.body;
+    // if (!parentFolderId) {
+    //   return res
+    //     .status(400)
+    //     .json({ message: 'No new parentFolderId provided' });
+    // }
+
+    const userId = (req as any).user.userId;
+    const { fileId } = req.params;
+    const file = await FileModel.getById(fileId);
+
+    if (!file) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    if (file?.parentFolder == parentFolderId) {
+      console.error('User attempted to move to existing location');
+      return res
+        .status(400)
+        .json({ message: 'No new parentFolderId provided' });
+    }
+
+    const fileMetadata = await FileModel.updateFileMetadata(fileId, {
+      parentFolder: parentFolderId,
+    });
+
+    return res.status(200).json({
+      message: 'File moved successfully',
+      file: fileMetadata,
+    });
+  } catch (error) {
+    console.error('File move error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });

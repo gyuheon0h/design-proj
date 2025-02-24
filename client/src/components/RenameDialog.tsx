@@ -15,7 +15,7 @@ interface RenameDialogProps {
   onRename: (fileName: string) => void;
 }
 
-const RenameFileDialog: React.FC<RenameDialogProps> = ({
+const RenameDialog: React.FC<RenameDialogProps> = ({
   open,
   fileName,
   onClose,
@@ -66,4 +66,4 @@ const RenameFileDialog: React.FC<RenameDialogProps> = ({
   );
 };
 
-export default RenameFileDialog;
+export default RenameDialog;
