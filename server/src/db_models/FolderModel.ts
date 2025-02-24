@@ -6,8 +6,6 @@ interface Folder {
   owner: string;
   createdAt: Date;
   parentFolder: string | null;
-  folderChildren: string[];
-  fileChildren: string[];
   isFavorited: boolean;
 }
 
