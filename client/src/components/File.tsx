@@ -166,22 +166,11 @@ const FileComponent = (props: FileComponentProps) => {
     setAnchorEl(null);
   };
 
-  const handleRenameClick = (event: React.MouseEvent) => {
+  // DELETE Event Handlers
+  const handleDeleteClick = (event: React.MouseEvent) => {
     event.stopPropagation();
-    setIsRenameDialogOpen(true);
-    handleOptionsClose();
-    props.refreshFiles(props.file.parentFolder);
-  };
-
-  const handlePermissionsClick = () => {
-    setIsPermissionsDialogOpen(true);
-    handleOptionsClose();
-    // props.refreshFiles(props.file.parentFolder);
-  };
-
-  const handleMoveClick = () => {
-    setIsMoveDialogOpen(true);
-    handleOptionsClose();
+    handleDeleteFile(props.file.id);
+    setAnchorEl(null); //TODO: figure out whether to use this or handleOptionsClose()
     props.refreshFiles(props.file.parentFolder);
   };
 
@@ -195,13 +184,7 @@ const FileComponent = (props: FileComponentProps) => {
     }
   };
 
-  const handleDeleteClick = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    handleDeleteFile(props.file.id);
-    setAnchorEl(null); //TODO: figure out whether to use this or handleOptionsClose()
-    props.refreshFiles(props.file.parentFolder);
-  };
-
+  // FAVORITE Event Handlers
   const handleFavoriteFileClick = (event: React.MouseEvent) => {
     event.stopPropagation();
     if (props.page === 'trash') {
@@ -231,6 +214,7 @@ const FileComponent = (props: FileComponentProps) => {
     }
   };
 
+  // RESTORE Event Handlers
   const handleRestoreClick = (event: React.MouseEvent) => {
     event.stopPropagation();
     handleRestoreFile(props.file.id, props.file.owner);
@@ -255,6 +239,26 @@ const FileComponent = (props: FileComponentProps) => {
     } catch (error) {
       console.error('Error restoring file:', error);
     }
+  };
+
+  //DIALOG CLICK TRIGGERS (Rename, Permissions/Share, Move)
+  const handleRenameClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setIsRenameDialogOpen(true);
+    handleOptionsClose();
+    props.refreshFiles(props.file.parentFolder);
+  };
+
+  const handlePermissionsClick = () => {
+    setIsPermissionsDialogOpen(true);
+    handleOptionsClose();
+    // props.refreshFiles(props.file.parentFolder);
+  };
+
+  const handleMoveClick = () => {
+    setIsMoveDialogOpen(true);
+    handleOptionsClose();
+    props.refreshFiles(props.file.parentFolder);
   };
 
   const lastModifiedDate = new Date(props.file.lastModifiedAt);
