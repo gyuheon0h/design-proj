@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import StorageService from '../../storage';
 import FileModel from '../../db_models/FileModel';
 import PermissionModel from '../../db_models/PermissionModel';
+import mime from 'mime-types';
 
 const fileRouter = Router();
 const upload = multer(); // Using memory storage to keep things minimal (TODO: implement streaming)
@@ -142,9 +143,17 @@ fileRouter.post(
         return res.status(400).json({ message: 'No file uploaded' });
       }
 
-      const { originalname, buffer, mimetype } = req.file;
+      let { originalname, buffer, mimetype } = req.file;
       const { parentFolder = null, fileName } = req.body;
       const userId = (req as any).user.userId;
+
+      // If the MIME type is 'application/octet-stream', try to infer it
+      if (mimetype === 'application/octet-stream') {
+        const inferredMimeType = mime.lookup(originalname);
+        if (inferredMimeType) {
+          mimetype = inferredMimeType;
+        }
+      }
 
       // Generate a unique file ID and file pagth
       const fileId = uuidv4();
