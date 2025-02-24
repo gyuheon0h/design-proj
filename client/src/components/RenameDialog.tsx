@@ -7,19 +7,22 @@ import {
   TextField,
   Button,
 } from '@mui/material';
+import axios from 'axios';
 
 interface RenameDialogProps {
   open: boolean;
   fileName: string;
+  fileId: string;
+  resourceType: 'folder' | 'file';
   onClose: () => void;
-  onRename: (fileName: string) => void;
 }
 
 const RenameDialog: React.FC<RenameDialogProps> = ({
   open,
   fileName,
+  fileId,
+  resourceType,
   onClose,
-  onRename,
 }) => {
   const [newFileName, setNewFileName] = useState(fileName);
 
@@ -27,9 +30,27 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
     setNewFileName(fileName);
   }, [fileName]);
 
-  const handleRename = () => {
+  const handleRename = async () => {
     if (newFileName.trim()) {
-      onRename(newFileName);
+      try {
+        if (resourceType == 'file') {
+          await axios.patch(
+            `http://localhost:5001/api/file/rename/${fileId}`,
+            { fileName: newFileName },
+            { withCredentials: true },
+          );
+        }
+
+        if (resourceType == 'folder') {
+          await axios.patch(
+            `http://localhost:5001/api/folder/rename/${fileId}`,
+            { folderName: newFileName },
+            { withCredentials: true },
+          );
+        }
+      } catch (error) {
+        console.error('Error renaming folder:', error);
+      }
       onClose();
     }
   };

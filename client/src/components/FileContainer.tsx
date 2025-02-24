@@ -9,8 +9,8 @@ interface FileContainerProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
   files: File[];
   currentFolderId: string | null;
-  username: string; // logged-in user
   refreshFiles: (folderId: string | null) => void;
+  username: string; // logged-in user
   searchQuery: string; // New prop for search input
 }
 
@@ -33,75 +33,6 @@ const FileContainer: React.FC<FileContainerProps> = ({
     setFilteredFiles(updatedFilteredFiles);
   }, [files, searchQuery]);
 
-  const handleDeleteFile = async (fileId: string) => {
-    try {
-      await axios.delete(`http://localhost:5001/api/file/delete/${fileId}`, {
-        withCredentials: true,
-      });
-
-      refreshFiles(currentFolderId);
-    } catch (error) {
-      console.error('Error deleting file:', error);
-    }
-  };
-
-  const handleRenameFile = async (fileId: string, fileName: string) => {
-    try {
-      await axios.patch(
-        `http://localhost:5001/api/file/rename/${fileId}`,
-        { fileName },
-        { withCredentials: true },
-      );
-
-      refreshFiles(currentFolderId);
-    } catch (error) {
-      console.error('Error renaming file:', error);
-    }
-  };
-
-  const handleFavoriteFile = async (fileId: string, owner: string) => {
-    const ownerUsername = await getUsernameById(owner);
-
-    if (ownerUsername !== username) {
-      alert('You do not have permission to favorite this file.');
-      return;
-    }
-    if (page === 'trash') {
-      alert('You cannot favorite a file in the trash.');
-      return;
-    }
-    try {
-      await axios.patch(
-        `http://localhost:5001/api/file/favorite/${fileId}`,
-        {},
-        { withCredentials: true },
-      );
-
-      refreshFiles(currentFolderId);
-    } catch (error) {
-      console.error('Error favoriting file:', error);
-    }
-  };
-
-  const handleRestoreFile = async (fileId: string, owner: string) => {
-    const ownerUsername = await getUsernameById(owner);
-
-    if (ownerUsername !== username) {
-      alert('You do not have permission to restore this file.');
-      return;
-    }
-    try {
-      await axios.patch(
-        `http://localhost:5001/api/file/restore/${fileId}`,
-        {},
-        { withCredentials: true },
-      );
-      refreshFiles(currentFolderId);
-    } catch (error) {
-      console.error('Error restoring file:', error);
-    }
-  };
-
   return (
     <div>
       {/* Header section with title */}
@@ -119,23 +50,11 @@ const FileContainer: React.FC<FileContainerProps> = ({
       {/* File List */}
       {filteredFiles.map((file) => (
         <Grow in={true} timeout={500} key={`${file.id}-${searchQuery}`}>
-          <div> 
+          <div>
             <FileComponent
               page={page}
-              id={file.id}
-              name={file.name}
-              owner={file.owner}
-              createdAt={file.createdAt}
-              lastModifiedBy={file.lastModifiedBy}
-              lastModifiedAt={file.lastModifiedAt}
-              parentFolder={file.parentFolder}
-              gcsKey={file.gcsKey}
-              isFavorited={file.isFavorited}
-              fileType={file.fileType}
-              handleDeleteFile={handleDeleteFile}
-              handleRenameFile={handleRenameFile}
-              handleRestoreFile={() => handleRestoreFile(file.id, file.owner)}
-              handleFavoriteFile={() => handleFavoriteFile(file.id, file.owner)}
+              file={file}
+              refreshFiles={refreshFiles}
             />
           </div>
         </Grow>
@@ -145,4 +64,3 @@ const FileContainer: React.FC<FileContainerProps> = ({
 };
 
 export default FileContainer;
-

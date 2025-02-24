@@ -13,23 +13,18 @@ import { colors } from '../Styles';
 import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import MoveDialog from './MoveDialog';
+import { Folder } from '../interfaces/Folder';
+import axios from 'axios';
+import { getUsernameById } from '../utils/helperRequests';
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
-  id: string;
-  name: string;
-  owner: string;
-  createdAt: Date;
-  parentFolder: string | null;
-  isFavorited: boolean;
+  folder: Folder;
   onClick: (folder: FolderProps) => void;
-  handleDeleteFolder: (folderId: string) => Promise<void>;
-  handleFavoriteFolder: (folderId: string) => void;
-  handleRestoreFolder: (folderId: string) => void;
-  handleRenameFolder: (folderId: string, newFolderName: string) => void;
+  refreshFolders: (folderId: string | null) => void;
 }
 
-const Folder = (props: FolderProps) => {
+const FolderComponent = (props: FolderProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
@@ -57,39 +52,110 @@ const Folder = (props: FolderProps) => {
     props.onClick(props);
   };
 
-  const handleFavoriteFolder = (event: React.MouseEvent) => {
+  const handleFavoriteFolderClick = (event: React.MouseEvent) => {
     event.stopPropagation();
-    props.handleFavoriteFolder(props.id);
+    if (props.page === 'trash') {
+      alert('Restore the folder to update it!');
+    } else {
+      handleFavoriteFolder(props.folder.id, props.folder.owner);
+    }
+    props.refreshFolders(props.folder.parentFolder);
+  };
+
+  const handleFavoriteFolder = async (folderId: string, owner: string) => {
+    const ownerUsername = await getUsernameById(owner);
+
+    // TODO: this doesn't matter once favorites gets upgraded
+    // if (ownerUsername !== username) {
+    //   alert('You do not have permission to favorite this folder.');
+    //   return;
+    // }
+    try {
+      await axios.patch(
+        `http://localhost:5001/api/folder/favorite/${folderId}`,
+        {},
+        {
+          withCredentials: true,
+        },
+      );
+    } catch (error) {
+      console.error('Error favoriting folder:', error);
+    }
+  };
+
+  const handleRestoreFolder = async (folderId: string, owner: string) => {
+    const ownerUsername = await getUsernameById(owner);
+
+    // TODO: is this neccessary? will non-owners see deleted files/folders shared w them?
+    // if (ownerUsername !== username) {
+    //   alert('You do not have permission to restore this folder.');
+    //   return;
+    // }
+    try {
+      await axios.patch(
+        `http://localhost:5001/api/folder/restore/${folderId}`,
+        {},
+        {
+          withCredentials: true,
+        },
+      );
+    } catch (error) {
+      console.error('Error restoring folder:', error);
+    }
+  };
+
+  const handleRestoreClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    handleRestoreFolder(props.folder.id, props.folder.owner);
+    setAnchorEl(null);
+    props.refreshFolders(props.folder.parentFolder);
+  };
+
+  const handleDeleteClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    handleDeleteFolder(props.folder.id);
+    setAnchorEl(null);
+    props.refreshFolders(props.folder.parentFolder);
   };
 
   const handleRenameClick = (event: React.MouseEvent) => {
     event.stopPropagation();
     setIsRenameDialogOpen(true);
     setAnchorEl(null);
-  };
-
-  const handleRenameFolder = (newFolderName: string) => {
-    if (!newFolderName.trim()) return;
-    props.handleRenameFolder(props.id, newFolderName);
-    setIsRenameDialogOpen(false);
+    props.refreshFolders(props.folder.parentFolder);
   };
 
   const handlePermissionsClick = (event: React.MouseEvent) => {
     event.stopPropagation();
     setIsPermissionsDialogOpen(true);
     setAnchorEl(null);
+    // props.refreshFolders(props.folder.parentFolder);
   };
 
   const handleMoveClick = (event: React.MouseEvent) => {
     event.stopPropagation();
     setIsMoveDialogOpen(true);
     setAnchorEl(null);
+    props.refreshFolders(props.folder.parentFolder);
+  };
+
+  const handleDeleteFolder = async (folderId: string) => {
+    try {
+      await axios.delete(
+        `http://localhost:5001/api/folder/delete/${folderId}`,
+        {
+          withCredentials: true,
+        },
+      );
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+    }
   };
 
   return (
     <Box
       className="folder"
-      data-folder-id={props.id}
+      data-folder-id={props.folder.id}
       onClick={handleFolderClick}
       sx={{
         position: 'relative',
@@ -147,26 +213,20 @@ const Folder = (props: FolderProps) => {
             whiteSpace: 'nowrap',
           }}
         >
-          {props.name}
+          {props.folder.name}
         </Typography>
 
         {/* Favorite Button */}
         <IconButton
-          onClick={(e) => {
-            if (props.page === 'trash') {
-              alert('Restore the folder to update it!');
-            } else {
-              handleFavoriteFolder(e);
-            }
-          }}
+          onClick={handleFavoriteFolderClick}
           sx={{
             position: 'absolute',
             top: '5px',
             right: '5px',
-            color: props.isFavorited ? '#FF6347' : colors.darkBlue,
+            color: props.folder.isFavorited ? '#FF6347' : colors.darkBlue,
           }}
         >
-          {props.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+          {props.folder.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
         </IconButton>
 
         {/* More Options Button */}
@@ -185,13 +245,7 @@ const Folder = (props: FolderProps) => {
         {/* Dropdown Menu */}
         <Menu anchorEl={anchorEl} open={open} onClose={handleOptionsClose}>
           {props.page === 'trash' ? (
-            <MenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                props.handleRestoreFolder(props.id);
-                handleOptionsClose(e);
-              }}
-            >
+            <MenuItem onClick={handleRestoreClick}>
               <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
               Restore
             </MenuItem>
@@ -210,13 +264,7 @@ const Folder = (props: FolderProps) => {
                 Rename
               </MenuItem>,
               <Divider sx={{ my: 0.2 }} />,
-              <MenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  props.handleDeleteFolder(props.id);
-                  handleOptionsClose(e);
-                }}
-              >
+              <MenuItem onClick={handleDeleteClick}>
                 <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
                 Delete
               </MenuItem>,
@@ -239,28 +287,29 @@ const Folder = (props: FolderProps) => {
       {/* Rename Folder Dialog */}
       <RenameDialog
         open={isRenameDialogOpen}
-        fileName={props.name}
+        fileName={props.folder.name}
+        fileId={props.folder.id}
+        resourceType="folder"
         onClose={() => setIsRenameDialogOpen(false)}
-        onRename={handleRenameFolder}
       />
 
       <PermissionDialog
         open={isPermissionsDialogOpen}
         onClose={() => setIsPermissionsDialogOpen(false)}
         fileId={null}
-        folderId={props.id}
+        folderId={props.folder.id}
       />
 
       <MoveDialog
         open={isMoveDialogOpen}
         onClose={() => setIsMoveDialogOpen(false)}
-        fileName={props.name}
-        fileId={props.id}
+        fileName={props.folder.name}
+        fileId={props.folder.id}
         resourceType="folder"
-        parentFolderId={props.parentFolder}
+        parentFolderId={props.folder.parentFolder}
       />
     </Box>
   );
 };
 
-export default Folder;
+export default FolderComponent;

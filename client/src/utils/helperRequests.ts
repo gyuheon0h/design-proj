@@ -2,6 +2,7 @@ import axios from 'axios';
 import { FileComponentProps } from '../components/File';
 import { useLocation } from 'react-router-dom';
 import { useState } from 'react';
+import { File } from '../interfaces/File';
 
 export async function getBlobGcskey(
   gcsKey: string,
@@ -81,11 +82,11 @@ export async function fetchFolderNames(
 }
 
 export function applyFilters(
-  files: FileComponentProps[],
+  files: File[],
   fileTypeFilter: string | null,
   createdAtFilter: string | null,
   modifiedAtFilter: string | null,
-): FileComponentProps[] {
+): File[] {
   return files.filter((file) => {
     const fileType =
       '.' + file.fileType.substring(file.fileType.indexOf('/') + 1);
@@ -162,7 +163,7 @@ export function useFilters() {
   const setModifiedAtFilter = (date: string | null) =>
     setFilters((prev) => ({ ...prev, modifiedAt: date }));
 
-  const [filteredFiles, setFilteredFiles] = useState<FileComponentProps[]>([]);
+  const [filteredFiles, setFilteredFiles] = useState<File[]>([]);
 
   return {
     filters,
