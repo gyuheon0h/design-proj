@@ -4,7 +4,7 @@ import {
   isSupportedFileTypeText,
   isSupportedFileTypeVideo,
 } from '../utils/fileTypeHelpers';
-import TextPreview from './FilePreview/TextPreview';
+import TextPreview from './TextPreview';
 
 interface FileViewerDialogProps {
   open: boolean;
