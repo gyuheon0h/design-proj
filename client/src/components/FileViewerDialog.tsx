@@ -20,8 +20,6 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
   fileType,
 }) => {
   const [loading, setLoading] = useState(true);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
 
   const isImage = fileType.startsWith('image/');
@@ -31,18 +29,31 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
   const isAudio = fileType.startsWith('audio/');
 
   useEffect(() => {
-    if (open) {
+    if (open && src && !src.startsWith('about:blank')) {
       setLoading(true);
       setTextContent(null);
 
       if (isSupportedFileTypeText(fileType) && !isPDF) {
         fetch(src)
-          .then((response) => response.text())
+          .then((response) => {
+            if (
+              !response.ok ||
+              (response.headers.get('content-type')?.includes('text/html') &&
+                !(fileType === 'text/html'))
+            ) {
+              throw new Error('Invalid file source');
+            }
+            return response.text();
+          })
           .then((text) => {
             setTextContent(text);
             setLoading(false);
           })
-          .catch(() => setLoading(false));
+          .catch((error) => {
+            console.error('Error fetching text file:', error);
+            setTextContent(null);
+            setLoading(false);
+          });
       }
     }
   }, [open, src, fileType, isPDF]);
@@ -92,7 +103,6 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
         {isVideo && (
           <video
             key={src}
-            ref={videoRef}
             controls
             autoPlay
             style={{
@@ -130,7 +140,6 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
         {isAudio && (
           <audio
             key={src}
-            ref={audioRef}
             controls
             autoPlay
             style={{
