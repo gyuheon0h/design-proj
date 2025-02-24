@@ -82,7 +82,11 @@ const PageComponent: React.FC<PageComponentProps> = ({
   }, [folderPath]);
 
   const handleFolderClick = (folder: Folder) => {
-    navigate(`/${page}/${[...folderPath, folder.id].join('/')}`);
+    if (page !== 'trash') {
+      navigate(`/${page}/${[...folderPath, folder.id].join('/')}`);
+    } else {
+      //TODO: Alert user that they cannot navigate into folders that have been trashed
+    }
   };
 
   const handleBreadcrumbClick = (index: number) => {
