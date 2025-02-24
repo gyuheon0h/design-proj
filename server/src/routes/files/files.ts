@@ -101,34 +101,34 @@ fileRouter.post('/folder/shared', async (req: AuthenticatedRequest, res) => {
   }
 });
 
-// /**
-//  * GET /api/files/favorites/
-//  * Route to get favorited files owned by a certain user (ownerId).
-//  * This is protected by authorize
-//  */
+/**
+ * GET /api/files/favorites/
+ * Route to get favorited files owned by a certain user (ownerId).
+ * This is protected by authorize
+ */
 
-// fileRouter.get(
-//   '/favorites',
-//   authorize,
-//   async (req: AuthenticatedRequest, res) => {
-//     try {
-//       if (!req.user) {
-//         return res.status(401).json({ error: 'Unauthorized' });
-//       }
-//       const userId = req.user.userId;
+fileRouter.get(
+  '/favorites',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const userId = req.user.userId;
 
-//       const favoritedFiles = await FileModel.getAllByOwnerAndColumn(
-//         userId,
-//         'isFavorited',
-//         true,
-//       );
-//       return res.json(favoritedFiles);
-//     } catch (error) {
-//       console.error('Error getting files by owner:', error);
-//       return res.status(500).json({ error: 'Internal Server Error' });
-//     }
-//   },
-// );
+      const favoritedFiles = await FileModel.getAllByOwnerAndColumn(
+        userId,
+        'isFavorited',
+        true,
+      );
+      return res.json(favoritedFiles);
+    } catch (error) {
+      console.error('Error getting files by owner:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
 
 /**
  * POST /api/files/upload
@@ -207,24 +207,24 @@ fileRouter.get('/download/:fileId', authorize, async (req, res) => {
   }
 });
 
-// fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
-//   try {
-//     const { fileId } = req.params;
-//     const file = await FileModel.getById(fileId);
+fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const file = await FileModel.getById(fileId);
 
-//     if (!file) {
-//       return res.status(404).json({ message: 'File not found' });
-//     }
-//     // TODO: think about good way to soft/hard delete from gcsKey. Should we have async process to
-//     // hard delete files that have been soft deleted for a long time?
-//     // await StorageService.deleteFile(file.gcsKey);
-//     await FileModel.softDelete(fileId);
-//     return res.json({ message: 'File deleted successfully' });
-//   } catch (error) {
-//     console.error('Error deleting file:', error);
-//     return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
+    if (!file) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+    // TODO: think about good way to soft/hard delete from gcsKey. Should we have async process to
+    // hard delete files that have been soft deleted for a long time?
+    // await StorageService.deleteFile(file.gcsKey);
+    await FileModel.softDelete(fileId);
+    return res.json({ message: 'File deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
   try {
@@ -360,27 +360,27 @@ fileRouter.patch('/move/:fileId', authorize, async (req, res) => {
   }
 });
 
-// /**
-//  * GETS all folder and permissions that userId has permissions for
-//  */
-// fileRouter.get('/shared', authorize, async (req: AuthenticatedRequest, res) => {
-//   try {
-//     const currentUserId = (req as any).user.userId;
-//     if (!currentUserId) {
-//       return res.status(401).json({ error: 'Not authenticated' });
-//     }
+/**
+ * GETS all folder and permissions that userId has permissions for
+ */
+fileRouter.get('/shared', authorize, async (req: AuthenticatedRequest, res) => {
+  try {
+    const currentUserId = (req as any).user.userId;
+    if (!currentUserId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
 
-//     const permissions = await PermissionModel.getFilesByUserId(currentUserId);
+    const permissions = await PermissionModel.getFilesByUserId(currentUserId);
 
-//     const files = await Promise.all(
-//       permissions.map((perm) => FileModel.getById(perm.fileId)),
-//     );
-//     return res.json({ files, permissions });
-//   } catch (error) {
-//     console.error('Error getting shared files:', error);
-//     return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
+    const files = await Promise.all(
+      permissions.map((perm) => FileModel.getById(perm.fileId)),
+    );
+    return res.json({ files, permissions });
+  } catch (error) {
+    console.error('Error getting shared files:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 /**
  * GETS all permissions pertaining to the fileId
@@ -516,16 +516,16 @@ fileRouter.delete(
   },
 );
 
-// fileRouter.get('/trash', authorize, async (req: AuthenticatedRequest, res) => {
-//   try {
-//     const userId = (req as any).user.userId;
-//     const deletdFiles = await FileModel.getAllByOwnerAndDeleted(userId);
-//     return res.json(deletdFiles);
-//   } catch (error) {
-//     console.error('Error getting deleted files:', error);
-//     return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
+fileRouter.get('/trash', authorize, async (req: AuthenticatedRequest, res) => {
+  try {
+    const userId = (req as any).user.userId;
+    const deletdFiles = await FileModel.getAllByOwnerAndDeleted(userId);
+    return res.json(deletdFiles);
+  } catch (error) {
+    console.error('Error getting deleted files:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 fileRouter.patch('/restore/:fileId', authorize, async (req, res) => {
   try {

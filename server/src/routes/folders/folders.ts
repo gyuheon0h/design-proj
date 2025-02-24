@@ -114,34 +114,34 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
   }
 });
 
-// /**
-//  * GET /api/files/favorites/:ownerId
-//  * Route to get favorited files owned by a certain user (ownerId).
-//  * This is protected by authorize
-//  */
+/**
+ * GET /api/files/favorites/:ownerId
+ * Route to get favorited files owned by a certain user (ownerId).
+ * This is protected by authorize
+ */
 
-// folderRouter.get(
-//   '/favorites',
-//   authorize,
-//   async (req: AuthenticatedRequest, res) => {
-//     try {
-//       if (!req.user) {
-//         return res.status(401).json({ error: 'Unauthorized' });
-//       }
-//       const userId = req.user.userId;
+folderRouter.get(
+  '/favorites',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const userId = req.user.userId;
 
-//       const favoritedFiles = await FolderModel.getAllByOwnerAndColumn(
-//         userId,
-//         'isFavorited',
-//         true,
-//       );
-//       return res.json(favoritedFiles);
-//     } catch (error) {
-//       console.error('Error getting files by owner:', error);
-//       return res.status(500).json({ error: 'Internal Server Error' });
-//     }
-//   },
-// );
+      const favoritedFiles = await FolderModel.getAllByOwnerAndColumn(
+        userId,
+        'isFavorited',
+        true,
+      );
+      return res.json(favoritedFiles);
+    } catch (error) {
+      console.error('Error getting files by owner:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
 
 /**
  * PATCH /api/files/favorite/:fileId
@@ -177,33 +177,33 @@ folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
   }
 });
 
-// /**
-//  * GETS all folder and permissions that userId has permissions for
-//  */
-// folderRouter.get(
-//   '/shared',
-//   authorize,
-//   async (req: AuthenticatedRequest, res) => {
-//     try {
-//       const currentUserId = (req as any).user.userId;
-//       if (!currentUserId) {
-//         return res.status(401).json({ error: 'Not authenticated' });
-//       }
+/**
+ * GETS all folder and permissions that userId has permissions for
+ */
+folderRouter.get(
+  '/shared',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const currentUserId = (req as any).user.userId;
+      if (!currentUserId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
 
-//       const permissions =
-//         await PermissionModel.getFoldersByUserId(currentUserId);
+      const permissions =
+        await PermissionModel.getFoldersByUserId(currentUserId);
 
-//       const folders = await Promise.all(
-//         permissions.map((perm) => FolderModel.getById(perm.fileId)),
-//       );
+      const folders = await Promise.all(
+        permissions.map((perm) => FolderModel.getById(perm.fileId)),
+      );
 
-//       return res.json({ permissions, folders });
-//     } catch (error) {
-//       console.error('Error getting shared folders:', error);
-//       return res.status(500).json({ error: 'Internal Server Error' });
-//     }
-//   },
-// );
+      return res.json({ permissions, folders });
+    } catch (error) {
+      console.error('Error getting shared folders:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
 
 /**
  * GETS all permissions pertaining to the fileId

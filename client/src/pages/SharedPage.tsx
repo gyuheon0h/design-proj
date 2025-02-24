@@ -12,8 +12,6 @@ import {
   useFolderPath,
 } from '../utils/helperRequests';
 import { Permission } from '../interfaces/Permission';
-import Header from '../components/HeaderComponent';
-import ContentComponent from '../components/Content';
 import PageComponent from '../components/Page';
 
 const Shared = () => {

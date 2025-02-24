@@ -12,8 +12,6 @@ import {
   useFilters,
   useFolderPath,
 } from '../utils/helperRequests';
-import Header from '../components/HeaderComponent';
-import ContentComponent from '../components/Content';
 import PageComponent from '../components/Page';
 
 const Home = () => {
