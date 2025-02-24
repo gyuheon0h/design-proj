@@ -267,12 +267,12 @@ const PageComponent: React.FC<PageComponentProps> = ({
             paddingBottom: '15px',
           }}
         >
-          {page}
+          {page.charAt(0).toUpperCase() + page.substring(1)}
         </Typography>
 
         <Box sx={{ marginLeft: '10px' }}>
           <SearchBar
-            location={page}
+            location={page.charAt(0).toUpperCase() + page.substring(1)}
             onSearch={handleSearch}
             setFileTypeFilter={setFileTypeFilter}
             setCreatedAtFilter={setCreatedAtFilter}
@@ -300,7 +300,9 @@ const PageComponent: React.FC<PageComponentProps> = ({
                 paddingTop: '10px',
               }}
             >
-              {index === 0 ? page : folderNames[crumb] || ''}
+              {index === 0
+                ? page.charAt(0).toUpperCase() + page.substring(1)
+                : folderNames[crumb] || ''}
               {index < folderPath.length ? ' / ' : ''}
             </span>
           ))}
@@ -343,7 +345,7 @@ const PageComponent: React.FC<PageComponentProps> = ({
       </Box>
 
       {/* Create Button */}
-      {currentFolderId && (
+      {(page === 'home' || currentFolderId) && (
         <CreateButton
           currentFolderId={currentFolderId}
           refreshFiles={fetchFileData}
