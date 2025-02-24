@@ -15,7 +15,7 @@ loginRouter.post('/', async (req: Request, res: Response) => {
     if (!username || !passwordHash) {
       return res.status(400).json({ message: 'Missing required fields.' });
     }
-    
+
     // check if the user exists
     const user = await userModel.getUserByUsername(username);
 
@@ -37,11 +37,15 @@ loginRouter.post('/', async (req: Request, res: Response) => {
       maxAge: 24 * 60 * 60 * 1000, // 1 day expiry
     });
 
-    return res.status(200).json({ message: 'Login successful.' });
+    return res
+      .status(200)
+      .json({ message: 'Login successful.', userId: user.id });
   } catch (error) {
-      // Send error details only in development
+    // Send error details only in development
     if (process.env.NODE_ENV === 'development') {
-      return res.status(500).json({ message: 'Internal server error.', error: String(error) });
+      return res
+        .status(500)
+        .json({ message: 'Internal server error.', error: String(error) });
     }
     console.error('Error during login:', error);
     return res.status(500).json({ message: 'Internal server error.' });

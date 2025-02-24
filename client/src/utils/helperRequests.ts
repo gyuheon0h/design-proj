@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { FileComponentProps } from '../components/File';
 import { useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { File } from '../interfaces/File';

@@ -29,7 +29,7 @@ const PageComponent: React.FC<PageComponentProps> = ({
   userId,
 }) => {
   const navigate = useNavigate();
-  const userContext = useUser();
+  //   const userContext = useUser();
   const { folderPath, currentFolderId } = useFolderPath(`/${page}`);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -82,11 +82,11 @@ const PageComponent: React.FC<PageComponentProps> = ({
   }, [folderPath]);
 
   const handleFolderClick = (folder: Folder) => {
-    navigate(`/favorites/${[...folderPath, folder.id].join('/')}`);
+    navigate(`/${page}/${[...folderPath, folder.id].join('/')}`);
   };
 
   const handleBreadcrumbClick = (index: number) => {
-    navigate(`/favorites/${folderPath.slice(0, index + 1).join('/')}`);
+    navigate(`/${page}/${folderPath.slice(0, index + 1).join('/')}`);
   };
 
   // Handle local search input
@@ -237,7 +237,7 @@ const PageComponent: React.FC<PageComponentProps> = ({
         <div style={{ marginLeft: '10px' }}>
           <FileContainer
             page={page}
-            files={files}
+            files={filteredFiles}
             currentFolderId={currentFolderId}
             refreshFiles={fetchFileData}
             username={username}
