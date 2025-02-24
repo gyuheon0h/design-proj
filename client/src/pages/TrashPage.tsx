@@ -4,8 +4,6 @@ import axios from 'axios';
 import { useUser } from '../context/UserContext';
 import { FileComponentProps } from '../components/File';
 import { FolderProps } from '../components/Folder';
-import Header from '../components/HeaderComponent';
-import ContentComponent from '../components/Content';
 import { applyFilters, useFilters } from '../utils/helperRequests';
 import PageComponent from '../components/Page';
 
