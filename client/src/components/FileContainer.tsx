@@ -119,25 +119,25 @@ const FileContainer: React.FC<FileContainerProps> = ({
       {/* File List */}
       {filteredFiles.map((file) => (
         <Grow in={true} timeout={500} key={`${file.id}-${searchQuery}`}>
-        <div> 
-          <FileComponent
-            page={page}
-            id={file.id}
-            name={file.name}
-            owner={file.owner}
-            createdAt={file.createdAt}
-            lastModifiedBy={file.lastModifiedBy}
-            lastModifiedAt={file.lastModifiedAt}
-            parentFolder={file.parentFolder}
-            gcsKey={file.gcsKey}
-            isFavorited={file.isFavorited}
-            fileType={file.fileType}
-            handleDeleteFile={handleDeleteFile}
-            handleRenameFile={handleRenameFile}
-            handleRestoreFile={() => handleRestoreFile(file.id, file.owner)}
-            handleFavoriteFile={() => handleFavoriteFile(file.id, file.owner)}
-          />
-        </div>
+          <div> 
+            <FileComponent
+              page={page}
+              id={file.id}
+              name={file.name}
+              owner={file.owner}
+              createdAt={file.createdAt}
+              lastModifiedBy={file.lastModifiedBy}
+              lastModifiedAt={file.lastModifiedAt}
+              parentFolder={file.parentFolder}
+              gcsKey={file.gcsKey}
+              isFavorited={file.isFavorited}
+              fileType={file.fileType}
+              handleDeleteFile={handleDeleteFile}
+              handleRenameFile={handleRenameFile}
+              handleRestoreFile={() => handleRestoreFile(file.id, file.owner)}
+              handleFavoriteFile={() => handleFavoriteFile(file.id, file.owner)}
+            />
+          </div>
         </Grow>
       ))}
     </div>
