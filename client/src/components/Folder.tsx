@@ -30,14 +30,13 @@ export interface FolderProps {
   handleRenameFolder: (folderId: string, newFolderName: string) => void;
 }
 
-const [error, setError] = useState<string | null>(null);
-
 const Folder = (props: FolderProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const open = Boolean(anchorEl);
+  const [error, setError] = useState<string | null>(null);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();

@@ -15,8 +15,6 @@ interface FileContainerProps {
   searchQuery: string; // New prop for search input
 }
 
-const [error, setError] = useState<string | null>(null);
-
 const FileContainer: React.FC<FileContainerProps> = ({
   page,
   files,
@@ -26,6 +24,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
   searchQuery, // Receive search query
 }) => {
   const [filteredFiles, setFilteredFiles] = useState<File[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Filter files based on search query
