@@ -15,6 +15,7 @@ import {
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIos';
 import axios from 'axios';
+import ErrorAlert from '../components/ErrorAlert';
 
 export interface FolderProps {
   id: string;
@@ -46,6 +47,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   const [folderHistory, setFolderHistory] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // reset states when opening dialog
   useEffect(() => {
@@ -81,7 +83,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
       setFolders(res.data);
     } catch (error) {
       console.error('Error fetching folders:', error);
-      alert('Failed to load folders. Please try again.');
+      setError('Failed to load folders. Please try again.');
     }
     setLoading(false);
   };
@@ -125,7 +127,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
       );
     } catch (error) {
       console.error('Error moving file:', error);
-      alert('Failed to move file. Please try again.');
+      setError('Failed to move file. Please try again.');
     }
     handleClose();
   };
@@ -206,6 +208,13 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           Move
         </Button>
       </DialogActions>
+      {error && (
+        <ErrorAlert
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </Dialog>
   );
 };

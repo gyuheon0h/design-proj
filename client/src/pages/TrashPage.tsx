@@ -7,6 +7,7 @@ import { FolderProps } from '../components/Folder';
 import Header from '../components/HeaderComponent';
 import ContentComponent from '../components/Content';
 import { applyFilters, useFilters } from '../utils/helperRequests';
+import ErrorAlert from '../components/ErrorAlert';
 
 const Trash = () => {
   const userContext = useUser();
@@ -16,6 +17,7 @@ const Trash = () => {
 
   const [folders, setFolders] = useState<FolderProps[]>([]);
   const [files, setFiles] = useState<FileComponentProps[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   // for filtering
   const {
@@ -87,12 +89,21 @@ const Trash = () => {
         page="trash"
         folders={folders}
         files={filteredFiles}
-        onFolderClick={() => alert('You cannot view folders in the trash bin.')}
+        onFolderClick={() =>
+          setError('You cannot view folders in the trash bin.')
+        }
         currentFolderId={null}
         fetchData={fetchData}
         username={userContext?.username || ''}
         searchQuery={searchQuery}
       />
+      {error && (
+        <ErrorAlert
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </Box>
   );
 };

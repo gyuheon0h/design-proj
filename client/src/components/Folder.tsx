@@ -13,6 +13,7 @@ import { colors } from '../Styles';
 import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import MoveDialog from './MoveDialog';
+import ErrorAlert from '../components/ErrorAlert';
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -30,6 +31,8 @@ export interface FolderProps {
   handleRestoreFolder: (folderId: string) => void;
   handleRenameFolder: (folderId: string, newFolderName: string) => void;
 }
+
+const [error, setError] = useState<string | null>(null);
 
 const Folder = (props: FolderProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -156,7 +159,7 @@ const Folder = (props: FolderProps) => {
         <IconButton
           onClick={(e) => {
             if (props.page === 'trash') {
-              alert('Restore the folder to update it!');
+              setError('Restore the folder to update it!');
             } else {
               handleFavoriteFolder(e);
             }
@@ -261,6 +264,13 @@ const Folder = (props: FolderProps) => {
         resourceType="folder"
         parentFolderId={props.parentFolder}
       />
+      {error && (
+        <ErrorAlert
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </Box>
   );
 };

@@ -4,6 +4,7 @@ import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import Folder, { FolderProps } from './Folder';
 import axios from 'axios';
 import { getUsernameById } from '../utils/helperRequests';
+import ErrorAlert from '../components/ErrorAlert';
 
 interface FolderContainerProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -29,6 +30,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const [activeStartIndex, setActiveStartIndex] = useState(0);
   const [filteredFolders, setFilteredFolders] = useState<FolderProps[]>([]);
   const [visibleFolders, setVisibleFolders] = useState<FolderProps[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Filter folders based on search query
@@ -90,7 +92,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const handleFavoriteFolder = async (folderId: string, owner: string) => {
     const ownerUsername = await getUsernameById(owner);
     if (ownerUsername !== username) {
-      alert('You do not have permission to favorite this folder.');
+      setError('You do not have permission to favorite this folder.');
       return;
     }
     try {
@@ -110,7 +112,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const handleRestoreFolder = async (folderId: string, owner: string) => {
     const ownerUsername = await getUsernameById(owner);
     if (ownerUsername !== username) {
-      alert('You do not have permission to restore this folder.');
+      setError('You do not have permission to restore this folder.');
       return;
     }
     try {
@@ -242,6 +244,13 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
           }}
         />
       </Box>
+      {error && (
+        <ErrorAlert
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </Box>
   );
 };

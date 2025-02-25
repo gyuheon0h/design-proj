@@ -36,6 +36,7 @@ import {
   isSupportedFileTypeText,
   isSupportedFileTypeVideo,
 } from '../utils/clientHelpers';
+import ErrorAlert from '../components/ErrorAlert';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -98,6 +99,8 @@ const FileComponent = (props: FileComponentProps) => {
   const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
   const [fileSrc, setFileSrc] = useState('');
 
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchOwnerUserName = async () => {
       if (props.owner) {
@@ -106,6 +109,7 @@ const FileComponent = (props: FileComponentProps) => {
           setOwnerUserName(username || 'Unknown');
         } catch (error) {
           console.error('Error fetching username:', error);
+          setError(`Error fetching owner username: ${error}`);
           setOwnerUserName('Unknown');
         }
       }
@@ -122,6 +126,7 @@ const FileComponent = (props: FileComponentProps) => {
           setModifiedByName(username || 'Unknown');
         } catch (error) {
           console.error('Error fetching username:', error);
+          setError('Error fetching username');
           setModifiedByName('Unknown');
         }
       }
@@ -154,7 +159,7 @@ const FileComponent = (props: FileComponentProps) => {
         setFileSrc(objectUrl);
       } catch (err) {
         console.error('Error fetching file from server:', err);
-        alert('Error fetching file');
+        setError('Error fetching file');
       }
     }
   };
@@ -293,7 +298,7 @@ const FileComponent = (props: FileComponentProps) => {
         <IconButton
           onClick={(e) => {
             if (props.page === 'trash') {
-              alert('Restore the folder to update it!');
+              setError('Restore the folder to update it!');
             } else {
               handleFavoriteFile();
             }
@@ -426,6 +431,13 @@ const FileComponent = (props: FileComponentProps) => {
         src={fileSrc}
         fileType={props.fileType}
       />
+      {error && (
+        <ErrorAlert
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </div>
   );
 };

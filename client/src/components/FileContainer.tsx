@@ -3,6 +3,7 @@ import FileComponent from './File';
 import axios from 'axios';
 import { getUsernameById } from '../utils/helperRequests';
 import { File } from '../interfaces/File';
+import ErrorAlert from '../components/ErrorAlert';
 
 interface FileContainerProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -12,6 +13,8 @@ interface FileContainerProps {
   refreshFiles: (folderId: string | null) => void;
   searchQuery: string; // New prop for search input
 }
+
+const [error, setError] = useState<string | null>(null);
 
 const FileContainer: React.FC<FileContainerProps> = ({
   page,
@@ -62,11 +65,11 @@ const FileContainer: React.FC<FileContainerProps> = ({
     const ownerUsername = await getUsernameById(owner);
 
     if (ownerUsername !== username) {
-      alert('You do not have permission to favorite this file.');
+      setError('You do not have permission to favorite this file.');
       return;
     }
     if (page === 'trash') {
-      alert('You cannot favorite a file in the trash.');
+      setError('You cannot favorite a file in the trash.');
       return;
     }
     try {
@@ -86,7 +89,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
     const ownerUsername = await getUsernameById(owner);
 
     if (ownerUsername !== username) {
-      alert('You do not have permission to restore this file.');
+      setError('You do not have permission to restore this file.');
       return;
     }
     try {
@@ -136,6 +139,13 @@ const FileContainer: React.FC<FileContainerProps> = ({
           handleFavoriteFile={() => handleFavoriteFile(file.id, file.owner)}
         />
       ))}
+      {error && (
+        <ErrorAlert
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </div>
   );
 };
