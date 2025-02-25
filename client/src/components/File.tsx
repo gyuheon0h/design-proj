@@ -196,7 +196,7 @@ const FileComponent = (props: FileComponentProps) => {
   };
 
   const handleFavoriteFile = async (fileId: string, owner: string) => {
-    const ownerUsername = await getUsernameById(owner);
+    // const ownerUsername = await getUsernameById(owner);
 
     // TODO: see comment in FolderComponent
     // if (ownerUsername !== username) {
@@ -223,7 +223,7 @@ const FileComponent = (props: FileComponentProps) => {
   };
 
   const handleRestoreFile = async (fileId: string, owner: string) => {
-    const ownerUsername = await getUsernameById(owner);
+    // const ownerUsername = await getUsernameById(owner);
 
     // TODO: see comment in FolderComponent
     // if (ownerUsername !== username) {
