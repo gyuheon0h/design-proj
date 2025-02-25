@@ -437,7 +437,7 @@ folderRouter.patch('/move/:folderId', authorize, async (req, res) => {
     const { folderId } = req.params;
     const folder = await FolderModel.getById(folderId);
 
-    if (folder?.parentFolder == parentFolderId) {
+    if (folder?.parentFolder === parentFolderId) {
       console.error('User attempted to move to existing location');
       return res
         .status(400)

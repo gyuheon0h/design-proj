@@ -29,6 +29,7 @@ interface MoveDialogProps {
   resourceType: 'folder' | 'file';
   parentFolderId: string | null;
   onClose: () => void;
+  onSuccess: () => void;
 }
 
 const MoveDialog: React.FC<MoveDialogProps> = ({
@@ -38,6 +39,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   resourceType,
   parentFolderId,
   onClose,
+  onSuccess,
 }) => {
   const [currentParentFolderId, setCurrentParentFolderId] = useState<
     string | null
@@ -123,6 +125,8 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
         { parentFolderId: selectedFolderId },
         { withCredentials: true },
       );
+
+      onSuccess();
     } catch (error) {
       console.error('Error moving file:', error);
       alert('Failed to move file. Please try again.');

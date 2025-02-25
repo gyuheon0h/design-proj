@@ -11,42 +11,42 @@ import { inferMimeType } from './fileHelpers';
 const fileRouter = Router();
 const upload = multer(); // Using memory storage to keep things minimal (TODO: implement streaming)
 
-fileRouter.get('/root', authorize, async (req: AuthenticatedRequest, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+// fileRouter.get('/root', authorize, async (req: AuthenticatedRequest, res) => {
+//   try {
+//     if (!req.user) {
+//       return res.status(401).json({ error: 'Unauthorized' });
+//     }
 
-    const userId = req.user.userId;
-    const files = await FileModel.getFilesByOwnerAndFolder(userId, null);
-    return res.json(files);
-  } catch (error) {
-    console.error('Error getting root folder files:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+//     const userId = req.user.userId;
+//     const files = await FileModel.getFilesByOwnerAndFolder(userId, null);
+//     return res.json(files);
+//   } catch (error) {
+//     console.error('Error getting root folder files:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
 
 /**
  * GET /api/files/owner/:ownerId
  * Route to get files owned by a certain user (ownerId).
  * This is protected by authorize
  */
-fileRouter.get('/owner/:ownerId', authorize, async (req, res) => {
-  try {
-    const { ownerId } = req.params;
+// fileRouter.get('/owner/:ownerId', authorize, async (req, res) => {
+//   try {
+//     const { ownerId } = req.params;
 
-    // ******** CHECK THIS OUT If we only want to let users get their own files
-    // if ((req as any).user.userId !== ownerId) {
-    //   return res.status(403).json({ message: 'Forbidden: You can only access your own files.' });
-    // }
+//     // ******** CHECK THIS OUT If we only want to let users get their own files
+//     // if ((req as any).user.userId !== ownerId) {
+//     //   return res.status(403).json({ message: 'Forbidden: You can only access your own files.' });
+//     // }
 
-    const files = await FileModel.getFilesByOwner(ownerId);
-    return res.json(files);
-  } catch (error) {
-    console.error('Error getting files by owner:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+//     const files = await FileModel.getFilesByOwner(ownerId);
+//     return res.json(files);
+//   } catch (error) {
+//     console.error('Error getting files by owner:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
 
 /**
  * GET /api/files/folder/:folderId
@@ -201,24 +201,24 @@ fileRouter.get('/download/:fileId', authorize, async (req, res) => {
   }
 });
 
-// fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
-//   try {
-//     const { fileId } = req.params;
-//     const file = await FileModel.getById(fileId);
+fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const file = await FileModel.getById(fileId);
 
-//     if (!file) {
-//       return res.status(404).json({ message: 'File not found' });
-//     }
-//     // TODO: think about good way to soft/hard delete from gcsKey. Should we have async process to
-//     // hard delete files that have been soft deleted for a long time?
-//     // await StorageService.deleteFile(file.gcsKey);
-//     await FileModel.softDelete(fileId);
-//     return res.json({ message: 'File deleted successfully' });
-//   } catch (error) {
-//     console.error('Error deleting file:', error);
-//     return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
+    if (!file) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+    // TODO: think about good way to soft/hard delete from gcsKey. Should we have async process to
+    // hard delete files that have been soft deleted for a long time?
+    // await StorageService.deleteFile(file.gcsKey);
+    await FileModel.softDelete(fileId);
+    return res.json({ message: 'File deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
   try {
@@ -333,7 +333,7 @@ fileRouter.patch('/move/:fileId', authorize, async (req, res) => {
       return res.status(404).json({ message: 'File not found' });
     }
 
-    if (file?.parentFolder == parentFolderId) {
+    if (file?.parentFolder === parentFolderId) {
       console.error('User attempted to move to existing location');
       return res
         .status(400)
