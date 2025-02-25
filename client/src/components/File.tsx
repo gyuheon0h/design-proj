@@ -167,9 +167,9 @@ const FileComponent = (props: FileComponentProps) => {
   };
 
   // DELETE Event Handlers
-  const handleDeleteClick = (event: React.MouseEvent) => {
+  const handleDeleteClick = async (event: React.MouseEvent) => {
     event.stopPropagation();
-    handleDeleteFile(props.file.id);
+    await handleDeleteFile(props.file.id);
     setAnchorEl(null); //TODO: figure out whether to use this or handleOptionsClose()
     props.refreshFiles(props.file.parentFolder);
   };
@@ -185,12 +185,12 @@ const FileComponent = (props: FileComponentProps) => {
   };
 
   // FAVORITE Event Handlers
-  const handleFavoriteFileClick = (event: React.MouseEvent) => {
+  const handleFavoriteFileClick = async (event: React.MouseEvent) => {
     event.stopPropagation();
     if (props.page === 'trash') {
       alert('Restore the file to update it!');
     } else {
-      handleFavoriteFile(props.file.id, props.file.owner);
+      await handleFavoriteFile(props.file.id, props.file.owner);
     }
     props.refreshFiles(props.file.parentFolder);
   };
@@ -215,9 +215,9 @@ const FileComponent = (props: FileComponentProps) => {
   };
 
   // RESTORE Event Handlers
-  const handleRestoreClick = (event: React.MouseEvent) => {
+  const handleRestoreClick = async (event: React.MouseEvent) => {
     event.stopPropagation();
-    handleRestoreFile(props.file.id, props.file.owner);
+    await handleRestoreFile(props.file.id, props.file.owner);
     setAnchorEl(null);
     props.refreshFiles(props.file.parentFolder);
   };
@@ -452,6 +452,7 @@ const FileComponent = (props: FileComponentProps) => {
         fileId={props.file.id}
         resourceType="file"
         onClose={() => setIsRenameDialogOpen(false)}
+        onSuccess={() => props.refreshFiles(props.file.parentFolder)}
       />
 
       <PermissionDialog
@@ -471,6 +472,7 @@ const FileComponent = (props: FileComponentProps) => {
               fileId={props.file.id}
               resourceType="file"
               parentFolderId={props.file.parentFolder}
+              onSuccess={() => props.refreshFiles(props.file.parentFolder)}
             />
             <FileViewerDialog
               open={isFileViewerOpen}

@@ -15,6 +15,7 @@ interface RenameDialogProps {
   fileId: string;
   resourceType: 'folder' | 'file';
   onClose: () => void;
+  onSuccess: () => void;
 }
 
 const RenameDialog: React.FC<RenameDialogProps> = ({
@@ -23,6 +24,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
   fileId,
   resourceType,
   onClose,
+  onSuccess,
 }) => {
   const [newFileName, setNewFileName] = useState(fileName);
 
@@ -48,6 +50,8 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
             { withCredentials: true },
           );
         }
+
+        onSuccess();
       } catch (error) {
         console.error('Error renaming folder:', error);
       }

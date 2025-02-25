@@ -52,12 +52,13 @@ const FolderComponent = (props: FolderProps) => {
     props.onClick(props);
   };
 
-  const handleFavoriteFolderClick = (event: React.MouseEvent) => {
+  // FAVORITE Event Handlers
+  const handleFavoriteFolderClick = async (event: React.MouseEvent) => {
     event.stopPropagation();
     if (props.page === 'trash') {
       alert('Restore the folder to update it!');
     } else {
-      handleFavoriteFolder(props.folder.id, props.folder.owner);
+      await handleFavoriteFolder(props.folder.id, props.folder.owner);
     }
     props.refreshFolders(props.folder.parentFolder);
   };
@@ -83,6 +84,14 @@ const FolderComponent = (props: FolderProps) => {
     }
   };
 
+  // RESTORE Event Handlers
+  const handleRestoreClick = async (event: React.MouseEvent) => {
+    event.stopPropagation();
+    await handleRestoreFolder(props.folder.id, props.folder.owner);
+    setAnchorEl(null);
+    props.refreshFolders(props.folder.parentFolder);
+  };
+
   const handleRestoreFolder = async (folderId: string, owner: string) => {
     const ownerUsername = await getUsernameById(owner);
 
@@ -104,37 +113,10 @@ const FolderComponent = (props: FolderProps) => {
     }
   };
 
-  const handleRestoreClick = (event: React.MouseEvent) => {
+  // DELETE Event Handlers
+  const handleDeleteClick = async (event: React.MouseEvent) => {
     event.stopPropagation();
-    handleRestoreFolder(props.folder.id, props.folder.owner);
-    setAnchorEl(null);
-    props.refreshFolders(props.folder.parentFolder);
-  };
-
-  const handleDeleteClick = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    handleDeleteFolder(props.folder.id);
-    setAnchorEl(null);
-    props.refreshFolders(props.folder.parentFolder);
-  };
-
-  const handleRenameClick = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    setIsRenameDialogOpen(true);
-    setAnchorEl(null);
-    props.refreshFolders(props.folder.parentFolder);
-  };
-
-  const handlePermissionsClick = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    setIsPermissionsDialogOpen(true);
-    setAnchorEl(null);
-    // props.refreshFolders(props.folder.parentFolder);
-  };
-
-  const handleMoveClick = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    setIsMoveDialogOpen(true);
+    await handleDeleteFolder(props.folder.id);
     setAnchorEl(null);
     props.refreshFolders(props.folder.parentFolder);
   };
@@ -150,6 +132,28 @@ const FolderComponent = (props: FolderProps) => {
     } catch (error) {
       console.error('Error deleting folder:', error);
     }
+  };
+
+  //DIALOG CLICK TRIGGERS (Rename, Permissions/Share, Move)
+  const handleRenameClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setIsRenameDialogOpen(true);
+    setAnchorEl(null);
+    // props.refreshFolders(props.folder.parentFolder);
+  };
+
+  const handlePermissionsClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setIsPermissionsDialogOpen(true);
+    setAnchorEl(null);
+    // props.refreshFolders(props.folder.parentFolder);
+  };
+
+  const handleMoveClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setIsMoveDialogOpen(true);
+    setAnchorEl(null);
+    // props.refreshFolders(props.folder.parentFolder);
   };
 
   return (
@@ -184,7 +188,6 @@ const FolderComponent = (props: FolderProps) => {
           transition: 'background-color 0.3s',
         }}
       />
-
       {/* Folder Body */}
       <Box
         className="folder-body"
@@ -283,7 +286,6 @@ const FolderComponent = (props: FolderProps) => {
           )}
         </Menu>
       </Box>
-
       {/* Rename Folder Dialog */}
       <RenameDialog
         open={isRenameDialogOpen}
@@ -291,15 +293,18 @@ const FolderComponent = (props: FolderProps) => {
         fileId={props.folder.id}
         resourceType="folder"
         onClose={() => setIsRenameDialogOpen(false)}
+        onSuccess={() => props.refreshFolders(props.folder.parentFolder)}
       />
+      {/* //TODO: idk whether to use the double fileId/folderId or
+      resourceId/resourceType */}
 
       <PermissionDialog
         open={isPermissionsDialogOpen}
         onClose={() => setIsPermissionsDialogOpen(false)}
         fileId={null}
         folderId={props.folder.id}
+        // onShareSuccess={() => props.refreshFolders(props.folder.parentFolder)}
       />
-
       <MoveDialog
         open={isMoveDialogOpen}
         onClose={() => setIsMoveDialogOpen(false)}
@@ -307,6 +312,7 @@ const FolderComponent = (props: FolderProps) => {
         fileId={props.folder.id}
         resourceType="folder"
         parentFolderId={props.folder.parentFolder}
+        onSuccess={() => props.refreshFolders(props.folder.parentFolder)}
       />
     </Box>
   );
