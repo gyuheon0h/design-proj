@@ -88,7 +88,9 @@ export function applyFilters(
 ): File[] {
   console.log('FILES FOUND', files);
 
-  return files.filter((file) => {
+  const filesArray = Array.isArray(files) ? files : [];
+
+  return filesArray.filter((file) => {
     const fileType =
       '.' + file.fileType.substring(file.fileType.indexOf('/') + 1);
     const matchesFileType = fileTypeFilter ? fileType === fileTypeFilter : true;

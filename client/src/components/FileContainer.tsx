@@ -26,7 +26,9 @@ const FileContainer: React.FC<FileContainerProps> = ({
 
   useEffect(() => {
     // Filter files based on search query
-    const updatedFilteredFiles = files.filter((file) =>
+    const filesArray = Array.isArray(files) ? files : [];
+
+    const updatedFilteredFiles = filesArray.filter((file) =>
       file.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
