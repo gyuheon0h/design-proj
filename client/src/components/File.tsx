@@ -8,6 +8,8 @@ import {
   Divider,
   Box,
   Tooltip,
+  Modal,
+  Fade,
 } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
@@ -35,7 +37,7 @@ import MoveDialog from './MoveDialog';
 import {
   isSupportedFileTypeText,
   isSupportedFileTypeVideo,
-} from '../utils/clientHelpers';
+} from '../utils/fileTypeHelpers';
 import ErrorAlert from '../components/ErrorAlert';
 
 export interface FileComponentProps {
@@ -233,6 +235,7 @@ const FileComponent = (props: FileComponentProps) => {
           },
         }}
         onClick={() => {
+          console.log(props.fileType);
           if (props.page !== 'trash') handleFileClick();
         }}
       >
@@ -417,27 +420,33 @@ const FileComponent = (props: FileComponentProps) => {
         folderId={null}
       />
 
-      <MoveDialog
-        open={isMoveDialogOpen}
-        onClose={() => setIsMoveDialogOpen(false)}
-        fileName={props.name}
-        fileId={props.id}
-        resourceType="file"
-        parentFolderId={props.parentFolder}
-      />
-      <FileViewerDialog
-        open={isFileViewerOpen}
-        onClose={handleCloseFileViewer}
-        src={fileSrc}
-        fileType={props.fileType}
-      />
-      {error && (
-        <ErrorAlert
-          open={!!error}
-          message={error}
-          onClose={() => setError(null)}
-        />
-      )}
+      <Modal open={isFileViewerOpen} onClose={handleCloseFileViewer}>
+        <Fade in={isFileViewerOpen} timeout={300}>
+          <Box>
+            <MoveDialog
+              open={isMoveDialogOpen}
+              onClose={() => setIsMoveDialogOpen(false)}
+              fileName={props.name}
+              fileId={props.id}
+              resourceType="file"
+              parentFolderId={props.parentFolder}
+            />
+            <FileViewerDialog
+              open={isFileViewerOpen}
+              onClose={handleCloseFileViewer}
+              src={fileSrc}
+              fileType={props.fileType}
+            />
+            {error && (
+              <ErrorAlert
+                open={!!error}
+                message={error}
+                onClose={() => setError(null)}
+              />
+            )}
+          </Box>
+        </Fade>
+      </Modal>
     </div>
   );
 };

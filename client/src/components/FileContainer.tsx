@@ -4,6 +4,7 @@ import axios from 'axios';
 import { getUsernameById } from '../utils/helperRequests';
 import { File } from '../interfaces/File';
 import ErrorAlert from '../components/ErrorAlert';
+import { Grow } from '@mui/material';
 
 interface FileContainerProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -120,24 +121,27 @@ const FileContainer: React.FC<FileContainerProps> = ({
 
       {/* File List */}
       {filteredFiles.map((file) => (
-        <FileComponent
-          page={page}
-          key={file.id}
-          id={file.id}
-          name={file.name}
-          owner={file.owner}
-          createdAt={file.createdAt}
-          lastModifiedBy={file.lastModifiedBy}
-          lastModifiedAt={file.lastModifiedAt}
-          parentFolder={file.parentFolder}
-          gcsKey={file.gcsKey}
-          isFavorited={file.isFavorited}
-          fileType={file.fileType}
-          handleDeleteFile={handleDeleteFile}
-          handleRenameFile={handleRenameFile}
-          handleRestoreFile={() => handleRestoreFile(file.id, file.owner)}
-          handleFavoriteFile={() => handleFavoriteFile(file.id, file.owner)}
-        />
+        <Grow in={true} timeout={500} key={`${file.id}-${searchQuery}`}>
+          <div>
+            <FileComponent
+              page={page}
+              id={file.id}
+              name={file.name}
+              owner={file.owner}
+              createdAt={file.createdAt}
+              lastModifiedBy={file.lastModifiedBy}
+              lastModifiedAt={file.lastModifiedAt}
+              parentFolder={file.parentFolder}
+              gcsKey={file.gcsKey}
+              isFavorited={file.isFavorited}
+              fileType={file.fileType}
+              handleDeleteFile={handleDeleteFile}
+              handleRenameFile={handleRenameFile}
+              handleRestoreFile={() => handleRestoreFile(file.id, file.owner)}
+              handleFavoriteFile={() => handleFavoriteFile(file.id, file.owner)}
+            />
+          </div>
+        </Grow>
       ))}
       {error && (
         <ErrorAlert

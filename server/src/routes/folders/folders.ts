@@ -21,8 +21,6 @@ folderRouter.post(
       }
       const userId = req.user.userId;
 
-      console.log('folderId recieved ', folderId);
-
       // Handle null case properly
       const subfolders = await FolderModel.getSubfoldersByOwner(
         userId,
@@ -73,19 +71,12 @@ folderRouter.post(
   authorize,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const {
-        name,
-        parentFolder,
-        folderChildren: reqFolderChildren,
-        fileChildren: reqFileChildren,
-      } = req.body;
+      const { name, parentFolder } = req.body;
 
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const folderChildren = reqFolderChildren || [];
-      const fileChildren = reqFileChildren || [];
       const owner = req.user?.userId;
       // Validate required fields
       if (!name) {
@@ -97,8 +88,6 @@ folderRouter.post(
         owner,
         createdAt: new Date(),
         parentFolder: parentFolder || null,
-        folderChildren: folderChildren,
-        fileChildren: fileChildren,
         isFavorited: false,
       });
 

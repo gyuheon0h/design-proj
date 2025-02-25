@@ -12,8 +12,9 @@ import {
   MenuItem,
   Box,
   Avatar,
+  Fade,
 } from '@mui/material';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
 import PeopleIcon from '@mui/icons-material/People';
 import StarIcon from '@mui/icons-material/Star';
@@ -29,6 +30,7 @@ const AccountMenu = () => {
   const { username } = useUser();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const open = Boolean(anchorEl);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -40,6 +42,7 @@ const AccountMenu = () => {
   };
 
   const handleLogout = () => {
+    setIsLoggingOut(true);
     try {
       document.cookie.split(';').forEach((cookie) => {
         const [name] = cookie.split('=');
@@ -106,6 +109,12 @@ const AccountMenu = () => {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
       />
+
+      {isLoggingOut && (
+              <Fade in={true} timeout={500}>
+                <Navigate to="/home" />
+              </Fade>
+            )}
     </React.Fragment>
   );
 };
