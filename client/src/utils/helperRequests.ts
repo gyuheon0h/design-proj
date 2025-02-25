@@ -86,9 +86,19 @@ export function applyFilters(
   createdAtFilter: string | null,
   modifiedAtFilter: string | null,
 ): File[] {
-  console.log('FILES FOUND', files);
+  let filesArray: File[] = [];
 
-  const filesArray = Array.isArray(files) ? files : [];
+  if (Array.isArray(files)) {
+    filesArray = files;
+  } else {
+    filesArray =
+      typeof files === 'object' &&
+      files !== null &&
+      'files' in files &&
+      'permissions' in files
+        ? (files as { files: File[]; permissions: any }).files
+        : [];
+  }
 
   return filesArray.filter((file) => {
     const fileType =

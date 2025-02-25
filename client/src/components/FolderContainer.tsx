@@ -33,7 +33,19 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   useEffect(() => {
     // Filter folders based on search query
 
-    const foldersArray = Array.isArray(folders) ? folders : [];
+    let foldersArray: Folder[] = [];
+
+    if (Array.isArray(folders)) {
+      foldersArray = folders;
+    } else {
+      foldersArray =
+        typeof folders === 'object' &&
+        folders !== null &&
+        'folders' in folders &&
+        'permissions' in folders
+          ? (folders as { folders: Folder[]; permissions: any }).folders
+          : [];
+    }
 
     const updatedFilteredFolders = foldersArray.filter((folder) =>
       folder.name.toLowerCase().includes(searchQuery.toLowerCase()),
