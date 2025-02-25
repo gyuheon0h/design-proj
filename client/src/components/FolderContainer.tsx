@@ -30,15 +30,15 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const [filteredFolders, setFilteredFolders] = useState<Folder[]>([]);
   const [visibleFolders, setVisibleFolders] = useState<Folder[]>([]);
 
-  useEffect(() => {
-    // Filter folders based on search query
-    const updatedFilteredFolders = folders.filter((folder) =>
-      folder.name.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
+  // useEffect(() => {
+  //   // Filter folders based on search query
+  //   const updatedFilteredFolders = folders.filter((folder) =>
+  //     folder.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  //   );
 
-    setFilteredFolders(updatedFilteredFolders);
-    setActiveStartIndex(0); // Reset pagination when search query changes
-  }, [folders, searchQuery]);
+  //   setFilteredFolders(updatedFilteredFolders);
+  //   setActiveStartIndex(0); // Reset pagination when search query changes
+  // }, [folders, searchQuery]);
 
   useEffect(() => {
     setVisibleFolders(

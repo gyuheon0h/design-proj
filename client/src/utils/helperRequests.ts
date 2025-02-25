@@ -86,6 +86,8 @@ export function applyFilters(
   createdAtFilter: string | null,
   modifiedAtFilter: string | null,
 ): File[] {
+  console.log('FILES FOUND', files);
+
   return files.filter((file) => {
     const fileType =
       '.' + file.fileType.substring(file.fileType.indexOf('/') + 1);
