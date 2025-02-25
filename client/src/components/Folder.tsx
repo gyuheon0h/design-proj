@@ -15,7 +15,6 @@ import PermissionDialog from './PermissionsDialog';
 import MoveDialog from './MoveDialog';
 import { Folder } from '../interfaces/Folder';
 import axios from 'axios';
-import { getUsernameById } from '../utils/helperRequests';
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
