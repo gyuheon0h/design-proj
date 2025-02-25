@@ -1,4 +1,6 @@
 const extensionToMimeType: { [key: string]: string } = {
+  ts: 'application/x-typescript',
+  tsx: 'application/x-typescript',
   jpg: 'image/jpeg',
   jpeg: 'image/jpeg',
   png: 'image/png',
@@ -36,7 +38,6 @@ const extensionToMimeType: { [key: string]: string } = {
   rs: 'text/x-rust',
   swift: 'text/x-swift',
   kt: 'text/x-kotlin',
-  ts: 'application/typescript',
   sh: 'application/x-sh',
   pl: 'text/x-perl',
   lua: 'text/x-lua',

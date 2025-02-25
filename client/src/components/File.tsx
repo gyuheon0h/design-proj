@@ -418,16 +418,15 @@ const FileComponent = (props: FileComponentProps) => {
       <Modal open={isFileViewerOpen} onClose={handleCloseFileViewer}>
         <Fade in={isFileViewerOpen} timeout={300}>
           <Box>
-      
-      <MoveDialog
-        open={isMoveDialogOpen}
-        onClose={() => setIsMoveDialogOpen(false)}
-        fileName={props.name}
-        fileId={props.id}
-        resourceType="file"
-        parentFolderId={props.parentFolder}
-      />
-      <FileViewerDialog
+            <MoveDialog
+              open={isMoveDialogOpen}
+              onClose={() => setIsMoveDialogOpen(false)}
+              fileName={props.name}
+              fileId={props.id}
+              resourceType="file"
+              parentFolderId={props.parentFolder}
+            />
+            <FileViewerDialog
               open={isFileViewerOpen}
               onClose={handleCloseFileViewer}
               src={fileSrc}

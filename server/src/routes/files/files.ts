@@ -147,15 +147,9 @@ fileRouter.post(
       let { originalname, buffer, mimetype } = req.file;
       const { parentFolder = null, fileName } = req.body;
       const userId = (req as any).user.userId;
-
       // If the MIME type is 'application/octet-stream', try to infer it
       if (mimetype === 'application/octet-stream') {
-        const inferredMimeType = mime.lookup(originalname);
-        if (inferredMimeType) {
-          mimetype = inferredMimeType;
-        } else {
-          mimetype = inferMimeType(originalname);
-        }
+        mimetype = inferMimeType(originalname);
       }
 
       // Generate a unique file ID and file pagth
