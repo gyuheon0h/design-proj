@@ -1,10 +1,10 @@
 import { Dialog, DialogContent } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
-import CodeOrTextEditor from './TextViewEditor';
+import TextViewer from './TextViewer';
 import { diff_match_patch } from 'diff-match-patch';
 import { debounce } from 'lodash';
 
-interface FileEditorProps {
+interface TextEditorProps {
   open: boolean;
   fileId: string;
   gcsKey: string;
@@ -67,7 +67,7 @@ function computeOperationsFromDiff(
   return operations;
 }
 
-const FileEditor: React.FC<FileEditorProps> = ({
+const TextEditor: React.FC<TextEditorProps> = ({
   open,
   fileId,
   gcsKey,
@@ -283,7 +283,7 @@ const FileEditor: React.FC<FileEditorProps> = ({
         }}
       >
         <div style={{ flexGrow: 1 }}>
-          <CodeOrTextEditor
+          <TextViewer
             fileType={mimeType}
             content={content}
             onChange={handleChange}
@@ -301,4 +301,4 @@ const FileEditor: React.FC<FileEditorProps> = ({
   );
 };
 
-export default FileEditor;
+export default TextEditor;

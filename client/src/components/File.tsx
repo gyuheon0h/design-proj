@@ -40,7 +40,7 @@ import {
 } from '../utils/fileTypeHelpers';
 import { File } from '../interfaces/File';
 import axios from 'axios';
-import FileEditor from './FileEditor';
+import TextEditor from './TextEditor';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -474,7 +474,7 @@ const FileComponent = (props: FileComponentProps) => {
 
       {/* necessary to only open one websocket at a time */}
       {isEditDialogOpen && (
-        <FileEditor
+        <TextEditor
           fileId={props.file.id}
           gcsKey={props.file.gcsKey}
           mimeType={props.file.fileType}
