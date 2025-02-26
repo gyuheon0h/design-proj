@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Card,
   Typography,
@@ -86,6 +86,7 @@ const FileComponent = (props: FileComponentProps) => {
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const fileCache = useRef(new Map<string, string>());
 
   // For the image viewer
   const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
@@ -135,12 +136,20 @@ const FileComponent = (props: FileComponentProps) => {
     ) {
       setIsFileViewerOpen(true); // Open the modal immediately
 
+      if (fileCache.current.has(props.file.gcsKey)) {
+        setFileSrc(fileCache.current.get(props.file.gcsKey) as string);
+        return;
+      }
+
       try {
         const blob = await getBlobGcskey(
           props.file.gcsKey,
           props.file.fileType,
         );
         const objectUrl = URL.createObjectURL(blob);
+        if (!isSupportedFileTypeText(props.file.fileType)) {
+          fileCache.current.set(props.file.gcsKey, objectUrl);
+        }
         setFileSrc(objectUrl);
       } catch (err) {
         console.error('Error fetching file from server:', err);

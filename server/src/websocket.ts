@@ -252,6 +252,10 @@ export default function setupWebSocketServer(server: Server) {
             // Extract batch information
             const { operation, batchId, isLastInBatch } = data;
 
+            // Increment right when we receive a new operation
+            // CHECKKKK
+            // clientInfo.pendingOps++;
+
             // transform operation against all operations that the client hasn't seen
             let transformedOp: Operation | null = operation;
             const clientRevision = doc.revision - clientInfo.pendingOps + 1;
@@ -279,6 +283,10 @@ export default function setupWebSocketServer(server: Server) {
             doc.content = applyOperation(doc.content, transformedOp);
             doc.revision++;
             doc.history.push(transformedOp);
+
+            // Decrement pendingOps once the op is successfully applied
+            // CHECKKKKKK
+            // clientInfo.pendingOps--;
 
             // acknowledge the operation to the sender
             ws.send(
