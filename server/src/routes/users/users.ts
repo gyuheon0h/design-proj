@@ -38,7 +38,6 @@ userRouter.post(
   authorize,
   async (req: AuthenticatedRequest, res) => {
     try {
-      console.log('REQUEST', req);
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }

@@ -97,7 +97,6 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   // navigate into the clicked folder and select it
   const handleGoIntoFolder = (event: React.MouseEvent, folderId: string) => {
     event.stopPropagation();
-    console.log('Navigating into:', folderId);
     setFolderHistory((prev) => [...prev, folderId]);
     setCurrentParentFolderId(folderId);
     setSelectedFolderId(folderId);
