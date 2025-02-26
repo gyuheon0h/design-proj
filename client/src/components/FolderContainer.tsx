@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Grow, Slider } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import ErrorAlert from '../components/ErrorAlert';
 // import Folder, { FolderProps } from './Folder';
 import { Folder } from '../interfaces/Folder';
 import FolderComponent from './Folder';
@@ -29,6 +30,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const [activeStartIndex, setActiveStartIndex] = useState(0);
   const [filteredFolders, setFilteredFolders] = useState<Folder[]>([]);
   const [visibleFolders, setVisibleFolders] = useState<Folder[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Filter folders based on search query
@@ -176,6 +178,13 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
           }}
         />
       </Box>
+      {error && (
+        <ErrorAlert
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </Box>
   );
 };

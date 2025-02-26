@@ -3,6 +3,7 @@ import FileComponent from './File';
 import axios from 'axios';
 import { getUsernameById } from '../utils/helperRequests';
 import { File } from '../interfaces/File';
+import ErrorAlert from '../components/ErrorAlert';
 import { Grow } from '@mui/material';
 
 interface FileContainerProps {
@@ -23,6 +24,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
   searchQuery, // Receive search query
 }) => {
   const [filteredFiles, setFilteredFiles] = useState<File[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Filter files based on search query
@@ -59,6 +61,13 @@ const FileContainer: React.FC<FileContainerProps> = ({
           </div>
         </Grow>
       ))}
+      {error && (
+        <ErrorAlert
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </div>
   );
 };

@@ -13,6 +13,7 @@ import { colors } from '../Styles';
 import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import MoveDialog from './MoveDialog';
+import ErrorAlert from '../components/ErrorAlert';
 import { Folder } from '../interfaces/Folder';
 import axios from 'axios';
 
@@ -29,6 +30,7 @@ const FolderComponent = (props: FolderProps) => {
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const open = Boolean(anchorEl);
+  const [error, setError] = useState<string | null>(null);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -313,6 +315,13 @@ const FolderComponent = (props: FolderProps) => {
         parentFolderId={props.folder.parentFolder}
         onSuccess={() => props.refreshFolders(props.folder.parentFolder)}
       />
+      {error && (
+        <ErrorAlert
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </Box>
   );
 };

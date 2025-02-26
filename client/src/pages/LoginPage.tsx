@@ -12,12 +12,14 @@ import {
   Link,
 } from '@mui/material';
 import { colors } from '../Styles';
+import ErrorAlert from '../components/ErrorAlert';
 
 const Login = () => {
   const [username, setUsernameInput] = useState('');
   const [password, setPassword] = useState('');
   const { setUsername, setUserId } = useUser();
   const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +42,12 @@ const Login = () => {
         console.log('USERID', data.userId);
         navigate('/home');
       } else {
-        const error = await response.json();
-        alert(`Login failed: ${error.message}`);
+        const errorData = await response.json();
+        setError(`Login failed: ${errorData.message}`);
       }
     } catch (error) {
       console.error('Error during login request:', error);
-      alert('Something went wrong. Please try again.');
+      setError(`Something went wrong: ${error}. Please try again.`);
     }
   };
 
@@ -150,6 +152,13 @@ const Login = () => {
           </Box>
         </Box>
       </Paper>
+      {error && (
+        <ErrorAlert
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </Container>
   );
 };

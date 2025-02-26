@@ -38,6 +38,7 @@ import {
   isSupportedFileTypeText,
   isSupportedFileTypeVideo,
 } from '../utils/fileTypeHelpers';
+import ErrorAlert from '../components/ErrorAlert';
 import { File } from '../interfaces/File';
 import axios from 'axios';
 
@@ -90,6 +91,8 @@ const FileComponent = (props: FileComponentProps) => {
   const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
   const [fileSrc, setFileSrc] = useState('');
 
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchOwnerUserName = async () => {
       if (props.file.owner) {
@@ -98,6 +101,7 @@ const FileComponent = (props: FileComponentProps) => {
           setOwnerUserName(username || 'Unknown');
         } catch (error) {
           console.error('Error fetching username:', error);
+          setError(`Error fetching owner username: ${error}`);
           setOwnerUserName('Unknown');
         }
       }
@@ -114,6 +118,7 @@ const FileComponent = (props: FileComponentProps) => {
           setModifiedByName(username || 'Unknown');
         } catch (error) {
           console.error('Error fetching username:', error);
+          setError('Error fetching username');
           setModifiedByName('Unknown');
         }
       }
@@ -149,7 +154,7 @@ const FileComponent = (props: FileComponentProps) => {
         setFileSrc(objectUrl);
       } catch (err) {
         console.error('Error fetching file from server:', err);
-        alert('Error fetching file');
+        setError('Error fetching file');
       }
     }
   };
@@ -480,6 +485,13 @@ const FileComponent = (props: FileComponentProps) => {
               src={fileSrc}
               fileType={props.file.fileType}
             />
+            {error && (
+              <ErrorAlert
+                open={!!error}
+                message={error}
+                onClose={() => setError(null)}
+              />
+            )}
           </Box>
         </Fade>
       </Modal>
