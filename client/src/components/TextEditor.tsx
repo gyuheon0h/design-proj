@@ -252,6 +252,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
     debouncedProcessChanges(newContent);
   };
 
+  // TODO UPDATE FILE METADATA
   const handleSave = () => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.send(

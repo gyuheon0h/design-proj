@@ -180,7 +180,7 @@ export default function setupWebSocketServer(server: Server) {
     ws.on('message', async (message: string) => {
       try {
         const data = JSON.parse(message.toString());
-        const { type, fileId, operation, revision, mimeType, gcsKey } = data;
+        const { type, fileId, mimeType, gcsKey } = data;
 
         switch (type) {
           case 'join-document': {
@@ -253,8 +253,7 @@ export default function setupWebSocketServer(server: Server) {
             const { operation, batchId, isLastInBatch } = data;
 
             // Increment right when we receive a new operation
-            // CHECKKKK
-            // clientInfo.pendingOps++;
+            clientInfo.pendingOps++;
 
             // transform operation against all operations that the client hasn't seen
             let transformedOp: Operation | null = operation;
@@ -284,9 +283,7 @@ export default function setupWebSocketServer(server: Server) {
             doc.revision++;
             doc.history.push(transformedOp);
 
-            // Decrement pendingOps once the op is successfully applied
-            // CHECKKKKKK
-            // clientInfo.pendingOps--;
+            clientInfo.pendingOps--;
 
             // acknowledge the operation to the sender
             ws.send(
@@ -343,7 +340,7 @@ export default function setupWebSocketServer(server: Server) {
             }
             break;
           }
-
+          // TODO UPDATE FILE METADATA
           case 'save-document': {
             const doc = documents.get(fileId);
             if (doc) {

@@ -401,17 +401,24 @@ const FileComponent = (props: FileComponentProps) => {
               Restore
             </MenuItem>
           ) : props.page === 'shared' ? (
-            <MenuItem
-              onClick={() => {
-                downloadFile(props.file.id, props.file.name);
-                handleOptionsClose();
-              }}
-            >
-              <InsertDriveFileIcon
-                sx={{ fontSize: '20px', marginRight: '9px' }}
-              />{' '}
-              Download
-            </MenuItem>
+            [
+              <MenuItem
+                onClick={() => {
+                  downloadFile(props.file.id, props.file.name);
+                  handleOptionsClose();
+                }}
+              >
+                <InsertDriveFileIcon
+                  sx={{ fontSize: '20px', marginRight: '9px' }}
+                />{' '}
+                Download
+              </MenuItem>,
+              // TODO ONLY SHOW THIS WHEN THEY HAVE PERMISSION
+              <MenuItem onClick={handleEditClick}>
+                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
+                Edit
+              </MenuItem>,
+            ]
           ) : (
             [
               <MenuItem onClick={handleEditClick}>
