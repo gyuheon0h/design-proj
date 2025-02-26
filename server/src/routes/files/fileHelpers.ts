@@ -1,3 +1,6 @@
+import FolderModel from '../../db_models/FolderModel';
+import PermissionModel from '../../db_models/PermissionModel';
+
 const extensionToMimeType: { [key: string]: string } = {
   ts: 'application/x-typescript',
   tsx: 'application/x-typescript',
@@ -50,7 +53,33 @@ const extensionToMimeType: { [key: string]: string } = {
   sql: 'application/sql',
 };
 
-export function inferMimeType(filename: string) {
+export function inferMimeType(filename: string): string {
   const ext = (filename.split('.').pop() || '').toLowerCase();
   return extensionToMimeType[ext] || 'application/octet-stream';
+}
+
+export async function isNestedSharedFile(
+  fileId: string,
+  userId: string,
+): Promise<boolean> {
+  // Get the file's parent folder
+  let folder = await FolderModel.getById(fileId);
+
+  // Traverse up the folder hierarchy
+  while (folder && folder.parentFolder !== null) {
+    // Check if this folder is shared with the user
+    const permission = await PermissionModel.getPermissionByFileAndUser(
+      folder.id,
+      userId,
+    );
+
+    if (permission) {
+      return true; // The folder is shared with the user
+    }
+
+    // Move up to the parent folder
+    folder = await FolderModel.getById(folder.parentFolder);
+  }
+
+  return false; // No shared parent folder found
 }
