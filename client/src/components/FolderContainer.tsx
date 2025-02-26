@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Grow, Slider } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
-import Folder, { FolderProps } from './Folder';
-import axios from 'axios';
-import { getUsernameById } from '../utils/helperRequests';
 import ErrorAlert from '../components/ErrorAlert';
+// import Folder, { FolderProps } from './Folder';
+import { Folder } from '../interfaces/Folder';
+import FolderComponent from './Folder';
 
 interface FolderContainerProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
-  folders: FolderProps[];
-  onFolderClick: (folder: FolderProps) => void;
+  folders: Folder[];
+  onFolderClick: (folder: Folder) => void;
   currentFolderId: string | null;
   refreshFolders: (folderId: string | null) => void;
   username: string;
@@ -28,13 +28,28 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const itemsPerPage = 5;
 
   const [activeStartIndex, setActiveStartIndex] = useState(0);
-  const [filteredFolders, setFilteredFolders] = useState<FolderProps[]>([]);
-  const [visibleFolders, setVisibleFolders] = useState<FolderProps[]>([]);
+  const [filteredFolders, setFilteredFolders] = useState<Folder[]>([]);
+  const [visibleFolders, setVisibleFolders] = useState<Folder[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Filter folders based on search query
-    const updatedFilteredFolders = folders.filter((folder) =>
+
+    let foldersArray: Folder[] = [];
+
+    if (Array.isArray(folders)) {
+      foldersArray = folders;
+    } else {
+      foldersArray =
+        typeof folders === 'object' &&
+        folders !== null &&
+        'folders' in folders &&
+        'permissions' in folders
+          ? (folders as { folders: Folder[]; permissions: any }).folders
+          : [];
+    }
+
+    const updatedFilteredFolders = foldersArray.filter((folder) =>
       folder.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
@@ -72,76 +87,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const handleSliderChange = (event: Event, newValue: number | number[]) => {
     if (typeof newValue === 'number') {
       updateVisibleFolders(newValue);
-    }
-  };
-
-  const handleDeleteFolder = async (folderId: string) => {
-    try {
-      await axios.delete(
-        `http://localhost:5001/api/folder/delete/${folderId}`,
-        {
-          withCredentials: true,
-        },
-      );
-      refreshFolders(currentFolderId);
-    } catch (error) {
-      console.error('Error deleting folder:', error);
-    }
-  };
-
-  const handleFavoriteFolder = async (folderId: string, owner: string) => {
-    const ownerUsername = await getUsernameById(owner);
-    if (ownerUsername !== username) {
-      setError('You do not have permission to favorite this folder.');
-      return;
-    }
-    try {
-      await axios.patch(
-        `http://localhost:5001/api/folder/favorite/${folderId}`,
-        {},
-        {
-          withCredentials: true,
-        },
-      );
-      refreshFolders(currentFolderId);
-    } catch (error) {
-      console.error('Error favoriting folder:', error);
-    }
-  };
-
-  const handleRestoreFolder = async (folderId: string, owner: string) => {
-    const ownerUsername = await getUsernameById(owner);
-    if (ownerUsername !== username) {
-      setError('You do not have permission to restore this folder.');
-      return;
-    }
-    try {
-      await axios.patch(
-        `http://localhost:5001/api/folder/restore/${folderId}`,
-        {},
-        {
-          withCredentials: true,
-        },
-      );
-      refreshFolders(currentFolderId);
-    } catch (error) {
-      console.error('Error restoring folder:', error);
-    }
-  };
-
-  const handleRenameFolder = async (
-    folderId: string,
-    newFolderName: string,
-  ) => {
-    try {
-      await axios.patch(
-        `http://localhost:5001/api/folder/rename/${folderId}`,
-        { folderName: newFolderName },
-        { withCredentials: true },
-      );
-      refreshFolders(currentFolderId);
-    } catch (error) {
-      console.error('Error renaming folder:', error);
     }
   };
 
@@ -188,29 +133,16 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
           }}
         >
           {visibleFolders.map((folder) => (
-            <Grow in={true} timeout={500} key={`${folder.id}-${searchQuery}`}> 
-              <div> 
-                <Folder
+            <Grow in={true} timeout={500} key={`${folder.id}-${searchQuery}`}>
+              <div>
+                <FolderComponent
                   page={page}
-                  key={folder.id}
-                  id={folder.id}
-                  name={folder.name}
-                  owner={folder.owner}
-                  createdAt={folder.createdAt}
-                  parentFolder={folder.parentFolder}
-                  isFavorited={folder.isFavorited}
+                  folder={folder}
                   onClick={() => onFolderClick(folder)}
-                  handleRenameFolder={handleRenameFolder}
-                  handleDeleteFolder={handleDeleteFolder}
-                  handleFavoriteFolder={() =>
-                    handleFavoriteFolder(folder.id, folder.owner)
-                  }
-                  handleRestoreFolder={() =>
-                    handleRestoreFolder(folder.id, folder.owner)
-                  }
+                  refreshFolders={refreshFolders}
                 />
               </div>
-          </Grow>
+            </Grow>
           ))}
         </Box>
 

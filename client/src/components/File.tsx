@@ -39,23 +39,13 @@ import {
   isSupportedFileTypeVideo,
 } from '../utils/fileTypeHelpers';
 import ErrorAlert from '../components/ErrorAlert';
+import { File } from '../interfaces/File';
+import axios from 'axios';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
-  id: string;
-  name: string;
-  owner: string;
-  createdAt: Date;
-  lastModifiedBy: string | null;
-  lastModifiedAt: Date;
-  parentFolder: string | null;
-  gcsKey: string;
-  fileType: string;
-  isFavorited: boolean;
-  handleRestoreFile: (fileId: string) => void;
-  handleDeleteFile: (fileId: string) => void;
-  handleRenameFile: (fileId: string, newFileName: string) => void;
-  handleFavoriteFile: (fileId: string) => void;
+  file: File;
+  refreshFiles: (folderId: string | null) => void;
 }
 
 const getFileIcon = (fileType: string) => {
@@ -105,9 +95,9 @@ const FileComponent = (props: FileComponentProps) => {
 
   useEffect(() => {
     const fetchOwnerUserName = async () => {
-      if (props.owner) {
+      if (props.file.owner) {
         try {
-          const username = await getUsernameById(props.owner);
+          const username = await getUsernameById(props.file.owner);
           setOwnerUserName(username || 'Unknown');
         } catch (error) {
           console.error('Error fetching username:', error);
@@ -118,13 +108,13 @@ const FileComponent = (props: FileComponentProps) => {
     };
 
     fetchOwnerUserName();
-  }, [props.owner]);
+  }, [props.file.owner]);
 
   useEffect(() => {
     const fetchModifiedByName = async () => {
-      if (props.lastModifiedBy) {
+      if (props.file.lastModifiedBy) {
         try {
-          const username = await getUsernameById(props.lastModifiedBy);
+          const username = await getUsernameById(props.file.lastModifiedBy);
           setModifiedByName(username || 'Unknown');
         } catch (error) {
           console.error('Error fetching username:', error);
@@ -135,29 +125,32 @@ const FileComponent = (props: FileComponentProps) => {
     };
 
     fetchModifiedByName();
-  }, [props.lastModifiedBy]);
+  }, [props.file.lastModifiedBy]);
 
   const open = Boolean(anchorEl);
 
   const handleFileClick = async () => {
     if (
-      props.fileType.startsWith('image/') ||
-      props.fileType.startsWith('application/pdf') ||
-      props.fileType.startsWith('audio/') ||
-      isSupportedFileTypeVideo(props.fileType) ||
-      isSupportedFileTypeText(props.fileType)
+      props.file.fileType.startsWith('image/') ||
+      props.file.fileType.startsWith('application/pdf') ||
+      props.file.fileType.startsWith('audio/') ||
+      isSupportedFileTypeVideo(props.file.fileType) ||
+      isSupportedFileTypeText(props.file.fileType)
     ) {
       setIsFileViewerOpen(true); // Open the modal immediately
 
-      if (fileCache.current.has(props.gcsKey)) {
-        setFileSrc(fileCache.current.get(props.gcsKey) as string);
+      if (fileCache.current.has(props.file.gcsKey)) {
+        setFileSrc(fileCache.current.get(props.file.gcsKey) as string);
         return;
       }
 
       try {
-        const blob = await getBlobGcskey(props.gcsKey, props.fileType);
+        const blob = await getBlobGcskey(
+          props.file.gcsKey,
+          props.file.fileType,
+        );
         const objectUrl = URL.createObjectURL(blob);
-        fileCache.current.set(props.gcsKey, objectUrl);
+        fileCache.current.set(props.file.gcsKey, objectUrl);
         setFileSrc(objectUrl);
       } catch (err) {
         console.error('Error fetching file from server:', err);
@@ -178,44 +171,112 @@ const FileComponent = (props: FileComponentProps) => {
     setAnchorEl(null);
   };
 
-  const handleRenameClick = () => {
+  // DELETE Event Handlers
+  const handleDeleteClick = async (event: React.MouseEvent) => {
+    event.stopPropagation();
+    await handleDeleteFile(props.file.id);
+    setAnchorEl(null); //TODO: figure out whether to use this or handleOptionsClose()
+    props.refreshFiles(props.file.parentFolder);
+  };
+
+  const handleDeleteFile = async (fileId: string) => {
+    try {
+      await axios.delete(`http://localhost:5001/api/file/delete/${fileId}`, {
+        withCredentials: true,
+      });
+    } catch (error) {
+      console.error('Error deleting file:', error);
+    }
+  };
+
+  // FAVORITE Event Handlers
+  const handleFavoriteFileClick = async (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (props.page === 'trash') {
+      alert('Restore the file to update it!');
+    } else {
+      await handleFavoriteFile(props.file.id, props.file.owner);
+    }
+    props.refreshFiles(props.file.parentFolder);
+  };
+
+  const handleFavoriteFile = async (fileId: string, owner: string) => {
+    // const ownerUsername = await getUsernameById(owner);
+
+    // TODO: see comment in FolderComponent
+    // if (ownerUsername !== username) {
+    //   alert('You do not have permission to favorite this file.');
+    //   return;
+    // }
+    try {
+      await axios.patch(
+        `http://localhost:5001/api/file/favorite/${fileId}`,
+        {},
+        { withCredentials: true },
+      );
+    } catch (error) {
+      console.error('Error favoriting file:', error);
+    }
+  };
+
+  // RESTORE Event Handlers
+  const handleRestoreClick = async (event: React.MouseEvent) => {
+    event.stopPropagation();
+    await handleRestoreFile(props.file.id, props.file.owner);
+    setAnchorEl(null);
+    props.refreshFiles(props.file.parentFolder);
+  };
+
+  const handleRestoreFile = async (fileId: string, owner: string) => {
+    // const ownerUsername = await getUsernameById(owner);
+
+    // TODO: see comment in FolderComponent
+    // if (ownerUsername !== username) {
+    //   alert('You do not have permission to restore this file.');
+    //   return;
+    // }
+    try {
+      await axios.patch(
+        `http://localhost:5001/api/file/restore/${fileId}`,
+        {},
+        { withCredentials: true },
+      );
+    } catch (error) {
+      console.error('Error restoring file:', error);
+    }
+  };
+
+  //DIALOG CLICK TRIGGERS (Rename, Permissions/Share, Move)
+  const handleRenameClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
     setIsRenameDialogOpen(true);
     handleOptionsClose();
+    props.refreshFiles(props.file.parentFolder);
   };
 
   const handlePermissionsClick = () => {
     setIsPermissionsDialogOpen(true);
     handleOptionsClose();
+    // props.refreshFiles(props.file.parentFolder);
   };
 
   const handleMoveClick = () => {
     setIsMoveDialogOpen(true);
     handleOptionsClose();
+    props.refreshFiles(props.file.parentFolder);
   };
 
-  const handleRenameFile = (newFileName: string) => {
-    props.handleRenameFile(props.id, newFileName);
-  };
-
-  const handleFavoriteFile = () => {
-    props.handleFavoriteFile(props.id);
-  };
-
-  const handleRestoreFile = () => {
-    props.handleRestoreFile(props.id);
-  };
-
-  const lastModifiedDate = new Date(props.lastModifiedAt);
+  const lastModifiedDate = new Date(props.file.lastModifiedAt);
   const formattedLastModifiedDate = !isNaN(lastModifiedDate.getTime())
     ? lastModifiedDate.toLocaleDateString()
     : 'Unknown';
 
-  const createdDate = new Date(props.createdAt);
+  const createdDate = new Date(props.file.createdAt);
   const formattedCreatedDate = !isNaN(createdDate.getTime())
     ? lastModifiedDate.toLocaleDateString()
     : 'Unknown';
 
-  const dateText = props.lastModifiedBy
+  const dateText = props.file.lastModifiedBy
     ? `Last Modified: ${formattedLastModifiedDate} by ${modifiedByName || ownerUserName}`
     : `Created: ${formattedCreatedDate} by ${ownerUserName}`;
 
@@ -235,11 +296,11 @@ const FileComponent = (props: FileComponentProps) => {
           },
         }}
         onClick={() => {
-          console.log(props.fileType);
+          console.log(props.file.fileType);
           if (props.page !== 'trash') handleFileClick();
         }}
       >
-        {getFileIcon(props.fileType)}
+        {getFileIcon(props.file.fileType)}
 
         <Box
           sx={{
@@ -251,7 +312,7 @@ const FileComponent = (props: FileComponentProps) => {
             gap: '20px',
           }}
         >
-          <Tooltip title={props.name} arrow>
+          <Tooltip title={props.file.name} arrow>
             <Typography
               variant="subtitle1"
               sx={{
@@ -262,7 +323,7 @@ const FileComponent = (props: FileComponentProps) => {
                 whiteSpace: 'nowrap',
               }}
             >
-              {props.name}
+              {props.file.name}
             </Typography>
           </Tooltip>
 
@@ -299,18 +360,12 @@ const FileComponent = (props: FileComponentProps) => {
 
         {/* Favorites Toggle Button */}
         <IconButton
-          onClick={(e) => {
-            if (props.page === 'trash') {
-              setError('Restore the folder to update it!');
-            } else {
-              handleFavoriteFile();
-            }
-          }}
+          onClick={handleFavoriteFileClick}
           sx={{
-            color: props.isFavorited ? '#FF6347' : colors.darkBlue,
+            color: props.file.isFavorited ? '#FF6347' : colors.darkBlue,
           }}
         >
-          {props.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+          {props.file.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
         </IconButton>
 
         <IconButton
@@ -334,19 +389,14 @@ const FileComponent = (props: FileComponentProps) => {
           }}
         >
           {props.page === 'trash' ? (
-            <MenuItem
-              onClick={() => {
-                handleRestoreFile();
-                handleOptionsClose();
-              }}
-            >
+            <MenuItem onClick={handleRestoreClick}>
               <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
               Restore
             </MenuItem>
           ) : props.page === 'shared' ? (
             <MenuItem
               onClick={() => {
-                downloadFile(props.id, props.name);
+                downloadFile(props.file.id, props.file.name);
                 handleOptionsClose();
               }}
             >
@@ -372,12 +422,7 @@ const FileComponent = (props: FileComponentProps) => {
 
               <Divider sx={{ my: 0.2 }} />,
 
-              <MenuItem
-                onClick={() => {
-                  props.handleDeleteFile(props.id);
-                  handleOptionsClose();
-                }}
-              >
+              <MenuItem onClick={handleDeleteClick}>
                 <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
                 Delete
               </MenuItem>,
@@ -386,7 +431,7 @@ const FileComponent = (props: FileComponentProps) => {
 
               <MenuItem
                 onClick={() => {
-                  downloadFile(props.id, props.name);
+                  downloadFile(props.file.id, props.file.name);
                   handleOptionsClose();
                 }}
               >
@@ -408,15 +453,17 @@ const FileComponent = (props: FileComponentProps) => {
 
       <RenameDialog
         open={isRenameDialogOpen}
-        fileName={props.name}
+        fileName={props.file.name}
+        fileId={props.file.id}
+        resourceType="file"
         onClose={() => setIsRenameDialogOpen(false)}
-        onRename={handleRenameFile}
+        onSuccess={() => props.refreshFiles(props.file.parentFolder)}
       />
 
       <PermissionDialog
         open={isPermissionsDialogOpen}
         onClose={() => setIsPermissionsDialogOpen(false)}
-        fileId={props.id}
+        fileId={props.file.id}
         folderId={null}
       />
 
@@ -426,16 +473,17 @@ const FileComponent = (props: FileComponentProps) => {
             <MoveDialog
               open={isMoveDialogOpen}
               onClose={() => setIsMoveDialogOpen(false)}
-              fileName={props.name}
-              fileId={props.id}
+              fileName={props.file.name}
+              fileId={props.file.id}
               resourceType="file"
-              parentFolderId={props.parentFolder}
+              parentFolderId={props.file.parentFolder}
+              onSuccess={() => props.refreshFiles(props.file.parentFolder)}
             />
             <FileViewerDialog
               open={isFileViewerOpen}
               onClose={handleCloseFileViewer}
               src={fileSrc}
-              fileType={props.fileType}
+              fileType={props.file.fileType}
             />
             {error && (
               <ErrorAlert

@@ -17,7 +17,7 @@ import ErrorAlert from '../components/ErrorAlert';
 const Login = () => {
   const [username, setUsernameInput] = useState('');
   const [password, setPassword] = useState('');
-  const { setUsername } = useUser();
+  const { setUsername, setUserId } = useUser();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +34,12 @@ const Login = () => {
       });
 
       if (response.ok) {
-        setUsername(username); // Store in context
+        const data = await response.json();
+        setUsername(username);
+        console.log('USERNAME', username);
+        setUserId(data.userId);
+        console.log('DATA', data);
+        console.log('USERID', data.userId);
         navigate('/home');
       } else {
         const errorData = await response.json();
