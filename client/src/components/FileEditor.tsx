@@ -176,10 +176,10 @@ const FileEditor: React.FC<FileEditorProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileId]);
 
-  // Set up debounced change handler for batch processing
+  // set up debounced change handler, prevent overloading client
   const debouncedProcessChanges = useRef(
     debounce((newContent: string) => {
-      if (!isConnected || !socketRef.current) {
+      if (!socketRef.current) {
         return;
       }
 
@@ -187,17 +187,16 @@ const FileEditor: React.FC<FileEditorProps> = ({
       localContentRef.current = newContent;
 
       if (oldContent === newContent) {
-        return; // No changes to process
+        return; // No changes
       }
 
-      // Get operations using diff algorithm
+      // Get operations
       const operations = computeOperationsFromDiff(oldContent, newContent);
-
       if (operations.length === 0) {
         return;
       }
 
-      // Create a new batch with these operations
+      // Create a new batch
       const newBatchId = lastBatchId + 1;
       setLastBatchId(newBatchId);
 
@@ -206,15 +205,15 @@ const FileEditor: React.FC<FileEditorProps> = ({
         batchId: newBatchId,
       };
 
-      // Add to batch queue
+      // Add to queue
       batchQueueRef.current.push(batch);
 
       // Try to process the queue
       processBatchQueue();
-    }, 30), // 30ms debounce to batch rapid changes
+    }, 30), // 30ms
   ).current;
 
-  // Function to process the batch queue
+  // process the batch queue
   const processBatchQueue = () => {
     if (
       isProcessingBatch ||
@@ -244,14 +243,13 @@ const FileEditor: React.FC<FileEditorProps> = ({
         }),
       );
     } else {
-      // If somehow we have an empty batch, remove it and process the next one
+      // somehow we have an empty batch, remove it and process the next one
       batchQueueRef.current.shift();
       setIsProcessingBatch(false);
       processBatchQueue();
     }
   };
 
-  // Update the handleChange function
   const handleChange = (newContent: string) => {
     // Update UI immediately for responsiveness
     setContent(newContent);

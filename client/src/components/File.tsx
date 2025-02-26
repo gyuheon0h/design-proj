@@ -255,7 +255,6 @@ const FileComponent = (props: FileComponentProps) => {
   };
 
   const handleEditClick = () => {
-    console.log(props.file.gcsKey);
     setIsEditDialogOpen(true);
     handleOptionsClose();
   };
