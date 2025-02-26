@@ -111,15 +111,14 @@ const TextEditor: React.FC<TextEditorProps> = ({
         localContentRef.current = message.content;
         lastSyncedContentRef.current = message.content;
 
-        // Clear all queues when getting a full update
+        // Clear q when full update
         batchQueueRef.current = [];
         currentBatchOperationsRef.current = [];
         setIsProcessingBatch(false);
       } else if (message.type === 'operation-ack') {
         if (message.batchId) {
-          // Handle batch acknowledgment
           if (currentBatchOperationsRef.current.length > 0) {
-            // Send the next operation in the current batch
+            // Send next op in the current batch
             const nextOp = currentBatchOperationsRef.current.shift()!;
 
             if (socketRef.current?.readyState === WebSocket.OPEN) {
@@ -136,10 +135,10 @@ const TextEditor: React.FC<TextEditorProps> = ({
               );
             }
           } else {
-            // This batch is complete
+            // batch is complete
             lastAcknowledgedBatchIdRef.current = message.batchId;
 
-            // Remove the completed batch
+            // Remove it
             if (
               batchQueueRef.current.length > 0 &&
               batchQueueRef.current[0].batchId === message.batchId
@@ -147,10 +146,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
               batchQueueRef.current.shift();
             }
 
-            // Reset processing flag
             setIsProcessingBatch(false);
-
-            // Process next batch if available
             processBatchQueue();
           }
         }
@@ -190,7 +186,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
         return; // No changes
       }
 
-      // Get operations
+      // Get ops
       const operations = computeOperationsFromDiff(oldContent, newContent);
       if (operations.length === 0) {
         return;
@@ -205,10 +201,8 @@ const TextEditor: React.FC<TextEditorProps> = ({
         batchId: newBatchId,
       };
 
-      // Add to queue
+      // Add to q
       batchQueueRef.current.push(batch);
-
-      // Try to process the queue
       processBatchQueue();
     }, 30), // 30ms
   ).current;
