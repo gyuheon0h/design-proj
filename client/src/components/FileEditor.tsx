@@ -1,7 +1,7 @@
 import { Dialog, DialogContent } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
-
 import CodeOrTextEditor from './TextViewEditor';
+import { debounce } from 'lodash';
 
 interface FileEditorProps {
   open: boolean;
@@ -11,6 +11,20 @@ interface FileEditorProps {
   onClose: () => void;
 }
 
+interface InsertOperation {
+  type: 'insert';
+  position: number;
+  text: string;
+}
+
+interface DeleteOperation {
+  type: 'delete';
+  position: number;
+  length: number;
+}
+
+type Operation = InsertOperation | DeleteOperation;
+
 const FileEditor: React.FC<FileEditorProps> = ({
   open,
   fileId,
@@ -19,13 +33,23 @@ const FileEditor: React.FC<FileEditorProps> = ({
   onClose,
 }) => {
   const [content, setContent] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
+  const socketRef = useRef<WebSocket | null>(null);
+  const lastSyncedContentRef = useRef('');
+  const pendingOpsRef = useRef<Operation[]>([]);
+  const contentBufferRef = useRef(content);
+  const [isProcessingOp, setIsProcessingOp] = useState(false);
+  const operationQueueRef = useRef<Operation[]>([]);
 
   useEffect(() => {
-    // ✅ Only create WebSocket inside useEffect
-    const socket = new WebSocket('ws://localhost:5001');
+    // Single WebSocket connection
+    const ws = new WebSocket('ws://localhost:5001');
+    socketRef.current = ws;
 
-    socket.onopen = () => {
-      socket.send(
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+      setIsConnected(true);
+      ws.send(
         JSON.stringify({
           type: 'join-document',
           fileId,
@@ -34,41 +58,31 @@ const FileEditor: React.FC<FileEditorProps> = ({
       );
     };
 
-    socket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === 'document-update') {
-        setContent(message.content);
-      }
-    };
-
-    // Cleanup when component unmounts
-    return () => {
-      if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: 'leave-document', fileId }));
-      }
-      socket.close();
-    };
-  }, [fileId, gcsKey]);
-
-  // Because the socket is now local to `useEffect`, we need a way to send ops
-  // from event handlers. FUCK
-
-  // keep the socket in a ref
-  const socketRef = useRef<WebSocket | null>(null);
-
-  useEffect(() => {
-    const ws = new WebSocket('ws://localhost:5001');
-    socketRef.current = ws;
-
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ type: 'join-document', fileId, gcsKey }));
-    };
-
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
+
       if (message.type === 'document-update') {
         setContent(message.content);
+        lastSyncedContentRef.current = message.content;
+        pendingOpsRef.current = [];
+      } else if (message.type === 'operation-ack') {
+        if (pendingOpsRef.current.length > 0) {
+          pendingOpsRef.current.shift();
+        }
+        setIsProcessingOp(false);
+        // Process next operation in queue
+        setTimeout(processOperationQueue, 0);
       }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setIsConnected(false);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+      setIsConnected(false);
     };
 
     return () => {
@@ -77,34 +91,139 @@ const FileEditor: React.FC<FileEditorProps> = ({
       }
       ws.close();
     };
-  }, [fileId, gcsKey]);
+  }, [fileId]);
 
-  // Then your handlers can do:
+  const debouncedProcessChange = useRef(
+    debounce((newContent: string) => {
+      if (!isConnected) {
+        setContent(newContent);
+        return;
+      }
+
+      const oldContent = content;
+      setContent(newContent);
+
+      // diff detection
+      const operation = computeOperation(oldContent, newContent);
+
+      // Add to operation queue
+      operationQueueRef.current.push(operation);
+
+      // Try to process the queue
+      if (!isProcessingOp) {
+        processOperationQueue();
+      }
+    }, 50), // Small delay for a bunch fo changes as once
+  ).current;
+
+  // Function to process the operation queue
+  const processOperationQueue = () => {
+    if (
+      isProcessingOp ||
+      operationQueueRef.current.length === 0 ||
+      !socketRef.current ||
+      socketRef.current.readyState !== WebSocket.OPEN
+    ) {
+      return;
+    }
+
+    setIsProcessingOp(true);
+    const operation = operationQueueRef.current.shift()!;
+    pendingOpsRef.current.push(operation);
+
+    socketRef.current.send(
+      JSON.stringify({
+        type: 'update-document',
+        fileId,
+        operation,
+        revision: pendingOpsRef.current.length,
+      }),
+    );
+  };
+
+  // diff detection function
+  function computeOperation(oldContent: string, newContent: string): Operation {
+    // Find the common prefix length
+    let prefixLength = 0;
+    const minLength = Math.min(oldContent.length, newContent.length);
+
+    while (
+      prefixLength < minLength &&
+      oldContent[prefixLength] === newContent[prefixLength]
+    ) {
+      prefixLength++;
+    }
+
+    // Find the common suffix length (starting from the end of the strings)
+    let oldSuffixLength = oldContent.length - prefixLength;
+    let newSuffixLength = newContent.length - prefixLength;
+    let suffixLength = 0;
+
+    while (
+      suffixLength < oldSuffixLength &&
+      suffixLength < newSuffixLength &&
+      oldContent[oldContent.length - suffixLength - 1] ===
+        newContent[newContent.length - suffixLength - 1]
+    ) {
+      suffixLength++;
+    }
+
+    // Adjusted lengths considering both prefix and suffix
+    const deleteLength = oldContent.length - prefixLength - suffixLength;
+    const insertText = newContent.substring(
+      prefixLength,
+      newContent.length - suffixLength,
+    );
+
+    // appropriate operations fuck this is so hard
+    if (deleteLength > 0 && insertText.length > 0) {
+      // This is a replace operation, which we'll implement as delete followed by insert
+      // For simplicity, we'll return just the first operation and queue the second one
+      const deleteOp: DeleteOperation = {
+        type: 'delete',
+        position: prefixLength,
+        length: deleteLength,
+      };
+
+      const insertOp: InsertOperation = {
+        type: 'insert',
+        position: prefixLength,
+        text: insertText,
+      };
+
+      // Store the insert operation to be sent after the delete is acknowledged
+      pendingOpsRef.current.push(insertOp);
+      return deleteOp;
+    } else if (deleteLength > 0) {
+      // This is a simple delete operation
+      return {
+        type: 'delete',
+        position: prefixLength,
+        length: deleteLength,
+      };
+    } else {
+      // This is a simple insert operation
+      return {
+        type: 'insert',
+        position: prefixLength,
+        text: insertText,
+      };
+    }
+  }
+
   const handleChange = (newContent: string) => {
-    const operation = {
-      type: newContent.length > content.length ? 'insert' : 'delete',
-      position:
-        newContent.length > content.length
-          ? content.length
-          : content.length - 1,
-      char:
-        newContent.length > content.length ? newContent[content.length] : null,
-    };
-
+    // Update the content immediately for local display
     setContent(newContent);
 
-    // Use the ref for sending
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      socketRef.current.send(
-        JSON.stringify({ type: 'update-document', fileId, operation }),
-      );
-    }
+    // Store in buffer for debounced processing
+    contentBufferRef.current = newContent;
+
+    // Process the change with debouncing
+    debouncedProcessChange(newContent);
   };
 
   const handleSave = () => {
-    console.log('save clicked');
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      console.log('save sent');
       socketRef.current.send(
         JSON.stringify({
           type: 'save-document',
@@ -127,13 +246,20 @@ const FileEditor: React.FC<FileEditorProps> = ({
           height: '80vh',
         }}
       >
-        <CodeOrTextEditor
-          fileType={mimeType}
-          content={content}
-          onChange={handleChange}
-          readOnly={false}
-        />
-        <button onClick={handleSave}>Save</button>
+        <div style={{ flexGrow: 1 }}>
+          <CodeOrTextEditor
+            fileType={mimeType}
+            content={content}
+            onChange={handleChange}
+            readOnly={!isConnected}
+          />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span>{isConnected ? 'Connected' : 'Disconnected'}</span>
+          <button onClick={handleSave} disabled={!isConnected}>
+            Save
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   );
