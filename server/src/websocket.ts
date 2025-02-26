@@ -20,7 +20,7 @@ type Operation = InsertOperation | DeleteOperation;
 
 interface ClientInfo {
   id: string;
-  pendingOps: number; // Track pending operations for this client
+  pendingOps: number; // Track pending opsfor this client
 }
 
 // Document state with revision history
@@ -34,7 +34,6 @@ interface DocumentState {
 // In-memory document store
 const documents = new Map<string, DocumentState>();
 
-// Generate a unique client ID
 function generateClientId(): string {
   return Math.random().toString(36).substring(2, 15);
 }
@@ -66,7 +65,7 @@ function transformInsertDelete(
       position: opA.position - opB.length,
     };
   } else {
-    // Insert position is within delete range, adjust accordingly
+    // Insert position is within delete range
     return {
       ...opA,
       position: opB.position,
@@ -112,7 +111,7 @@ function transformDeleteDelete(
     opA.position + opA.length <= opB.position + opB.length
   ) {
     // opA is contained within opB
-    return null; // This operation is superseded
+    return null; // This operation is overwiten
   } else if (
     opA.position <= opB.position &&
     opA.position + opA.length >= opB.position + opB.length
