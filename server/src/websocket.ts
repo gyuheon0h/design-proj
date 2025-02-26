@@ -238,7 +238,7 @@ export default function setupWebSocketServer(server: Server) {
               return;
             }
 
-            // get client info with explicit type cast
+            // get client info
             const clientInfo = doc.clients.get(ws);
             if (!clientInfo) {
               ws.send(
@@ -250,8 +250,8 @@ export default function setupWebSocketServer(server: Server) {
               return;
             }
 
-            // increment pending ops for this client
-            clientInfo.pendingOps++;
+            // Extract batch information
+            const { operation, batchId, isLastInBatch } = data;
 
             // transform operation against all operations that the client hasn't seen
             let transformedOp: Operation | null = operation;
@@ -261,13 +261,16 @@ export default function setupWebSocketServer(server: Server) {
               if (!transformedOp) break;
               transformedOp = transform(transformedOp, doc.history[i]);
             }
-            // dont apply ops nullified by transformations
+
+            // don't apply ops nullified by transformations
             if (!transformedOp) {
               clientInfo.pendingOps--;
               ws.send(
                 JSON.stringify({
                   type: 'operation-ack',
                   revision: doc.revision,
+                  batchId, // include batch info in acknowledgment
+                  isLastInBatch,
                 }),
               );
               return;
@@ -283,12 +286,16 @@ export default function setupWebSocketServer(server: Server) {
               JSON.stringify({
                 type: 'operation-ack',
                 revision: doc.revision,
+                batchId, // include batch info in acknowledgment
+                isLastInBatch,
               }),
             );
 
-            // broadcast to other clients
-            doc.clients.forEach((info, client) => {
-              if (client !== ws) {
+            // If this is the last operation in a batch and there have been multiple
+            // operations, send a full document update to all clients
+            if (isLastInBatch) {
+              // broadcast to all clients
+              doc.clients.forEach((info, client) => {
                 client.send(
                   JSON.stringify({
                     type: 'document-update',
@@ -296,12 +303,22 @@ export default function setupWebSocketServer(server: Server) {
                     revision: doc.revision,
                   }),
                 );
-              }
-            });
+              });
+            } else {
+              // For intermediate operations, only broadcast to other clients
+              doc.clients.forEach((info, client) => {
+                if (client !== ws) {
+                  client.send(
+                    JSON.stringify({
+                      type: 'document-update',
+                      content: doc.content,
+                      revision: doc.revision,
+                    }),
+                  );
+                }
+              });
+            }
 
-            console.log(
-              `Applied operation from client ${clientInfo.id} to document ${fileId}`,
-            );
             break;
           }
 

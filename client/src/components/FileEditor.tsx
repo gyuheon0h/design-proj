@@ -1,6 +1,7 @@
 import { Dialog, DialogContent } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
 import CodeOrTextEditor from './TextViewEditor';
+import { diff_match_patch } from 'diff-match-patch';
 import { debounce } from 'lodash';
 
 interface FileEditorProps {
@@ -23,7 +24,48 @@ interface DeleteOperation {
   length: number;
 }
 
+interface OperationBatch {
+  operations: Operation[];
+  batchId: number;
+}
+
 type Operation = InsertOperation | DeleteOperation;
+
+function computeOperationsFromDiff(
+  oldContent: string,
+  newContent: string,
+): Operation[] {
+  const dmp = new diff_match_patch();
+  const diffs = dmp.diff_main(oldContent, newContent);
+  dmp.diff_cleanupSemantic(diffs);
+
+  const operations: Operation[] = [];
+  let cursor = 0;
+
+  for (const [type, text] of diffs) {
+    if (type === -1) {
+      // Deletion
+      operations.push({
+        type: 'delete',
+        position: cursor,
+        length: text.length,
+      });
+    } else if (type === 1) {
+      // Insertion
+      operations.push({
+        type: 'insert',
+        position: cursor,
+        text,
+      });
+      cursor += text.length;
+    } else {
+      // Equal - just move the cursor
+      cursor += text.length;
+    }
+  }
+
+  return operations;
+}
 
 const FileEditor: React.FC<FileEditorProps> = ({
   open,
@@ -36,10 +78,12 @@ const FileEditor: React.FC<FileEditorProps> = ({
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
   const lastSyncedContentRef = useRef('');
-  const pendingOpsRef = useRef<Operation[]>([]);
-  const contentBufferRef = useRef(content);
-  const [isProcessingOp, setIsProcessingOp] = useState(false);
-  const operationQueueRef = useRef<Operation[]>([]);
+  const [lastBatchId, setLastBatchId] = useState(0);
+  const [isProcessingBatch, setIsProcessingBatch] = useState(false);
+  const batchQueueRef = useRef<OperationBatch[]>([]);
+  const currentBatchOperationsRef = useRef<Operation[]>([]);
+  const lastAcknowledgedBatchIdRef = useRef(0);
+  const localContentRef = useRef('');
 
   useEffect(() => {
     // Single WebSocket connection
@@ -62,16 +106,54 @@ const FileEditor: React.FC<FileEditorProps> = ({
       const message = JSON.parse(event.data);
 
       if (message.type === 'document-update') {
+        // Full document update from server
         setContent(message.content);
+        localContentRef.current = message.content;
         lastSyncedContentRef.current = message.content;
-        pendingOpsRef.current = [];
+
+        // Clear all queues when getting a full update
+        batchQueueRef.current = [];
+        currentBatchOperationsRef.current = [];
+        setIsProcessingBatch(false);
       } else if (message.type === 'operation-ack') {
-        if (pendingOpsRef.current.length > 0) {
-          pendingOpsRef.current.shift();
+        if (message.batchId) {
+          // Handle batch acknowledgment
+          if (currentBatchOperationsRef.current.length > 0) {
+            // Send the next operation in the current batch
+            const nextOp = currentBatchOperationsRef.current.shift()!;
+
+            if (socketRef.current?.readyState === WebSocket.OPEN) {
+              socketRef.current.send(
+                JSON.stringify({
+                  type: 'update-document',
+                  fileId,
+                  operation: nextOp,
+                  batchId: message.batchId,
+                  isLastInBatch: currentBatchOperationsRef.current.length === 0,
+                  totalInBatch:
+                    batchQueueRef.current[0]?.operations.length || 0,
+                }),
+              );
+            }
+          } else {
+            // This batch is complete
+            lastAcknowledgedBatchIdRef.current = message.batchId;
+
+            // Remove the completed batch
+            if (
+              batchQueueRef.current.length > 0 &&
+              batchQueueRef.current[0].batchId === message.batchId
+            ) {
+              batchQueueRef.current.shift();
+            }
+
+            // Reset processing flag
+            setIsProcessingBatch(false);
+
+            // Process next batch if available
+            processBatchQueue();
+          }
         }
-        setIsProcessingOp(false);
-        // Process next operation in queue
-        setTimeout(processOperationQueue, 0);
       }
     };
 
@@ -91,135 +173,91 @@ const FileEditor: React.FC<FileEditorProps> = ({
       }
       ws.close();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileId]);
 
-  const debouncedProcessChange = useRef(
+  // Set up debounced change handler for batch processing
+  const debouncedProcessChanges = useRef(
     debounce((newContent: string) => {
-      if (!isConnected) {
-        setContent(newContent);
+      if (!isConnected || !socketRef.current) {
         return;
       }
 
-      const oldContent = content;
-      setContent(newContent);
+      const oldContent = localContentRef.current;
+      localContentRef.current = newContent;
 
-      // diff detection
-      const operation = computeOperation(oldContent, newContent);
+      if (oldContent === newContent) {
+        return; // No changes to process
+      }
 
-      // Add to operation queue
-      operationQueueRef.current.push(operation);
+      // Get operations using diff algorithm
+      const operations = computeOperationsFromDiff(oldContent, newContent);
+
+      if (operations.length === 0) {
+        return;
+      }
+
+      // Create a new batch with these operations
+      const newBatchId = lastBatchId + 1;
+      setLastBatchId(newBatchId);
+
+      const batch: OperationBatch = {
+        operations,
+        batchId: newBatchId,
+      };
+
+      // Add to batch queue
+      batchQueueRef.current.push(batch);
 
       // Try to process the queue
-      if (!isProcessingOp) {
-        processOperationQueue();
-      }
-    }, 50), // Small delay for a bunch fo changes as once
+      processBatchQueue();
+    }, 30), // 30ms debounce to batch rapid changes
   ).current;
 
-  // Function to process the operation queue
-  const processOperationQueue = () => {
+  // Function to process the batch queue
+  const processBatchQueue = () => {
     if (
-      isProcessingOp ||
-      operationQueueRef.current.length === 0 ||
+      isProcessingBatch ||
+      batchQueueRef.current.length === 0 ||
       !socketRef.current ||
       socketRef.current.readyState !== WebSocket.OPEN
     ) {
       return;
     }
 
-    setIsProcessingOp(true);
-    const operation = operationQueueRef.current.shift()!;
-    pendingOpsRef.current.push(operation);
+    setIsProcessingBatch(true);
+    const currentBatch = batchQueueRef.current[0];
+    currentBatchOperationsRef.current = [...currentBatch.operations];
 
-    socketRef.current.send(
-      JSON.stringify({
-        type: 'update-document',
-        fileId,
-        operation,
-        revision: pendingOpsRef.current.length,
-      }),
-    );
+    // Send the first operation of the batch
+    if (currentBatchOperationsRef.current.length > 0) {
+      const firstOp = currentBatchOperationsRef.current.shift()!;
+
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'update-document',
+          fileId,
+          operation: firstOp,
+          batchId: currentBatch.batchId,
+          isLastInBatch: currentBatchOperationsRef.current.length === 0,
+          totalInBatch: currentBatch.operations.length,
+        }),
+      );
+    } else {
+      // If somehow we have an empty batch, remove it and process the next one
+      batchQueueRef.current.shift();
+      setIsProcessingBatch(false);
+      processBatchQueue();
+    }
   };
 
-  // diff detection function
-  function computeOperation(oldContent: string, newContent: string): Operation {
-    // Find the common prefix length
-    let prefixLength = 0;
-    const minLength = Math.min(oldContent.length, newContent.length);
-
-    while (
-      prefixLength < minLength &&
-      oldContent[prefixLength] === newContent[prefixLength]
-    ) {
-      prefixLength++;
-    }
-
-    // Find the common suffix length (starting from the end of the strings)
-    let oldSuffixLength = oldContent.length - prefixLength;
-    let newSuffixLength = newContent.length - prefixLength;
-    let suffixLength = 0;
-
-    while (
-      suffixLength < oldSuffixLength &&
-      suffixLength < newSuffixLength &&
-      oldContent[oldContent.length - suffixLength - 1] ===
-        newContent[newContent.length - suffixLength - 1]
-    ) {
-      suffixLength++;
-    }
-
-    // Adjusted lengths considering both prefix and suffix
-    const deleteLength = oldContent.length - prefixLength - suffixLength;
-    const insertText = newContent.substring(
-      prefixLength,
-      newContent.length - suffixLength,
-    );
-
-    // appropriate operations fuck this is so hard
-    if (deleteLength > 0 && insertText.length > 0) {
-      // This is a replace operation, which we'll implement as delete followed by insert
-      // For simplicity, we'll return just the first operation and queue the second one
-      const deleteOp: DeleteOperation = {
-        type: 'delete',
-        position: prefixLength,
-        length: deleteLength,
-      };
-
-      const insertOp: InsertOperation = {
-        type: 'insert',
-        position: prefixLength,
-        text: insertText,
-      };
-
-      // Store the insert operation to be sent after the delete is acknowledged
-      pendingOpsRef.current.push(insertOp);
-      return deleteOp;
-    } else if (deleteLength > 0) {
-      // This is a simple delete operation
-      return {
-        type: 'delete',
-        position: prefixLength,
-        length: deleteLength,
-      };
-    } else {
-      // This is a simple insert operation
-      return {
-        type: 'insert',
-        position: prefixLength,
-        text: insertText,
-      };
-    }
-  }
-
+  // Update the handleChange function
   const handleChange = (newContent: string) => {
-    // Update the content immediately for local display
+    // Update UI immediately for responsiveness
     setContent(newContent);
 
-    // Store in buffer for debounced processing
-    contentBufferRef.current = newContent;
-
-    // Process the change with debouncing
-    debouncedProcessChange(newContent);
+    // Process actual changes with debouncing for stability
+    debouncedProcessChanges(newContent);
   };
 
   const handleSave = () => {
