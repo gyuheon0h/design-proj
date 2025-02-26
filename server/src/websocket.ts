@@ -1,153 +1,383 @@
-import { Server as WebSocketServer } from 'ws';
+// WebSocketServer.ts - Server-side implementation
+import { Server as WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import StorageService from './storage';
 
-// In-memory document store
-const documents = new Map<
-  string,
-  { content: string; ops: any[]; clients: Set<any> }
->();
-
-// OT Transformation Function
-function transform(opA: any, opB: any) {
-  if (!opA || !opB) {
-    return opA;
-  }
-
-  if (opA.type === 'insert' && opB.type === 'insert') {
-    return opA.position <= opB.position
-      ? opA
-      : { ...opA, position: opA.position + 1 };
-  }
-
-  if (opA.type === 'delete' && opB.type === 'insert') {
-    return opA.position < opB.position
-      ? opA
-      : { ...opA, position: opA.position + 1 };
-  }
-
-  if (opA.type === 'insert' && opB.type === 'delete') {
-    return opA.position < opB.position
-      ? opA
-      : { ...opA, position: Math.max(opA.position - 1, 0) };
-  }
-
-  if (opA.type === 'delete' && opB.type === 'delete') {
-    if (opA.position < opB.position) {
-      return opA;
-    } else if (opA.position > opB.position) {
-      return { ...opA, position: opA.position - 1 };
-    }
-    // If same position, assume one deletion takes precedence
-    return null;
-  }
-
-  // If unknown operation type, return opA unchanged
-  return { ...opA };
+// operation types
+interface InsertOperation {
+  type: 'insert';
+  position: number;
+  text: string;
 }
 
-// WebSocket Setup
+interface DeleteOperation {
+  type: 'delete';
+  position: number;
+  length: number;
+}
+
+type Operation = InsertOperation | DeleteOperation;
+
+interface ClientInfo {
+  id: string;
+  pendingOps: number; // Track pending operations for this client
+}
+
+// Document state with revision history
+interface DocumentState {
+  content: string;
+  revision: number;
+  history: Operation[];
+  clients: Map<WebSocket, ClientInfo>;
+}
+
+// In-memory document store
+const documents = new Map<string, DocumentState>();
+
+// Generate a unique client ID
+function generateClientId(): string {
+  return Math.random().toString(36).substring(2, 15);
+}
+
+// OT Transformation Functions
+function transformInsertInsert(
+  opA: InsertOperation,
+  opB: InsertOperation,
+): InsertOperation {
+  if (opA.position <= opB.position) {
+    return opA;
+  } else {
+    return {
+      ...opA,
+      position: opA.position + opB.text.length,
+    };
+  }
+}
+
+function transformInsertDelete(
+  opA: InsertOperation,
+  opB: DeleteOperation,
+): InsertOperation {
+  if (opA.position <= opB.position) {
+    return opA;
+  } else if (opA.position >= opB.position + opB.length) {
+    return {
+      ...opA,
+      position: opA.position - opB.length,
+    };
+  } else {
+    // Insert position is within delete range, adjust accordingly
+    return {
+      ...opA,
+      position: opB.position,
+    };
+  }
+}
+
+function transformDeleteInsert(
+  opA: DeleteOperation,
+  opB: InsertOperation,
+): DeleteOperation {
+  if (opA.position >= opB.position) {
+    return {
+      ...opA,
+      position: opA.position + opB.text.length,
+    };
+  } else if (opA.position + opA.length <= opB.position) {
+    return opA;
+  } else {
+    // Delete range overlaps with insert position
+    return {
+      ...opA,
+      length: opA.length + opB.text.length,
+    };
+  }
+}
+
+function transformDeleteDelete(
+  opA: DeleteOperation,
+  opB: DeleteOperation,
+): DeleteOperation | null {
+  if (opA.position >= opB.position + opB.length) {
+    // opA is after opB
+    return {
+      ...opA,
+      position: opA.position - opB.length,
+    };
+  } else if (opA.position + opA.length <= opB.position) {
+    // opA is before opB
+    return opA;
+  } else if (
+    opA.position >= opB.position &&
+    opA.position + opA.length <= opB.position + opB.length
+  ) {
+    // opA is contained within opB
+    return null; // This operation is superseded
+  } else if (
+    opA.position <= opB.position &&
+    opA.position + opA.length >= opB.position + opB.length
+  ) {
+    // opA contains opB
+    return {
+      ...opA,
+      length: opA.length - opB.length,
+    };
+  } else if (opA.position < opB.position) {
+    // opA overlaps with start of opB
+    return {
+      ...opA,
+      length: opB.position - opA.position,
+    };
+  } else {
+    // opA overlaps with end of opB
+    const newPosition = opB.position;
+    const newLength = opA.position + opA.length - (opB.position + opB.length);
+    return {
+      type: 'delete',
+      position: newPosition,
+      length: newLength > 0 ? newLength : 0,
+    };
+  }
+}
+
+// Main transformation function
+function transform(opA: Operation, opB: Operation): Operation | null {
+  if (opA.type === 'insert' && opB.type === 'insert') {
+    return transformInsertInsert(opA, opB);
+  } else if (opA.type === 'insert' && opB.type === 'delete') {
+    return transformInsertDelete(opA, opB);
+  } else if (opA.type === 'delete' && opB.type === 'insert') {
+    return transformDeleteInsert(opA, opB);
+  } else if (opA.type === 'delete' && opB.type === 'delete') {
+    return transformDeleteDelete(
+      opA as DeleteOperation,
+      opB as DeleteOperation,
+    );
+  }
+
+  return opA; // fallback
+}
+
+// apply an operation to a document
+function applyOperation(content: string, op: Operation): string {
+  if (op.type === 'insert') {
+    return content.slice(0, op.position) + op.text + content.slice(op.position);
+  } else if (op.type === 'delete') {
+    return (
+      content.slice(0, op.position) + content.slice(op.position + op.length)
+    );
+  }
+  return content;
+}
+
+// WebSocket Server Setup
 export default function setupWebSocketServer(server: Server) {
   const wss = new WebSocketServer({ server });
 
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws: WebSocket) => {
+    const clientId = generateClientId();
+    console.log(`Client connected: ${clientId}`);
+
     ws.on('message', async (message: string) => {
-      const { type, fileId, operation, mimeType, gcsKey } = JSON.parse(message);
+      try {
+        const data = JSON.parse(message.toString());
+        const { type, fileId, operation, revision, mimeType, gcsKey } = data;
 
-      if (type === 'join-document') {
-        if (!documents.has(fileId)) {
-          const fileContent = await StorageService.getGCSFile(gcsKey);
-          documents.set(fileId, {
-            content: fileContent,
-            ops: [],
-            clients: new Set(),
-          });
-        }
-        documents.get(fileId)!.clients.add(ws);
-        ws.send(
-          JSON.stringify({
-            type: 'document-update',
-            content: documents.get(fileId)!.content,
-          }),
-        );
-      }
+        switch (type) {
+          case 'join-document': {
+            // Create or retrieve document
+            if (!documents.has(fileId)) {
+              console.log(`Creating new document: ${fileId}`);
+              try {
+                const fileContent = await StorageService.getGCSFile(gcsKey);
+                documents.set(fileId, {
+                  content: fileContent,
+                  revision: 0,
+                  history: [],
+                  clients: new Map(),
+                });
+              } catch (error) {
+                console.error(`Error loading document ${fileId}:`, error);
+                ws.send(
+                  JSON.stringify({
+                    type: 'error',
+                    message: 'Failed to load document',
+                  }),
+                );
+                return;
+              }
+            }
 
-      if (type === 'update-document') {
-        const doc = documents.get(fileId);
-        if (!doc) return;
+            const doc = documents.get(fileId)!;
 
-        // Transform new operation with existing ones
-        let transformedOp = operation;
-        for (const prevOp of doc.ops) {
-          if (!transformedOp) {
-            // No need to transform further
-            break;
-          }
-          transformedOp = transform(transformedOp, prevOp);
-        }
+            // add client to the document
+            doc.clients.set(ws, { id: clientId, pendingOps: 0 });
 
-        // After the loop, if it's still null, don't apply it
-        if (!transformedOp) {
-          return; // skip applying a null operation
-        }
-
-        // Apply operation
-        if (transformedOp.type === 'insert') {
-          doc.content =
-            doc.content.slice(0, transformedOp.position) +
-            transformedOp.char +
-            doc.content.slice(transformedOp.position);
-        } else if (transformedOp.type === 'delete') {
-          doc.content =
-            doc.content.slice(0, transformedOp.position) +
-            doc.content.slice(transformedOp.position + 1);
-        }
-
-        // Store operation
-        doc.ops.push(transformedOp);
-
-        // Broadcast updates
-        doc.clients.forEach((client) => {
-          if (client !== ws) {
-            client.send(
+            // send current document state
+            ws.send(
               JSON.stringify({
                 type: 'document-update',
                 content: doc.content,
+                revision: doc.revision,
               }),
             );
-          }
-        });
-      }
 
-      if (type === 'leave-document') {
-        // Remove this client from the document’s set
-        const doc = documents.get(fileId);
-        if (doc) {
-          doc.clients.delete(ws);
-          // If no more clients are connected, remove the doc from memory
-          if (doc.clients.size === 0) {
-            documents.delete(fileId);
+            console.log(`Client ${clientId} joined document ${fileId}`);
+            break;
+          }
+
+          case 'update-document': {
+            const doc = documents.get(fileId);
+            if (!doc) {
+              ws.send(
+                JSON.stringify({
+                  type: 'error',
+                  message: 'Document not found',
+                }),
+              );
+              return;
+            }
+
+            // get client info with explicit type cast
+            const clientInfo = doc.clients.get(ws);
+            if (!clientInfo) {
+              ws.send(
+                JSON.stringify({
+                  type: 'error',
+                  message: 'Client not registered for this document',
+                }),
+              );
+              return;
+            }
+
+            // increment pending ops for this client
+            clientInfo.pendingOps++;
+
+            // transform operation against all operations that the client hasn't seen
+            let transformedOp: Operation | null = operation;
+            const clientRevision = doc.revision - clientInfo.pendingOps + 1;
+
+            for (let i = clientRevision; i < doc.revision; i++) {
+              if (!transformedOp) break;
+              transformedOp = transform(transformedOp, doc.history[i]);
+            }
+            // dont apply ops nullified by transformations
+            if (!transformedOp) {
+              clientInfo.pendingOps--;
+              ws.send(
+                JSON.stringify({
+                  type: 'operation-ack',
+                  revision: doc.revision,
+                }),
+              );
+              return;
+            }
+
+            // apply operation to document
+            doc.content = applyOperation(doc.content, transformedOp);
+            doc.revision++;
+            doc.history.push(transformedOp);
+
+            // acknowledge the operation to the sender
+            ws.send(
+              JSON.stringify({
+                type: 'operation-ack',
+                revision: doc.revision,
+              }),
+            );
+
+            // broadcast to other clients
+            doc.clients.forEach((info, client) => {
+              if (client !== ws) {
+                client.send(
+                  JSON.stringify({
+                    type: 'document-update',
+                    content: doc.content,
+                    revision: doc.revision,
+                  }),
+                );
+              }
+            });
+
+            console.log(
+              `Applied operation from client ${clientInfo.id} to document ${fileId}`,
+            );
+            break;
+          }
+
+          case 'leave-document': {
+            const doc = documents.get(fileId);
+            if (doc) {
+              doc.clients.delete(ws);
+              console.log(`Client ${clientId} left document ${fileId}`);
+
+              // Clean up if no clients are left
+              if (doc.clients.size === 0) {
+                documents.delete(fileId);
+                console.log(`Document ${fileId} removed from memory`);
+              }
+            }
+            break;
+          }
+
+          case 'save-document': {
+            const doc = documents.get(fileId);
+            if (doc) {
+              try {
+                await StorageService.saveToGCS(gcsKey, doc.content, mimeType);
+                ws.send(
+                  JSON.stringify({
+                    type: 'save-success',
+                    message: 'Document saved successfully',
+                  }),
+                );
+                console.log(`Document ${fileId} saved to GCS`);
+              } catch (error) {
+                console.error(`Error saving document ${fileId}:`, error);
+                ws.send(
+                  JSON.stringify({
+                    type: 'error',
+                    message: 'Failed to save document',
+                  }),
+                );
+              }
+            } else {
+              ws.send(
+                JSON.stringify({
+                  type: 'error',
+                  message: 'Document not found',
+                }),
+              );
+            }
+            break;
           }
         }
-      }
-
-      if (type === 'save-document') {
-        if (documents.has(fileId)) {
-          await StorageService.saveToGCS(
-            gcsKey,
-            documents.get(fileId)!.content,
-            mimeType,
-          );
-        }
+      } catch (error) {
+        console.error('Error processing message:', error);
+        ws.send(
+          JSON.stringify({
+            type: 'error',
+            message: 'Invalid message format',
+          }),
+        );
       }
     });
 
-    // When the websocket closes, remove it from all documents it was in
+    // Cleanup
     ws.on('close', () => {
+      console.log(`Client disconnected: ${clientId}`);
+
+      // remove client from all documents
       documents.forEach((doc, fileId) => {
-        doc.clients.delete(ws);
-        if (doc.clients.size === 0) {
-          documents.delete(fileId);
+        if (doc.clients.has(ws)) {
+          doc.clients.delete(ws);
+          console.log(`Client ${clientId} removed from document ${fileId}`);
+
+          // clean up if no clients are left
+          if (doc.clients.size === 0) {
+            documents.delete(fileId);
+            console.log(`Document ${fileId} removed from memory`);
+          }
         }
       });
     });
