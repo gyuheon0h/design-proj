@@ -7,7 +7,7 @@ interface TextPreviewProps {
 }
 
 const TextPreview: React.FC<TextPreviewProps> = ({ content, fileType }) => {
-  return <TextViewer content={content} fileType={fileType} />;
+  return <TextViewer content={content} fileType={fileType} readOnly={true} />;
 };
 
 export default TextPreview;

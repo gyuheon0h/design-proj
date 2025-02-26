@@ -33,7 +33,7 @@ const TextViewer: React.FC<TextViewerProps> = ({
         }}
         theme="vs-dark"
         options={{
-          readOnly,
+          readOnly: readOnly,
           minimap: { enabled: false },
           wordWrap: 'on',
           scrollBeyondLastLine: false,
