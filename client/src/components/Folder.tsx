@@ -15,7 +15,6 @@ import PermissionDialog from './PermissionsDialog';
 import MoveDialog from './MoveDialog';
 import { Folder } from '../interfaces/Folder';
 import axios from 'axios';
-import { getUsernameById } from '../utils/helperRequests';
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -64,7 +63,7 @@ const FolderComponent = (props: FolderProps) => {
   };
 
   const handleFavoriteFolder = async (folderId: string, owner: string) => {
-    const ownerUsername = await getUsernameById(owner);
+    // const ownerUsername = await getUsernameById(owner);
 
     // TODO: this doesn't matter once favorites gets upgraded
     // if (ownerUsername !== username) {
@@ -93,7 +92,7 @@ const FolderComponent = (props: FolderProps) => {
   };
 
   const handleRestoreFolder = async (folderId: string, owner: string) => {
-    const ownerUsername = await getUsernameById(owner);
+    // const ownerUsername = await getUsernameById(owner);
 
     // TODO: is this neccessary? will non-owners see deleted files/folders shared w them?
     // if (ownerUsername !== username) {

@@ -35,7 +35,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
   const handleRename = async () => {
     if (newFileName.trim()) {
       try {
-        if (resourceType == 'file') {
+        if (resourceType === 'file') {
           await axios.patch(
             `http://localhost:5001/api/file/rename/${fileId}`,
             { fileName: newFileName },
@@ -43,7 +43,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
           );
         }
 
-        if (resourceType == 'folder') {
+        if (resourceType === 'folder') {
           await axios.patch(
             `http://localhost:5001/api/folder/rename/${fileId}`,
             { folderName: newFileName },

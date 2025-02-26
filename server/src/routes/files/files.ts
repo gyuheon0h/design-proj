@@ -333,7 +333,7 @@ fileRouter.patch('/move/:fileId', authorize, async (req, res) => {
       return res.status(404).json({ message: 'File not found' });
     }
 
-    if (file?.parentFolder == parentFolderId) {
+    if (file?.parentFolder === parentFolderId) {
       console.error('User attempted to move to existing location');
       return res
         .status(400)
