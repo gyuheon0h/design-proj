@@ -1,6 +1,4 @@
 import React from 'react';
-import Editor from '@monaco-editor/react';
-import { getMonacoLanguage, isCodeText } from '../utils/fileTypeHelpers';
 import TextViewer from './TextViewer';
 
 interface TextPreviewProps {
