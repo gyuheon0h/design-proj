@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Grow, Slider } from '@mui/material';
+import { Box, Button, Grow } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import ErrorAlert from '../components/ErrorAlert';
-// import Folder, { FolderProps } from './Folder';
 import { Folder } from '../interfaces/Folder';
 import FolderComponent from './Folder';
 
@@ -13,7 +12,7 @@ interface FolderContainerProps {
   currentFolderId: string | null;
   refreshFolders: (folderId: string | null) => void;
   username: string;
-  searchQuery: string; // New prop for search input
+  searchQuery: string;
 }
 
 const FolderContainer: React.FC<FolderContainerProps> = ({
@@ -23,7 +22,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   currentFolderId,
   refreshFolders,
   username,
-  searchQuery, // Receive search query
+  searchQuery,
 }) => {
   const itemsPerPage = 5;
 
@@ -32,9 +31,21 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const [visibleFolders, setVisibleFolders] = useState<Folder[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // Compute visible folders based on current index
+  const computeVisibleFolders = (startIndex: number, folderList: Folder[]) => {
+    if (folderList.length <= itemsPerPage) {
+      return folderList;
+    }
+    const visible: Folder[] = [];
+    for (let i = 0; i < itemsPerPage; i++) {
+      const index = (startIndex + i) % folderList.length;
+      visible.push(folderList[index]);
+    }
+    return visible;
+  };
+
   useEffect(() => {
     // Filter folders based on search query
-
     let foldersArray: Folder[] = [];
 
     if (Array.isArray(folders)) {
@@ -58,37 +69,27 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   }, [folders, searchQuery]);
 
   useEffect(() => {
-    setVisibleFolders(
-      filteredFolders.slice(activeStartIndex, activeStartIndex + itemsPerPage),
-    );
-  }, [filteredFolders, activeStartIndex, itemsPerPage]);
-
-  const sliderMax = Math.max(filteredFolders.length - itemsPerPage, 0);
+    setVisibleFolders(computeVisibleFolders(activeStartIndex, filteredFolders));
+  }, [filteredFolders, activeStartIndex]);
 
   const updateVisibleFolders = (newStartIndex: number) => {
-    setActiveStartIndex(newStartIndex);
-    setVisibleFolders(
-      filteredFolders.slice(newStartIndex, newStartIndex + itemsPerPage),
-    );
+    if (filteredFolders.length <= itemsPerPage) return;
+    const len = filteredFolders.length;
+    const wrappedIndex = ((newStartIndex % len) + len) % len;
+    setActiveStartIndex(wrappedIndex);
+    setVisibleFolders(computeVisibleFolders(wrappedIndex, filteredFolders));
   };
 
   const handleNext = () => {
-    if (activeStartIndex + itemsPerPage < filteredFolders.length) {
-      updateVisibleFolders(activeStartIndex + 1);
-    }
+    updateVisibleFolders(activeStartIndex + 1);
   };
 
   const handleBack = () => {
-    if (activeStartIndex > 0) {
-      updateVisibleFolders(activeStartIndex - 1);
-    }
+    updateVisibleFolders(activeStartIndex - 1);
   };
 
-  const handleSliderChange = (event: Event, newValue: number | number[]) => {
-    if (typeof newValue === 'number') {
-      updateVisibleFolders(newValue);
-    }
-  };
+  // Determine whether looping/pagination is active
+  const paginationActive = filteredFolders.length > itemsPerPage;
 
   return (
     <Box className="folder-container" sx={{ width: '100%' }}>
@@ -116,7 +117,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         <Button
           className="left-button"
           onClick={handleBack}
-          disabled={activeStartIndex === 0}
+          disabled={!paginationActive}
         >
           <KeyboardArrowLeft />
         </Button>
@@ -132,8 +133,8 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
             mx: 4,
           }}
         >
-          {visibleFolders.map((folder) => (
-            <Grow in={true} timeout={500} key={`${folder.id}-${searchQuery}`}>
+          {visibleFolders.map((folder, idx) => (
+            <Grow in={true} timeout={500} key={`${folder.id}-${idx}`}>
               <div>
                 <FolderComponent
                   page={page}
@@ -149,35 +150,12 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         <Button
           className="right-button"
           onClick={handleNext}
-          disabled={activeStartIndex + itemsPerPage >= filteredFolders.length}
+          disabled={!paginationActive}
         >
           <KeyboardArrowRight />
         </Button>
       </Box>
 
-      <Box sx={{ px: 2, display: 'flex', justifyContent: 'center' }}>
-        <Slider
-          value={activeStartIndex}
-          min={0}
-          max={sliderMax}
-          step={1}
-          onChange={handleSliderChange}
-          valueLabelDisplay="off"
-          sx={{
-            width: '200px',
-            '& .MuiSlider-thumb': {
-              width: 12,
-              height: 12,
-            },
-            '& .MuiSlider-track': {
-              height: 4,
-            },
-            '& .MuiSlider-rail': {
-              height: 4,
-            },
-          }}
-        />
-      </Box>
       {error && (
         <ErrorAlert
           open={!!error}
@@ -190,3 +168,19 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 };
 
 export default FolderContainer;
+
+/*
+<Carousel animation="slide">
+      {
+          items.map( (item, i) => 
+            <Paper key={i}>
+              <h2>{item.name}</h2>
+              <p>{item.description}</p>
+              <Button className="CheckButton">
+                Check it out!
+              </Button>
+            </Paper>
+          )
+      }
+  </Carousel>
+*/
