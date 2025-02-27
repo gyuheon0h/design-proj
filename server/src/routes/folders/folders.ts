@@ -190,7 +190,6 @@ folderRouter.get(
 folderRouter.post('/parent/shared', async (req, res) => {
   try {
     const { folderId } = req.body; // Get from request body
-    console.log(folderId);
     const subfolders = await FolderModel.getSubfolders(folderId || null);
 
     // sort in descending order

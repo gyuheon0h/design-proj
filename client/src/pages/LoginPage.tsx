@@ -36,10 +36,7 @@ const Login = () => {
       if (response.ok) {
         const data = await response.json();
         setUsername(username);
-        console.log('USERNAME', username);
         setUserId(data.userId);
-        console.log('DATA', data);
-        console.log('USERID', data.userId);
         navigate('/home');
       } else {
         const errorData = await response.json();
