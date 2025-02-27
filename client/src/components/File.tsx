@@ -181,7 +181,7 @@ const FileComponent = (props: FileComponentProps) => {
 
   const handleDeleteFile = async (fileId: string) => {
     try {
-      await axios.delete(`http://localhost:5001/api/file/delete/${fileId}`, {
+      await axios.delete(`http://localhost:5001/api/file/${fileId}/delete`, {
         withCredentials: true,
       });
     } catch (error) {
@@ -210,7 +210,7 @@ const FileComponent = (props: FileComponentProps) => {
     // }
     try {
       await axios.patch(
-        `http://localhost:5001/api/file/favorite/${fileId}`,
+        `http://localhost:5001/api/file/${fileId}/favorite`,
         {},
         { withCredentials: true },
       );
@@ -237,7 +237,7 @@ const FileComponent = (props: FileComponentProps) => {
     // }
     try {
       await axios.patch(
-        `http://localhost:5001/api/file/restore/${fileId}`,
+        `http://localhost:5001/api/file/${fileId}/restore`,
         {},
         { withCredentials: true },
       );

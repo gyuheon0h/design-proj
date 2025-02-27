@@ -42,6 +42,25 @@ folderRouter.post(
   },
 );
 
+// Bypassing auth for now. Will need to add back in later by checking permissions table
+folderRouter.post('/parent/shared', async (req, res) => {
+  try {
+    const { folderId } = req.body; // Get from request body
+
+    const subfolders = await FolderModel.getSubfolders(folderId || null);
+
+    // sort in descending order
+    const sortedSubfolders = subfolders.sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return res.json(sortedSubfolders);
+  } catch (error) {
+    console.error('Error getting subfolders:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 /**
  * POST /api/folders/create
  * Protected route to create a new folder.
@@ -126,9 +145,9 @@ folderRouter.get(
 
 /**
  * PATCH /api/files/favorite/:fileId
- * Route to favorite a file
+ * Route to favorite a folder 
  */
-folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
+folderRouter.patch('/:folderId/favorite/', authorize, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const { folderId } = req.params;
@@ -185,25 +204,6 @@ folderRouter.get(
     }
   },
 );
-
-// Bypassing auth for now. Will need to add back in later by checking permissions table
-folderRouter.post('/parent/shared', async (req, res) => {
-  try {
-    const { folderId } = req.body; // Get from request body
-    console.log(folderId);
-    const subfolders = await FolderModel.getSubfolders(folderId || null);
-
-    // sort in descending order
-    const sortedSubfolders = subfolders.sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-
-    return res.json(sortedSubfolders);
-  } catch (error) {
-    console.error('Error getting subfolders:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 
 /**
  * GETS all permissions pertaining to the fileId
@@ -341,7 +341,7 @@ folderRouter.delete(
   },
 );
 
-folderRouter.delete('/delete/:folderId', authorize, async (req, res) => {
+folderRouter.delete('/:folderId/delete', authorize, async (req, res) => {
   try {
     const { folderId } = req.params;
     const folder = await FolderModel.getById(folderId);
@@ -369,7 +369,7 @@ folderRouter.get('/trash', authorize, async (req, res) => {
   }
 });
 
-folderRouter.patch('/restore/:folderId', authorize, async (req, res) => {
+folderRouter.patch('/:folderId/restore/', authorize, async (req, res) => {
   try {
     const { folderId } = req.params;
     const folder = await FolderModel.getByIdAll(folderId);

@@ -74,7 +74,7 @@ const FolderComponent = (props: FolderProps) => {
     // }
     try {
       await axios.patch(
-        `http://localhost:5001/api/folder/favorite/${folderId}`,
+        `http://localhost:5001/api/folder/${folderId}/favorite`,
         {},
         {
           withCredentials: true,
@@ -103,7 +103,7 @@ const FolderComponent = (props: FolderProps) => {
     // }
     try {
       await axios.patch(
-        `http://localhost:5001/api/folder/restore/${folderId}`,
+        `http://localhost:5001/api/folder/${folderId}/restore`,
         {},
         {
           withCredentials: true,
@@ -125,7 +125,7 @@ const FolderComponent = (props: FolderProps) => {
   const handleDeleteFolder = async (folderId: string) => {
     try {
       await axios.delete(
-        `http://localhost:5001/api/folder/delete/${folderId}`,
+        `http://localhost:5001/api/folder/${folderId}/delete`,
         {
           withCredentials: true,
         },
