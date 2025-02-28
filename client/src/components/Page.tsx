@@ -121,6 +121,36 @@ const PageComponent: React.FC<PageComponentProps> = ({
           { withCredentials: true },
         );
       }
+
+      if (page === 'favorites') {
+        if (!folderId) {
+          filesRes = await axios.get(
+            `http://localhost:5001/api/user/${userId}/favorites/file`,
+            {
+              withCredentials: true,
+            },
+          );
+        } else {
+          filesRes = await axios.post(
+            'http://localhost:5001/api/file/folder',
+            { folderId },
+            { withCredentials: true },
+          );
+        }
+      }
+      if (!folderId) {
+        filesRes = await axios.post(
+          `http://localhost:5001/api/user/${userId}/${page}/file`,
+          { withCredentials: true },
+        );
+      } else {
+        filesRes = await axios.post(
+          `http://localhost:5001/api/folder/parent?${folderId}`,
+          { folderId },
+          { withCredentials: true },
+        );
+      }
+
       setFiles(filesRes?.data);
     } catch (error) {
       console.error('Error fetching file data:', error);
@@ -135,12 +165,36 @@ const PageComponent: React.FC<PageComponentProps> = ({
           `http://localhost:5001/api/user/${userId}/${page}/folder`,
           { withCredentials: true },
         );
+      }
+
+      if (page === 'favorites') {
+        if (!folderId) {
+          folderRes = await axios.get(
+            `http://localhost:5001/api/user/${userId}/favorites/folder`,
+            {
+              withCredentials: true,
+            },
+          );
+        } else {
+          axios.post(
+            'http://localhost:5001/api/folder/parent',
+            { folderId },
+            { withCredentials: true },
+          );
+        }
+      }
+      if (!folderId) {
+        folderRes = await axios.post(
+          `http://localhost:5001/api/user/${userId}/${page}/folder`,
+          { withCredentials: true },
+        );
       } else {
-        folderRes = await axios.get(
+        folderRes = await axios.post(
           `http://localhost:5001/api/folder/parent?${folderId}`,
           { withCredentials: true },
         );
       }
+
       setFolders(folderRes?.data);
     } catch (error) {
       console.error('Error fetching folder data:', error);
