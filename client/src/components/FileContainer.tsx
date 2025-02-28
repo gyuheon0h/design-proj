@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import FileComponent from './File';
-import axios from 'axios';
-import { getUsernameById } from '../utils/helperRequests';
 import { File } from '../interfaces/File';
 import ErrorAlert from '../components/ErrorAlert';
 import { Grow } from '@mui/material';
