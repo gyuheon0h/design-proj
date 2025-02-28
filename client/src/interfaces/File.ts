@@ -8,5 +8,4 @@ export interface File {
   parentFolder: string | null;
   gcsKey: string;
   fileType: string;
-  isFavorited: boolean;
 }

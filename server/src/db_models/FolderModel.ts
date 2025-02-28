@@ -6,7 +6,6 @@ interface Folder {
   owner: string;
   createdAt: Date;
   parentFolder: string | null;
-  isFavorited: boolean;
 }
 
 class FolderModel extends BaseModel<Folder> {
@@ -64,7 +63,7 @@ class FolderModel extends BaseModel<Folder> {
     return folder?.name || '';
   }
 
-  // Update folder metadata (e.g., name, isFavorited)
+  // Update folder metadata (e.g., name)
   async updateFolderMetadata(
     id: string,
     updatedData: Partial<Folder>,

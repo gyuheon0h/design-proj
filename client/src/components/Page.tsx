@@ -114,7 +114,8 @@ const PageComponent: React.FC<PageComponentProps> = ({
       if (page === 'favorites') {
         if (!folderId) {
           filesRes = await axios.get(
-            'http://localhost:5001/api/file/favorites',
+            // 'http://localhost:5001/api/file/favorites',
+            `http://localhost:5001/api/user/${userId}/favorites/file`,
             {
               withCredentials: true,
             },
@@ -185,7 +186,8 @@ const PageComponent: React.FC<PageComponentProps> = ({
       if (page === 'favorites') {
         if (!folderId) {
           folderRes = await axios.get(
-            'http://localhost:5001/api/folder/favorites',
+            // 'http://localhost:5001/api/folder/favorites',
+            `http://localhost:5001/api/user/${userId}/favorites/folder`,
             {
               withCredentials: true,
             },

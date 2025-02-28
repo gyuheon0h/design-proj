@@ -2,9 +2,10 @@ import BaseModel from './baseModel';
 
 interface Permission {
   id: string;
-  fileId: string;
+  fileId: string; // includes folders
   userId: string;
   role: 'owner' | 'editor' | 'viewer';
+  isFavorited: boolean;
   deletedAt: Date | null;
 }
 
@@ -13,7 +14,7 @@ class PermissionModel extends BaseModel<Permission> {
     super('Permission');
   }
 
-  // Get all permissions for a specific file
+  // Get all permissions for a specific file/folder
   async getPermissionsByFileId(fileId: string): Promise<Permission[]> {
     try {
       return await this.getAllByColumn('fileId', fileId);
