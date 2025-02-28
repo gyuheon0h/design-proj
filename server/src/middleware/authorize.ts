@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
 dotenv.config();
-
 export interface AuthenticatedRequest extends Request {
   user?: { userId: string; username: string };
 }

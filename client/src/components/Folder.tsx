@@ -290,8 +290,8 @@ const FolderComponent = (props: FolderProps) => {
       {/* Rename Folder Dialog */}
       <RenameDialog
         open={isRenameDialogOpen}
-        fileName={props.folder.name}
-        fileId={props.folder.id}
+        resourceName={props.folder.name} // renamed these in order to use resourceName/resourceId consistenlty
+        resourceId={props.folder.id}
         resourceType="folder"
         onClose={() => setIsRenameDialogOpen(false)}
         onSuccess={() => props.refreshFolders(props.folder.parentFolder)}
@@ -310,7 +310,7 @@ const FolderComponent = (props: FolderProps) => {
         open={isMoveDialogOpen}
         onClose={() => setIsMoveDialogOpen(false)}
         fileName={props.folder.name}
-        fileId={props.folder.id}
+        resourceId={props.folder.id}
         resourceType="folder"
         parentFolderId={props.folder.parentFolder}
         onSuccess={() => props.refreshFolders(props.folder.parentFolder)}

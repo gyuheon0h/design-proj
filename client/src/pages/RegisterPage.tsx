@@ -36,7 +36,7 @@ const Register = () => {
 
       // TODO: change endpoint to not raw string
       const response = await axios.post(
-        'http://localhost:5001/api/register',
+        'http://localhost:5001/api/auth/register',
         { username, email, passwordHash },
         {
           withCredentials: true, // Send cookies automatically

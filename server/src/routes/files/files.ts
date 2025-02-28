@@ -294,20 +294,19 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
 });
 
 /**
- * PATCH /api/files/move/:fileId
+ * PATCH /api/files/:fileId/move
  * Route to move a file (updates parentFolderId)
  */
-fileRouter.patch('/move/:fileId', authorize, async (req, res) => {
+fileRouter.patch(':fileId/move', authorize, async (req, res) => {
   try {
     const { parentFolderId } = req.body;
-    // if (!parentFolderId) {
+    // if (!parentFolderId) { // why is this commented out ? is it because it was copy pasted/irrelevant for this
     //   return res
     //     .status(400)
     //     .json({ message: 'No new parentFolderId provided' });
     // }
-
-    const userId = (req as any).user.userId;
-    const { fileId } = req.params;
+    // const userId = (req as any).user.userId;
+    const { fileId } = req.params; // this is the weird dollar sign thing in the url
     const file = await FileModel.getById(fileId);
 
     if (!file) {

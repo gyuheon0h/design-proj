@@ -148,6 +148,7 @@ const FileComponent = (props: FileComponentProps) => {
         const blob = await getBlobGcskey(
           props.file.gcsKey,
           props.file.fileType,
+          props.file.id,
         );
         const objectUrl = URL.createObjectURL(blob);
         fileCache.current.set(props.file.gcsKey, objectUrl);
@@ -453,8 +454,8 @@ const FileComponent = (props: FileComponentProps) => {
 
       <RenameDialog
         open={isRenameDialogOpen}
-        fileName={props.file.name}
-        fileId={props.file.id}
+        resourceName={props.file.name}
+        resourceId={props.file.id}
         resourceType="file"
         onClose={() => setIsRenameDialogOpen(false)}
         onSuccess={() => props.refreshFiles(props.file.parentFolder)}
@@ -474,7 +475,7 @@ const FileComponent = (props: FileComponentProps) => {
               open={isMoveDialogOpen}
               onClose={() => setIsMoveDialogOpen(false)}
               fileName={props.file.name}
-              fileId={props.file.id}
+              resourceId={props.file.id}
               resourceType="file"
               parentFolderId={props.file.parentFolder}
               onSuccess={() => props.refreshFiles(props.file.parentFolder)}

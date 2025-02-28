@@ -95,7 +95,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
 
   const handleRoleChange = async (
     permissionId: string,
-    userId: string,
+    userId: string, // this is not the current user that is being operated on, but rather another user
     newRoleValue: 'editor' | 'viewer',
   ) => {
     if (!resourceId) return;

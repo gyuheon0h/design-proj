@@ -26,7 +26,7 @@ export interface FolderProps {
 interface MoveDialogProps {
   open: boolean;
   fileName: string;
-  fileId: string;
+  resourceId: string;
   resourceType: 'folder' | 'file';
   parentFolderId: string | null;
   onClose: () => void;
@@ -36,7 +36,7 @@ interface MoveDialogProps {
 const MoveDialog: React.FC<MoveDialogProps> = ({
   open,
   fileName,
-  fileId,
+  resourceId,
   resourceType,
   parentFolderId,
   onClose,
@@ -78,7 +78,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
     setLoading(true);
     try {
       const res = await axios.post(
-         `http://localhost:5001/api/folder/${folderId}/parent`,
+        `http://localhost:5001/api/folder/${folderId}/parent`,
         { folderId: folderId ?? null }, // ensure null is passed for root
         { withCredentials: true },
       );
@@ -123,11 +123,10 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
     if (selectedFolderId === parentFolderId) return;
     try {
       await axios.patch(
-        `http://localhost:5001/api/${resourceType}/${fileId}/move`,
+        `http://localhost:5001/api/${resourceType}/${resourceId}/move`,
         { parentFolderId: selectedFolderId },
         { withCredentials: true },
       );
-
       onSuccess();
     } catch (error) {
       console.error('Error moving file:', error);

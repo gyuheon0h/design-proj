@@ -11,11 +11,11 @@ const folderRouter = Router();
  * Protected route to get subfolders of a specific folder.
  */
 folderRouter.post(
-  '/parent',
+  '/parent/:folderId',
   authorize,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const { folderId } = req.body; // Get from request body
+      const { folderId } = req.params; // Get from request parameters
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
@@ -145,7 +145,7 @@ folderRouter.get(
 
 /**
  * PATCH /api/files/favorite/:fileId
- * Route to favorite a folder 
+ * Route to favorite a folder
  */
 folderRouter.patch('/:folderId/favorite/', authorize, async (req, res) => {
   try {
@@ -209,18 +209,17 @@ folderRouter.get(
  * GETS all permissions pertaining to the fileId
  */
 folderRouter.get(
-  '/:folderId/permissions',
+  '/:folderId/permissions/:userId',
   authorize,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const currentUserId = (req as any).user.userId;
-      if (!currentUserId) {
+      // const currentUserId = (req as any).user.userId;
+      const { resourceId, userId } = req.params;
+      if (!userId) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
-
-      const { folderId } = req.params;
-      const fileId = folderId;
-      const sharedWith = await PermissionModel.getPermissionsByFileId(fileId);
+      const sharedWith =
+        await PermissionModel.getPermissionsByFileId(resourceId);
       return res.json(sharedWith);
     } catch (error) {
       console.error('Error getting permissions:', error);

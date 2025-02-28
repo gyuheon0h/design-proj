@@ -3,11 +3,11 @@ import jwt from 'jsonwebtoken';
 import userModel from '../../db_models/UserModel';
 import { AuthenticatedRequest, authorize } from '../../middleware/authorize';
 
-const authRouter= Router();
+const authRouter = Router();
 
 /** Auth API */
 
-// '/' -> /api/auth/ 
+// '/' -> /api/auth/
 // how do we know where tf this is called in front end?
 authRouter.post('/login', async (req: Request, res: Response) => {
   try {
@@ -17,7 +17,7 @@ authRouter.post('/login', async (req: Request, res: Response) => {
     if (!username || !passwordHash) {
       return res.status(400).json({ message: 'Missing required fields.' });
     }
-    
+
     // check if the user exists
     const user = await userModel.getUserByUsername(username);
 
@@ -39,11 +39,15 @@ authRouter.post('/login', async (req: Request, res: Response) => {
       maxAge: 24 * 60 * 60 * 1000, // 1 day expiry
     });
 
-    return res.status(200).json({ message: 'Login successful.' });
+    return res
+      .status(200)
+      .json({ message: 'Login successful.', userId: user.id });
   } catch (error) {
-      // Send error details only in development
+    // Send error details only in development
     if (process.env.NODE_ENV === 'development') {
-      return res.status(500).json({ message: 'Internal server error.', error: String(error) });
+      return res
+        .status(500)
+        .json({ message: 'Internal server error.', error: String(error) });
     }
     console.error('Error during login:', error);
     return res.status(500).json({ message: 'Internal server error.' });
@@ -86,33 +90,36 @@ authRouter.post('/register', async (req: Request, res: Response) => {
   }
 });
 
+// this is almost exactly the same as login. However,
+authRouter.post(
+  '/verify-password',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-// this is almost exactly the same as login. However, 
-authRouter.post('/verify-password', authorize, async (req: AuthenticatedRequest, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
-    const { passwordHash } = req.body;
-    const userId = req.user.userId;
-    
-    const user = await userModel.getById(userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+      const { passwordHash } = req.body;
+      const userId = req.user.userId;
 
-    if (user.passwordHash !== passwordHash) {
-      return res.status(401).json({ error: 'Invalid password' });
-    }
+      const user = await userModel.getById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
 
-    return res.json({ message: 'Password verified' });
-  } catch (error) {
-    console.error('Error verifying password:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+      if (user.passwordHash !== passwordHash) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+
+      return res.json({ message: 'Password verified' });
+    } catch (error) {
+      console.error('Error verifying password:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
 
 export default authRouter;
 
-// edit , change endpoint in frontend. 
+// edit , change endpoint in frontend.

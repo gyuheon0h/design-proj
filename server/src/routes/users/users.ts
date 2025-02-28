@@ -18,7 +18,10 @@ userRouter.get('/', async (req, res) => {
   }
 });
 
-userRouter.get('/all', async (req, res) => {
+/**
+ * I believe req isn't used and so I've underscored it
+ */
+userRouter.get('/all', async (_, res) => {
   try {
     const users = await UserModel.getAll();
     return res.status(201).json(users);
@@ -33,7 +36,7 @@ userRouter.get('/all', async (req, res) => {
  * Route to get files in a certain folder.
  * this is also protected by authorize
  */
-userRouter.post(
+userRouter.get(
   '/:userId/home/file',
   authorize,
   async (req: AuthenticatedRequest, res) => {
@@ -64,7 +67,7 @@ userRouter.post(
  * GET /api/folders/parent/:folderId
  * Protected route to get subfolders of a specific folder.
  */
-userRouter.post(
+userRouter.get(
   '/:userId/home/folder',
   authorize,
   async (req: AuthenticatedRequest, res) => {

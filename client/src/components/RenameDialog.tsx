@@ -11,8 +11,8 @@ import axios from 'axios';
 
 interface RenameDialogProps {
   open: boolean;
-  fileName: string;
-  fileId: string;
+  resourceName: string;
+  resourceId: string;
   resourceType: 'folder' | 'file';
   onClose: () => void;
   onSuccess: () => void;
@@ -20,40 +20,40 @@ interface RenameDialogProps {
 
 const RenameDialog: React.FC<RenameDialogProps> = ({
   open,
-  fileName,
-  fileId,
+  resourceName,
+  resourceId,
   resourceType,
   onClose,
   onSuccess,
 }) => {
-  const [newFileName, setNewFileName] = useState(fileName);
+  const [newResourceName, setnewResourceName] = useState(resourceName);
 
   useEffect(() => {
-    setNewFileName(fileName);
-  }, [fileName]);
+    setnewResourceName(resourceName);
+  }, [resourceName]);
 
   const handleRename = async () => {
-    if (newFileName.trim()) {
+    if (newResourceName.trim()) {
       try {
-        if (resourceType === 'file') {
-          await axios.patch(
-            `http://localhost:5001/api/file/rename/${fileId}`,
-            { fileName: newFileName },
-            { withCredentials: true },
-          );
-        }
+        // if (resourceType === 'file') {
+        await axios.patch(
+          `http://localhost:5001/api/${resourceType}/${resourceId}/rename`,
+          { resourceName: newResourceName },
+          { withCredentials: true },
+        );
+        // }
 
-        if (resourceType === 'folder') {
-          await axios.patch(
-            `http://localhost:5001/api/folder/rename/${fileId}`,
-            { folderName: newFileName },
-            { withCredentials: true },
-          );
-        }
+        // if (resourceType === 'folder') {
+        //   await axios.patch(
+        //     `http://localhost:5001/api/folder/${resourceId}/rename`,
+        //     { folderName: newResourceName },
+        //     { withCredentials: true },
+        //   );
+        // }
 
         onSuccess();
       } catch (error) {
-        console.error('Error renaming folder:', error);
+        console.error('Error renaming resource:', error);
       }
       onClose();
     }
@@ -61,17 +61,17 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Rename {fileName}</DialogTitle>
+      <DialogTitle>Rename {resourceName}</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
           margin="dense"
-          label={newFileName}
+          label={newResourceName}
           type="text"
           fullWidth
           variant="outlined"
-          value={newFileName}
-          onChange={(e) => setNewFileName(e.target.value)}
+          value={newResourceName}
+          onChange={(e) => setnewResourceName(e.target.value)}
         />
       </DialogContent>
       <DialogActions>
@@ -82,7 +82,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
           onClick={handleRename}
           color="primary"
           variant="contained"
-          disabled={newFileName.trim() === fileName.trim()}
+          disabled={newResourceName.trim() === resourceName.trim()}
         >
           Rename
         </Button>
