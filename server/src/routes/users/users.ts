@@ -4,6 +4,8 @@ import { AuthenticatedRequest, authorize } from '../../middleware/authorize';
 import PermissionModel from '../../db_models/PermissionModel';
 import FolderModel from '../../db_models/FolderModel';
 import FileModel from '../../db_models/FileModel';
+import StorageService from '../../storage';
+import jwt from 'jsonwebtoken';
 
 const userRouter = Router();
 
@@ -232,5 +234,98 @@ userRouter.get('/:userId/trash/folder', authorize, async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+userRouter.post(
+  '/:userId/update-profile',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { username, newPassword } = req.body;
+      const userId = req.user.userId;
+
+      const user = await UserModel.getById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      if (username && username !== user.username) {
+        const existingUser = await UserModel.getUserByUsername(username);
+        if (existingUser) {
+          return res.status(400).json({ error: 'Username already taken' });
+        }
+      }
+
+      const updateData: Partial<typeof user> = {};
+      if (username) {
+        updateData.username = username;
+      }
+
+      if (newPassword) {
+        updateData.passwordHash = newPassword;
+      }
+
+      await UserModel.update(userId, updateData);
+
+      if (username) {
+        const token = jwt.sign(
+          { userId, username },
+          process.env.JWT_SECRET as string,
+        );
+
+        res.cookie('authToken', token, {
+          httpOnly: true,
+          secure: false,
+          sameSite: 'strict',
+          maxAge: 24 * 60 * 60 * 1000,
+        });
+      }
+
+      return res.json({ message: 'Profile updated successfully' });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
+userRouter.delete(
+  '/:userId/delete-account',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const userId = req.user.userId;
+
+      const userFiles = await FileModel.getFilesByOwner(userId);
+      await UserModel.hardDeleteOnCondition('id', userId);
+      await PermissionModel.hardDeleteOnCondition('userId', userId);
+      await FileModel.hardDeleteOnCondition('owner', userId);
+
+      // Remove actual files from GCP Storage -> delete.
+      for (const file of userFiles) {
+        await StorageService.deleteFile(file.gcsKey);
+      }
+
+      // Clear session
+      res.clearCookie('authToken', {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'strict',
+      });
+
+      return res.json({ message: 'Account deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
 
 export default userRouter;
