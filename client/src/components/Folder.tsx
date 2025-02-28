@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SendIcon from '@mui/icons-material/Send';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -13,9 +13,12 @@ import { colors } from '../Styles';
 import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import MoveDialog from './MoveDialog';
+import { getIsFavoritedByFileId } from "../utils/helperRequests";
 import ErrorAlert from '../components/ErrorAlert';
 import { Folder } from '../interfaces/Folder';
 import axios from 'axios';
+
+
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -29,8 +32,24 @@ const FolderComponent = (props: FolderProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
   const open = Boolean(anchorEl);
   const [error, setError] = useState<string | null>(null);
+
+
+  useEffect(() => {
+      const fetchIsFavorited = async () => {
+        try {
+          const isFavorited = await getIsFavoritedByFileId(props.folder.id); 
+          setIsFavorited(isFavorited);
+        } catch (error) {
+          console.error("Error fetching isFavorited for folder", error);
+          setError("Error fetching isFavorited for folder");
+        }
+      };
+  
+      fetchIsFavorited();
+    }, [props.folder.id]);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -59,20 +78,15 @@ const FolderComponent = (props: FolderProps) => {
     if (props.page === 'trash') {
       alert('Restore the folder to update it!');
     } else {
-      await handleFavoriteFolder(props.folder.id, props.folder.owner);
+      await handleFavoriteFolder(props.folder.id); 
+      setIsFavorited(!isFavorited); // toggle state locally
     }
     props.refreshFolders(props.folder.parentFolder);
   };
 
-  const handleFavoriteFolder = async (folderId: string, owner: string) => {
-    // const ownerUsername = await getUsernameById(owner);
-
-    // TODO: this doesn't matter once favorites gets upgraded
-    // if (ownerUsername !== username) {
-    //   alert('You do not have permission to favorite this folder.');
-    //   return;
-    // }
+  const handleFavoriteFolder = async (folderId: string) => {
     try {
+      // NOTE: using the user based permission to favorite but still calling the PATCH within the folder router
       await axios.patch(
         `http://localhost:5001/api/folder/favorite/${folderId}`,
         {},
@@ -227,10 +241,10 @@ const FolderComponent = (props: FolderProps) => {
             position: 'absolute',
             top: '5px',
             right: '5px',
-            color: props.folder.isFavorited ? '#FF6347' : colors.darkBlue,
+            color: isFavorited ? '#FF6347' : colors.darkBlue,
           }}
         >
-          {props.folder.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+          {isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
         </IconButton>
 
         {/* More Options Button */}
