@@ -154,6 +154,12 @@ fileRouter.post(
         isFavorited: false,
       });
 
+      await PermissionModel.createPermission({
+        fileId: fileMetadata.id,
+        userId: userId,
+        role: 'owner',
+      });
+
       return res
         .status(201)
         .json({ message: 'File uploaded successfully', file: fileMetadata });
