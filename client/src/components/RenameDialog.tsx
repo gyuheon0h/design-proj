@@ -35,22 +35,11 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
   const handleRename = async () => {
     if (newResourceName.trim()) {
       try {
-        // if (resourceType === 'file') {
         await axios.patch(
           `http://localhost:5001/api/${resourceType}/${resourceId}/rename`,
           { resourceName: newResourceName },
           { withCredentials: true },
         );
-        // }
-
-        // if (resourceType === 'folder') {
-        //   await axios.patch(
-        //     `http://localhost:5001/api/folder/${resourceId}/rename`,
-        //     { folderName: newResourceName },
-        //     { withCredentials: true },
-        //   );
-        // }
-
         onSuccess();
       } catch (error) {
         console.error('Error renaming resource:', error);
