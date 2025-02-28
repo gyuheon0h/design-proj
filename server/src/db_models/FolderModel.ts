@@ -64,6 +64,30 @@ class FolderModel extends BaseModel<Folder> {
     return folder?.name || '';
   }
 
+  /**
+   * Find a folder by name, owner, and parentFolder
+   * This supports finding nested folders with the same name under different parent folders
+   **/
+  async findOneByNameAndParent(
+    name: string,
+    owner: string,
+    parentFolder: string | null,
+  ): Promise<Folder | null> {
+    const conditions: Partial<Folder> = {
+      name,
+      owner,
+    };
+
+    // include parentFolder condition only if it's not null
+    if (parentFolder) {
+      conditions['parentFolder'] = parentFolder;
+    } else {
+      conditions['parentFolder'] = null;
+    }
+
+    return await this.getOneByMultipleColumns(conditions);
+  }
+
   // Update folder metadata (e.g., name, isFavorited)
   async updateFolderMetadata(
     id: string,

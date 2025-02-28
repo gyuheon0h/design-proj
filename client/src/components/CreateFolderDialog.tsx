@@ -8,14 +8,14 @@ import {
   Button,
 } from '@mui/material';
 
-interface FolderDialogProps {
+interface CreateFolderDialogProps {
   open: boolean;
   onClose: () => void;
   currentFolderId: string | null;
   onFolderCreate: (folderName: string, parentFolder: string | null) => void;
 }
 
-const FolderDialog: React.FC<FolderDialogProps> = ({
+const CreateFolderDialog: React.FC<CreateFolderDialogProps> = ({
   open,
   currentFolderId,
   onClose,
@@ -58,4 +58,4 @@ const FolderDialog: React.FC<FolderDialogProps> = ({
   );
 };
 
-export default FolderDialog;
+export default CreateFolderDialog;

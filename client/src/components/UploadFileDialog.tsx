@@ -10,13 +10,13 @@ import {
 } from '@mui/material';
 import { typography } from '../Styles';
 
-interface UploadDialogProps {
+interface UploadFileDialogProps {
   open: boolean;
   onClose: () => void;
   onFileUpload: (file: Blob | File, fileName: string) => Promise<void>;
 }
 
-const UploadDialog: React.FC<UploadDialogProps> = ({
+const UploadFileDialog: React.FC<UploadFileDialogProps> = ({
   open,
   onClose,
   onFileUpload,
@@ -86,4 +86,4 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
   );
 };
 
-export default UploadDialog;
+export default UploadFileDialog;

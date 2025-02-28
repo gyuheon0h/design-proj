@@ -3,8 +3,14 @@ import { authorize } from '../../middleware/authorize';
 import FolderModel from '../../db_models/FolderModel';
 import { AuthenticatedRequest } from '../../middleware/authorize';
 import PermissionModel from '../../db_models/PermissionModel';
+import multer from 'multer';
+import { inferMimeType } from '../files/fileHelpers';
+import { v4 as uuidv4 } from 'uuid';
+import StorageService from '../../storage';
+import FileModel from '../../db_models/FileModel';
 
 const folderRouter = Router();
+const upload = multer();
 
 /**
  * GET /api/folders/parent/:folderId
@@ -37,6 +43,108 @@ folderRouter.post(
       return res.json(sortedSubfolders);
     } catch (error) {
       console.error('Error getting subfolders:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
+/**
+ * POST /api/folders/upload
+ * Route to upload a folder with nested subfolders
+ */
+folderRouter.post(
+  '/upload',
+  authorize,
+  upload.array('files'), // accept multiple files
+  async (req, res) => {
+    try {
+      const userId = (req as any).user.userId;
+      const { folderName, parentFolder = null } = req.body;
+
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ message: 'No files uploaded' });
+      }
+
+      // create folder in metadata table
+      const rootFolder = await FolderModel.createFolder({
+        name: folderName,
+        owner: userId,
+        createdAt: new Date(),
+        parentFolder: parentFolder || null,
+        isFavorited: false,
+      });
+
+      // loop through each file and upload to GCS
+      const fileUploadPromises = (req.files as Express.Multer.File[]).map(
+        async (file) => {
+          let { originalname, buffer, mimetype } = file;
+
+          // If the MIME type is 'application/octet-stream', try to infer it
+          if (mimetype === 'application/octet-stream') {
+            mimetype = inferMimeType(originalname);
+          }
+
+          // get the relative path and create any nested folders
+          const relativePath = file.originalname;
+          const pathParts = relativePath.split('/');
+          const fileName = pathParts.pop();
+          const nestedFolders = pathParts.join('/');
+
+          // recursively create nested folders
+          let parentFolderId = rootFolder.id;
+          for (const folderName of pathParts) {
+            const existingFolder = await FolderModel.findOneByNameAndParent(
+              folderName,
+              userId,
+              parentFolderId,
+            );
+
+            if (existingFolder) {
+              parentFolderId = existingFolder.id;
+            } else {
+              const newFolder = await FolderModel.createFolder({
+                name: folderName,
+                owner: userId,
+                createdAt: new Date(),
+                parentFolder: parentFolderId,
+                isFavorited: false,
+              });
+              parentFolderId = newFolder.id;
+            }
+          }
+
+          // generate unique file id and gcs file path
+          const fileId = uuidv4();
+          const gcsFilePath = `uploads/${userId}/${nestedFolders}/${fileId}-${fileName}`;
+
+          // upload to gcs
+          await StorageService.uploadFile(gcsFilePath, buffer, mimetype);
+
+          // save file metadata to sql
+          return FileModel.create({
+            id: fileId,
+            name: fileName,
+            owner: userId,
+            createdAt: new Date(),
+            lastModifiedBy: null,
+            lastModifiedAt: new Date(),
+            parentFolder: parentFolderId,
+            gcsKey: gcsFilePath,
+            fileType: mimetype,
+            isFavorited: false,
+          });
+        },
+      );
+
+      // wait for all file uploads to complete
+      const uploadedFiles = await Promise.all(fileUploadPromises);
+
+      return res.status(201).json({
+        message: 'Folder uploaded successfully',
+        files: uploadedFiles,
+      });
+    } catch (error) {
+      console.error('Folder upload error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   },

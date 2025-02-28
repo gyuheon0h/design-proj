@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { Fab, Menu, MenuItem } from '@mui/material';
 import axios from 'axios';
-import UploadDialog from './CreateFileDialog';
-import FolderDialog from './CreateFolderDialog';
+import UploadFileDialog from './UploadFileDialog';
+import CreateFolderDialog from './CreateFolderDialog';
 import AddIcon from '@mui/icons-material/Add';
 import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
+import UploadFolderDialog from './UploadFolderDialog';
 
 interface CreateButtonProps {
   currentFolderId: string | null;
@@ -22,8 +23,9 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
 
-  const [folderDialogOpen, setFolderDialogOpen] = useState(false);
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [createFolderDialogOpen, setCreateFolderDialogOpen] = useState(false);
+  const [uploadFileDialogOpen, setUploadFileDialogOpen] = useState(false);
+  const [uploadFolderDialogOpen, setUploadFolderDialogOpen] = useState(false);
 
   // Drag detection
   const [didDrag, setDidDrag] = useState(false);
@@ -33,19 +35,27 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   };
 
   const openFolderDialog = () => {
-    setFolderDialogOpen(true);
+    setCreateFolderDialogOpen(true);
   };
 
   const closeFolderDialog = () => {
-    setFolderDialogOpen(false);
+    setCreateFolderDialogOpen(false);
   };
 
-  const openUploadDialog = () => {
-    setUploadDialogOpen(true);
+  const openUploadFileDialog = () => {
+    setUploadFileDialogOpen(true);
   };
 
-  const closeUploadDialog = () => {
-    setUploadDialogOpen(false);
+  const closeUploadFileDialog = () => {
+    setUploadFileDialogOpen(false);
+  };
+
+  const openUploadFolderDialog = () => {
+    setUploadFolderDialogOpen(true);
+  };
+
+  const closeUploadFolderDialog = () => {
+    setUploadFolderDialogOpen(false);
   };
 
   // Draggable handlers
@@ -77,6 +87,32 @@ const CreateButton: React.FC<CreateButtonProps> = ({
       return response.data;
     } catch (error) {
       console.error('Upload failed:', error);
+      throw error;
+    }
+  };
+
+  const handleUploadFolder = async (files: File[], folderName: string) => {
+    const formData = new FormData();
+    formData.append('folderName', folderName);
+
+    files.forEach((file) => {
+      formData.append('files', file, file.webkitRelativePath);
+    });
+
+    if (currentFolderId) {
+      formData.append('parentFolder', currentFolderId);
+    }
+
+    try {
+      const response = await axios.post(
+        'http://localhost:5001/api/folder/upload',
+        formData,
+        { withCredentials: true },
+      );
+      refreshFolders(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Folder upload failed:', error);
       throw error;
     }
   };
@@ -141,24 +177,38 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            openUploadDialog();
+            openUploadFileDialog();
           }}
         >
           Upload a File
         </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            openUploadFolderDialog();
+          }}
+        >
+          Upload a Folder
+        </MenuItem>
       </Menu>
 
-      <FolderDialog
-        open={folderDialogOpen}
+      <CreateFolderDialog
+        open={createFolderDialogOpen}
         onClose={closeFolderDialog}
         currentFolderId={currentFolderId}
         onFolderCreate={handleCreateFolder}
       />
 
-      <UploadDialog
-        open={uploadDialogOpen}
-        onClose={closeUploadDialog}
+      <UploadFileDialog
+        open={uploadFileDialogOpen}
+        onClose={closeUploadFileDialog}
         onFileUpload={handleUploadFile}
+      />
+
+      <UploadFolderDialog
+        open={uploadFolderDialogOpen}
+        onClose={closeUploadFolderDialog}
+        onFolderUpload={handleUploadFolder}
       />
     </>
   );
