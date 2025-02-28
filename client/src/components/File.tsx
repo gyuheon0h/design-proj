@@ -41,6 +41,7 @@ import {
 import ErrorAlert from '../components/ErrorAlert';
 import { File } from '../interfaces/File';
 import axios from 'axios';
+import TextEditor from './TextEditor';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -84,8 +85,9 @@ const FileComponent = (props: FileComponentProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const fileCache = useRef(new Map<string, string>()); // Woah this speeds up reopens by a LOT
+  const fileCache = useRef(new Map<string, string>());
 
   // For the image viewer
   const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
@@ -151,7 +153,9 @@ const FileComponent = (props: FileComponentProps) => {
           props.file.id,
         );
         const objectUrl = URL.createObjectURL(blob);
-        fileCache.current.set(props.file.gcsKey, objectUrl);
+        if (!isSupportedFileTypeText(props.file.fileType)) {
+          fileCache.current.set(props.file.gcsKey, objectUrl);
+        }
         setFileSrc(objectUrl);
       } catch (err) {
         console.error('Error fetching file from server:', err);
@@ -162,6 +166,10 @@ const FileComponent = (props: FileComponentProps) => {
 
   const handleCloseFileViewer = () => {
     setIsFileViewerOpen(false);
+  };
+
+  const handleCloseEditor = () => {
+    setIsEditDialogOpen(false);
   };
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -261,6 +269,11 @@ const FileComponent = (props: FileComponentProps) => {
     // props.refreshFiles(props.file.parentFolder);
   };
 
+  const handleEditClick = () => {
+    setIsEditDialogOpen(true);
+    handleOptionsClose();
+  };
+
   const handleMoveClick = () => {
     setIsMoveDialogOpen(true);
     handleOptionsClose();
@@ -297,7 +310,6 @@ const FileComponent = (props: FileComponentProps) => {
           },
         }}
         onClick={() => {
-          console.log(props.file.fileType);
           if (props.page !== 'trash') handleFileClick();
         }}
       >
@@ -395,19 +407,33 @@ const FileComponent = (props: FileComponentProps) => {
               Restore
             </MenuItem>
           ) : props.page === 'shared' ? (
-            <MenuItem
-              onClick={() => {
-                downloadFile(props.file.id, props.file.name);
-                handleOptionsClose();
-              }}
-            >
-              <InsertDriveFileIcon
-                sx={{ fontSize: '20px', marginRight: '9px' }}
-              />{' '}
-              Download
-            </MenuItem>
+            [
+              <MenuItem
+                onClick={() => {
+                  downloadFile(props.file.id, props.file.name);
+                  handleOptionsClose();
+                }}
+              >
+                <InsertDriveFileIcon
+                  sx={{ fontSize: '20px', marginRight: '9px' }}
+                />{' '}
+                Download
+              </MenuItem>,
+              // TODO ONLY SHOW THIS WHEN THEY HAVE PERMISSION
+              <MenuItem onClick={handleEditClick}>
+                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
+                Edit
+              </MenuItem>,
+            ]
           ) : (
             [
+              <MenuItem onClick={handleEditClick}>
+                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
+                Edit
+              </MenuItem>,
+
+              <Divider sx={{ my: 0.2 }} />,
+
               <MenuItem onClick={handlePermissionsClick}>
                 <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
               </MenuItem>,
@@ -467,6 +493,17 @@ const FileComponent = (props: FileComponentProps) => {
         fileId={props.file.id}
         folderId={null}
       />
+
+      {/* necessary to only open one websocket at a time */}
+      {isEditDialogOpen && (
+        <TextEditor
+          fileId={props.file.id}
+          gcsKey={props.file.gcsKey}
+          mimeType={props.file.fileType}
+          open={isEditDialogOpen}
+          onClose={handleCloseEditor}
+        />
+      )}
 
       <Modal open={isFileViewerOpen} onClose={handleCloseFileViewer}>
         <Fade in={isFileViewerOpen} timeout={300}>

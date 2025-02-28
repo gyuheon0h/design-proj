@@ -39,6 +39,39 @@ const StorageService = {
   },
 
   /**
+   * Gets text contents from GCS
+   * @param fileId - The path of the file in the bucket (GCS KEY)
+   * @returns string repr of the file or empty string
+   */
+  getGCSFile: async (fileId: string) => {
+    try {
+      const file = bucket.file(fileId);
+      const [contents] = await file.download();
+      return contents.toString();
+    } catch (error) {
+      console.error('Error loading file from GCS:', error);
+      return '';
+    }
+  },
+
+  /**
+   *
+   * @param fileId - The path of the file in the bucket
+   * @param content  - the string content for that file
+   */
+  saveToGCS: async (fileId: string, content: string, mimeType: string) => {
+    try {
+      const file = bucket.file(fileId);
+      // Save content to GCS
+      await file.save(content, {
+        metadata: { contentType: mimeType },
+      });
+    } catch (error) {
+      console.error('Error saving file to GCS:', error);
+    }
+  },
+
+  /**
    * Upload a file to GCS.
    * @param filePath - The path to save the file in the bucket.
    * @param buffer - The file data as a Buffer.
