@@ -82,34 +82,6 @@ fileRouter.post(
   },
 );
 
-/**
- * GET /api/files/favorites/
- * Route to get favorited files owned by a certain user (ownerId).
- * This is protected by authorize
- */
-
-fileRouter.get(
-  '/favorites',
-  authorize,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-      const userId = req.user.userId;
-
-      const favoritedFiles = await FileModel.getAllByOwnerAndColumn(
-        userId,
-        'isFavorited',
-        true,
-      );
-      return res.json(favoritedFiles);
-    } catch (error) {
-      console.error('Error getting files by owner:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  },
-);
 
 /**
  * POST /api/files/upload
@@ -151,7 +123,6 @@ fileRouter.post(
         parentFolder: parentFolder || null, // Allow null for root files
         gcsKey: gcsFilePath,
         fileType: mimetype,
-        isFavorited: false,
       });
 
       await PermissionModel.createPermission({
@@ -238,25 +209,19 @@ fileRouter.patch('/favorite/:fileId', authorize, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const { fileId } = req.params;
-    const file = await FileModel.getById(fileId);
+    const permission = await PermissionModel.getPermissionByFileAndUser(fileId, userId);
 
-    if (!file) {
+    if (!permission) {
       return res.status(404).json({ message: 'File not found' });
-    }
+    };
 
-    if (userId != file.owner) {
-      return res.status(403).json({
-        message: 'Unauthorized: User cannot favorite files they do not own',
-      });
-    }
-
-    const fileMetadata = await FileModel.updateFileMetadata(fileId, {
-      isFavorited: !file.isFavorited,
+    const permissionMetadata = await PermissionModel.updatePermission(permission.id, {
+      isFavorited: !permission.isFavorited,
     });
 
     return res.status(200).json({
       message: 'File favorited successfully',
-      file: fileMetadata,
+      file: permissionMetadata,
     });
   } catch (error) {
     console.error('File favorite error:', error);

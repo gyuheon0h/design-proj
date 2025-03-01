@@ -69,7 +69,12 @@ folderRouter.post(
         owner,
         createdAt: new Date(),
         parentFolder: parentFolder || null,
-        isFavorited: false,
+      });
+
+      await PermissionModel.createPermission({
+        fileId: newFolder.id,
+        userId: owner,
+        role: 'owner',
       });
 
       return res.status(201).json(newFolder);
@@ -96,61 +101,30 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
 });
 
 /**
- * GET /api/files/favorites/:ownerId
- * Route to get favorited files owned by a certain user (ownerId).
- * This is protected by authorize
- */
-
-folderRouter.get(
-  '/favorites',
-  authorize,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-      const userId = req.user.userId;
-
-      const favoritedFiles = await FolderModel.getAllByOwnerAndColumn(
-        userId,
-        'isFavorited',
-        true,
-      );
-      return res.json(favoritedFiles);
-    } catch (error) {
-      console.error('Error getting files by owner:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  },
-);
-
-/**
- * PATCH /api/files/favorite/:fileId
- * Route to favorite a file
+ * PATCH /api/folder/favorite/:folderId
+ * Route to favorite/unfavorite a folder
  */
 folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const { folderId } = req.params;
-    const folder = await FolderModel.getById(folderId);
 
-    if (!folder) {
+    
+    // TODO: im thinking this is because we don't create a permission for yourself
+
+    const permission = await PermissionModel.getPermissionByFileAndUser(folderId, userId);
+
+    if (!permission) {
       return res.status(404).json({ message: 'Folder not found' });
     }
 
-    if (userId != folder.owner) {
-      return res.status(403).json({
-        message: 'Unauthorized: User cannot favorite folders they do not own',
-      });
-    }
-
-    const folderMetadata = await FolderModel.updateFolderMetadata(folderId, {
-      isFavorited: !folder.isFavorited,
+    const permissionMetadata = await PermissionModel.updatePermission(permission.id, {
+      isFavorited: !permission.isFavorited,
     });
 
     return res.status(200).json({
       message: 'Folder favorited successfully',
-      folder: folderMetadata,
+      folder: permissionMetadata,
     });
   } catch (error) {
     console.error('Folder favorite error:', error);

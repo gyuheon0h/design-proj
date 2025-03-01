@@ -27,6 +27,7 @@ import {
   getUsernameById,
   downloadFile,
   getBlobGcskey,
+  getIsFavoritedByFileId,
 } from '../utils/helperRequests';
 import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -88,6 +89,7 @@ const FileComponent = (props: FileComponentProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const fileCache = useRef(new Map<string, string>());
+  const [isFavorited, setIsFavorited] = useState(false);
 
   // For the image viewer
   const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
@@ -128,6 +130,21 @@ const FileComponent = (props: FileComponentProps) => {
 
     fetchModifiedByName();
   }, [props.file.lastModifiedBy]);
+
+
+  useEffect(() => {
+    const fetchIsFavorited = async () => {
+      try {
+        const isFavorited = await getIsFavoritedByFileId(props.file.id); 
+        setIsFavorited(isFavorited);
+      } catch (error) {
+        console.error("Error fetching isFavorited for file", error);
+        setError("Error fetching isFavorited for file");
+      }
+    };
+
+    fetchIsFavorited();
+  }, [props.file.id]);
 
   const open = Boolean(anchorEl);
 
@@ -203,19 +220,14 @@ const FileComponent = (props: FileComponentProps) => {
     if (props.page === 'trash') {
       alert('Restore the file to update it!');
     } else {
-      await handleFavoriteFile(props.file.id, props.file.owner);
+      await handleFavoriteFile(props.file.id);
+      setIsFavorited(!isFavorited); // toggle state locally
     }
     props.refreshFiles(props.file.parentFolder);
   };
 
-  const handleFavoriteFile = async (fileId: string, owner: string) => {
-    // const ownerUsername = await getUsernameById(owner);
-
-    // TODO: see comment in FolderComponent
-    // if (ownerUsername !== username) {
-    //   alert('You do not have permission to favorite this file.');
-    //   return;
-    // }
+  const handleFavoriteFile = async (fileId: string) => {
+    // Note: still calling the patch through the file endpoint, but it's using the permission model
     try {
       await axios.patch(
         `${process.env.REACT_APP_API_BASE_URL}/api/file/favorite/${fileId}`,
@@ -374,10 +386,10 @@ const FileComponent = (props: FileComponentProps) => {
         <IconButton
           onClick={handleFavoriteFileClick}
           sx={{
-            color: props.file.isFavorited ? '#FF6347' : colors.darkBlue,
+            color: isFavorited ? '#FF6347' : colors.darkBlue,
           }}
         >
-          {props.file.isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+          {isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
         </IconButton>
 
         <IconButton

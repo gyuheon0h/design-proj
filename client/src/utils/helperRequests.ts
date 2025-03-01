@@ -36,6 +36,19 @@ export async function getUsernameById(id: string): Promise<string> {
   }
 }
 
+export async function getIsFavoritedByFileId(fileId: string): Promise<boolean> {
+  try {
+    const response = await axios.get(`http://localhost:5001/api/user/permissions/${fileId}`, 
+      { withCredentials: true }
+    );
+     
+    return response.data?.isFavorited || false;
+  } catch (error) {
+    console.error("Error fetching isFavorited status: ", error);
+    return false;
+  }
+}
+
 export async function downloadFile(
   fileId: string,
   fileName: string,
