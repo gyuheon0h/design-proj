@@ -71,6 +71,12 @@ folderRouter.post(
         parentFolder: parentFolder || null,
       });
 
+      await PermissionModel.createPermission({
+        fileId: newFolder.id,
+        userId: owner,
+        role: 'owner',
+      });
+
       return res.status(201).json(newFolder);
     } catch (error) {
       console.error('Error creating folder:', error);
@@ -95,13 +101,17 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
 });
 
 /**
- * PATCH /api/files/favorite/:folderId
+ * PATCH /api/folder/favorite/:folderId
  * Route to favorite/unfavorite a folder
  */
 folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const { folderId } = req.params;
+
+    
+    // TODO: im thinking this is because we don't create a permission for yourself
+
     const permission = await PermissionModel.getPermissionByFileAndUser(folderId, userId);
 
     if (!permission) {
