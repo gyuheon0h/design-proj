@@ -12,6 +12,7 @@ import {
   CircularProgress,
   Typography,
 } from '@mui/material';
+import { useUser } from '../context/UserContext';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIos';
 import axios from 'axios';
@@ -24,6 +25,7 @@ export interface FolderProps {
 }
 
 interface MoveDialogProps {
+  page: 'home' | 'shared' | 'favorites' | 'trash';
   open: boolean;
   fileName: string;
   resourceId: string;
@@ -34,6 +36,7 @@ interface MoveDialogProps {
 }
 
 const MoveDialog: React.FC<MoveDialogProps> = ({
+  page,
   open,
   fileName,
   resourceId,
@@ -42,6 +45,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const userContext = useUser();
   const [currentParentFolderId, setCurrentParentFolderId] = useState<
     string | null
   >(null);
@@ -57,14 +61,14 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
       setCurrentParentFolderId(null); //set to root directory
       setFolderHistory([]); // reset history
       setSelectedFolderId(null); // automatically select the root directory
-      fetchSubFolders(null); // load subfolders of root directory
+      fetchSubFolders(null, userContext.userId); // load subfolders of root directory
     }
   }, [open]);
 
   // fetch subfolders whenever the current parent folder changes
   useEffect(() => {
     if (currentParentFolderId !== undefined) {
-      fetchSubFolders(currentParentFolderId);
+      fetchSubFolders(currentParentFolderId, userContext.userId);
 
       // automatically select the root directory when at the root
       if (currentParentFolderId === null) {
@@ -74,15 +78,27 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   }, [currentParentFolderId]);
 
   // fetch subfolders for the given parent folder ID
-  const fetchSubFolders = async (folderId: string | null) => {
+  const fetchSubFolders = async (
+    folderId: string | null,
+    userId: string | null,
+  ) => {
     setLoading(true);
     try {
-      const res = await axios.post(
-        `http://localhost:5001/api/folder/${folderId}/parent`,
-        { folderId: folderId ?? null }, // ensure null is passed for root
-        { withCredentials: true },
-      );
-      setFolders(res.data);
+      if (folderId === null) {
+        const res = await axios.get(
+          `http://localhost:5001/api/user/${userId}/${page}/folder`,
+          // { folderId: folderId ?? null }, // ensure null is passed for root
+          { withCredentials: true },
+        );
+        setFolders(res.data);
+      } else {
+        const res = await axios.get(
+          `http://localhost:5001/api/folder/${folderId}/parent`,
+          // { folderId: folderId ?? null }, // ensure null is passed for root
+          { withCredentials: true },
+        );
+        setFolders(res.data);
+      }
     } catch (error) {
       console.error('Error fetching folders:', error);
       setError('Failed to load folders. Please try again.');

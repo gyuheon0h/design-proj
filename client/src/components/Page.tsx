@@ -29,7 +29,6 @@ const PageComponent: React.FC<PageComponentProps> = ({
   userId,
 }) => {
   const navigate = useNavigate();
-  //   const userContext = useUser();
   const { folderPath, currentFolderId } = useFolderPath(`/${page}`);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -108,45 +107,18 @@ const PageComponent: React.FC<PageComponentProps> = ({
   const fetchFileData = async (folderId: string | null) => {
     try {
       let filesRes; // GOAT logic by ethan
-      if (!folderId) {
+      console.log('firstly: ' + folderId);
+      console.log(userId);
+      if (folderId === null) {
         filesRes = await axios.get(
-          // user-based endpoints (these are like "global home gets")
           `http://localhost:5001/api/user/${userId}/${page}/file`,
           { withCredentials: true },
         );
       } else {
+        console.log('We are not at the parent ? ');
+        console.log(folderId);
         filesRes = await axios.get(
-          // these are specific gets on a folder. Why is there a '?' here though?
-          `http://localhost:5001/api/folder/parent?${folderId}`,
-          { withCredentials: true },
-        );
-      }
-
-      if (page === 'favorites') {
-        if (!folderId) {
-          filesRes = await axios.get(
-            `http://localhost:5001/api/user/${userId}/favorites/file`,
-            {
-              withCredentials: true,
-            },
-          );
-        } else {
-          filesRes = await axios.post(
-            'http://localhost:5001/api/file/folder',
-            { folderId },
-            { withCredentials: true },
-          );
-        }
-      }
-      if (!folderId) {
-        filesRes = await axios.post(
-          `http://localhost:5001/api/user/${userId}/${page}/file`,
-          { withCredentials: true },
-        );
-      } else {
-        filesRes = await axios.post(
-          `http://localhost:5001/api/folder/parent?${folderId}`,
-          { folderId },
+          `http://localhost:5001/api/file/parent?${folderId}`,
           { withCredentials: true },
         );
       }
@@ -160,41 +132,18 @@ const PageComponent: React.FC<PageComponentProps> = ({
   const fetchFolderData = async (folderId: string | null) => {
     try {
       let folderRes;
-      if (!folderId) {
+      console.log('secondary: ' + folderId);
+      if (folderId === null) {
         folderRes = await axios.get(
           `http://localhost:5001/api/user/${userId}/${page}/folder`,
           { withCredentials: true },
         );
-      }
-
-      if (page === 'favorites') {
-        if (!folderId) {
-          folderRes = await axios.get(
-            `http://localhost:5001/api/user/${userId}/favorites/folder`,
-            {
-              withCredentials: true,
-            },
-          );
-        } else {
-          axios.post(
-            'http://localhost:5001/api/folder/parent',
-            { folderId },
-            { withCredentials: true },
-          );
-        }
-      }
-      if (!folderId) {
-        folderRes = await axios.post(
-          `http://localhost:5001/api/user/${userId}/${page}/folder`,
-          { withCredentials: true },
-        );
       } else {
-        folderRes = await axios.post(
+        folderRes = await axios.get(
           `http://localhost:5001/api/folder/parent?${folderId}`,
           { withCredentials: true },
         );
       }
-
       setFolders(folderRes?.data);
     } catch (error) {
       console.error('Error fetching folder data:', error);

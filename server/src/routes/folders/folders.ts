@@ -11,7 +11,7 @@ const folderRouter = Router();
  * Protected route to get subfolders of a specific folder.
  */
 folderRouter.post(
-  '/parent/:folderId',
+  '/parent',
   authorize,
   async (req: AuthenticatedRequest, res) => {
     try {

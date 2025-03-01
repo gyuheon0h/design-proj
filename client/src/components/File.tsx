@@ -131,15 +131,14 @@ const FileComponent = (props: FileComponentProps) => {
     fetchModifiedByName();
   }, [props.file.lastModifiedBy]);
 
-
   useEffect(() => {
     const fetchIsFavorited = async () => {
       try {
-        const isFavorited = await getIsFavoritedByFileId(props.file.id); 
+        const isFavorited = await getIsFavoritedByFileId(props.file.id);
         setIsFavorited(isFavorited);
       } catch (error) {
-        console.error("Error fetching isFavorited for file", error);
-        setError("Error fetching isFavorited for file");
+        console.error('Error fetching isFavorited for file', error);
+        setError('Error fetching isFavorited for file');
       }
     };
 
@@ -521,6 +520,7 @@ const FileComponent = (props: FileComponentProps) => {
         <Fade in={isFileViewerOpen} timeout={300}>
           <Box>
             <MoveDialog
+              page={props.page}
               open={isMoveDialogOpen}
               onClose={() => setIsMoveDialogOpen(false)}
               fileName={props.file.name}

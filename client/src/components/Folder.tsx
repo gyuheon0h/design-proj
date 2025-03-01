@@ -13,12 +13,10 @@ import { colors } from '../Styles';
 import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import MoveDialog from './MoveDialog';
-import { getIsFavoritedByFileId } from "../utils/helperRequests";
+import { getIsFavoritedByFileId } from '../utils/helperRequests';
 import ErrorAlert from '../components/ErrorAlert';
 import { Folder } from '../interfaces/Folder';
 import axios from 'axios';
-
-
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -36,20 +34,19 @@ const FolderComponent = (props: FolderProps) => {
   const open = Boolean(anchorEl);
   const [error, setError] = useState<string | null>(null);
 
-
   useEffect(() => {
-      const fetchIsFavorited = async () => {
-        try {
-          const isFavorited = await getIsFavoritedByFileId(props.folder.id); 
-          setIsFavorited(isFavorited);
-        } catch (error) {
-          console.error("Error fetching isFavorited for folder", error);
-          setError("Error fetching isFavorited for folder");
-        }
-      };
-  
-      fetchIsFavorited();
-    }, [props.folder.id]);
+    const fetchIsFavorited = async () => {
+      try {
+        const isFavorited = await getIsFavoritedByFileId(props.folder.id);
+        setIsFavorited(isFavorited);
+      } catch (error) {
+        console.error('Error fetching isFavorited for folder', error);
+        setError('Error fetching isFavorited for folder');
+      }
+    };
+
+    fetchIsFavorited();
+  }, [props.folder.id]);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -78,7 +75,7 @@ const FolderComponent = (props: FolderProps) => {
     if (props.page === 'trash') {
       alert('Restore the folder to update it!');
     } else {
-      await handleFavoriteFolder(props.folder.id); 
+      await handleFavoriteFolder(props.folder.id);
       setIsFavorited(!isFavorited); // toggle state locally
     }
     props.refreshFolders(props.folder.parentFolder);
@@ -321,6 +318,7 @@ const FolderComponent = (props: FolderProps) => {
         // onShareSuccess={() => props.refreshFolders(props.folder.parentFolder)}
       />
       <MoveDialog
+        page={props.page}
         open={isMoveDialogOpen}
         onClose={() => setIsMoveDialogOpen(false)}
         fileName={props.folder.name}

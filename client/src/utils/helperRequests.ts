@@ -37,13 +37,14 @@ export async function getUsernameById(userId: string): Promise<string> {
 
 export async function getIsFavoritedByFileId(fileId: string): Promise<boolean> {
   try {
-    const response = await axios.get(`http://localhost:5001/api/user/permissions/${fileId}`, 
-      { withCredentials: true }
+    const response = await axios.get(
+      `http://localhost:5001/api/user/permissions/${fileId}`,
+      { withCredentials: true },
     );
-     
+
     return response.data?.isFavorited || false;
   } catch (error) {
-    console.error("Error fetching isFavorited status: ", error);
+    console.error('Error fetching isFavorited status: ', error);
     return false;
   }
 }
@@ -74,6 +75,12 @@ export async function downloadFile(
   }
 }
 
+/**
+ * This function is for breadcrumbing. Given a list of folderIds, convert it to their
+ * folder name equivalent.
+ * @param folderIds List of folder Ids.
+ * @returns Promise that's an array of key/strings.
+ */
 export async function fetchFolderNames(
   folderIds: string[],
 ): Promise<{ [key: string]: string }> {
