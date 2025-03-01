@@ -11,7 +11,7 @@ dotenv.config(); // we need this to be able to access things like userId in our 
 // Middleware
 app.use(
   cors({
-    origin: 'http://localhost:3000', // Allow requests from React frontend
+    origin: process.env.CLIENT_BASE_URL, // Allow requests from React frontend
     credentials: true, // Allow cookies to be sent with requests
   }),
 );

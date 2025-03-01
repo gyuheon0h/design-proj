@@ -28,9 +28,12 @@ interface PermissionDialogProps {
 
 const getAllUsers = async (): Promise<User[]> => {
   try {
-    const response = await axios.get('http://localhost:5001/api/user/all', {
-      withCredentials: true,
-    });
+    const response = await axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/api/user/all`,
+      {
+        withCredentials: true,
+      },
+    );
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error('Error getting all users:', error);
@@ -62,7 +65,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
     if (!resourceId) return;
     try {
       const response = await axios.get(
-        `http://localhost:5001/api/${resourceType}/${resourceId}/permissions`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/permissions`,
         { withCredentials: true },
       );
       setPermissions(Array.isArray(response.data) ? response.data : []);
@@ -101,7 +104,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
     if (!resourceId) return;
     try {
       await axios.put(
-        `http://localhost:5001/api/${resourceType}/${resourceId}/permissions/${userId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/permissions/${userId}`,
         { role: newRoleValue },
         { withCredentials: true },
       );
@@ -123,7 +126,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
     if (!resourceId) return;
     try {
       await axios.delete(
-        `http://localhost:5001/api/${resourceType}/${resourceId}/permissions/${userId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/permissions/${userId}`,
         { withCredentials: true },
       );
       // Remove from state
@@ -139,7 +142,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
     if (!resourceId || !newUserId) return;
     try {
       const response = await axios.put(
-        `http://localhost:5001/api/${resourceType}/${resourceId}/permissions/${newUserId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/permissions/${newUserId}`,
         {
           role: newRole,
         },

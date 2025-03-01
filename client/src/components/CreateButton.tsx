@@ -69,7 +69,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
 
     try {
       const response = await axios.post(
-        'http://localhost:5001/api/file/upload',
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/upload`,
         formData,
         { withCredentials: true },
       );
@@ -88,7 +88,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
     const requestBody = { name: folderName, parentFolder };
     try {
       const response = await axios.post(
-        'http://localhost:5001/api/folder/create',
+        `${process.env.REACT_APP_API_BASE_URL}/api/folder/create`,
         requestBody,
         { withCredentials: true },
       );
