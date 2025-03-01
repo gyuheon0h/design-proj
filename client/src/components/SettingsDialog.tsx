@@ -34,21 +34,17 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
     username: '',
     currentPassword: '',
     newPassword: '',
-    newPassword: '',
   });
 
   const [errors, setErrors] = useState({
     username: false,
-    currentPassword: false,
     currentPassword: false,
   });
 
   useEffect(() => {
     if (contextUsername) {
       setFormData((prev) => ({
-      setFormData((prev) => ({
         ...prev,
-        username: contextUsername,
         username: contextUsername,
       }));
     }
@@ -58,20 +54,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
     (field: keyof typeof formData) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setFormData((prev) => ({
-  const handleInputChange =
-    (field: keyof typeof formData) =>
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((prev) => ({
         ...prev,
-        [field]: event.target.value,
-      }));
-      if (errors[field as keyof typeof errors]) {
-        setErrors((prev) => ({
-          ...prev,
-          [field]: false,
-        }));
-      }
-    };
         [field]: event.target.value,
       }));
       if (errors[field as keyof typeof errors]) {
@@ -97,9 +80,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
 
       if (!response.ok) {
         setErrors((prev) => ({
-        setErrors((prev) => ({
           ...prev,
-          currentPassword: true,
           currentPassword: true,
         }));
         return false;
@@ -114,9 +95,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
   const handleSaveChanges = async () => {
     if (!formData.currentPassword) {
       setErrors((prev) => ({
-      setErrors((prev) => ({
         ...prev,
-        currentPassword: true,
         currentPassword: true,
       }));
       return;
@@ -158,9 +137,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
           const error = await response.json();
           if (error.error === 'Username already taken') {
             setErrors((prev) => ({
-            setErrors((prev) => ({
               ...prev,
-              username: true,
               username: true,
             }));
           }
@@ -174,20 +151,13 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
   const handleDeleteAccount = async () => {
     if (!formData.currentPassword) {
       setErrors((prev) => ({
-      setErrors((prev) => ({
         ...prev,
-        currentPassword: true,
         currentPassword: true,
       }));
       return;
     }
 
     if (await verifyPassword(formData.currentPassword)) {
-      if (
-        window.confirm(
-          'Are you sure you want to delete your account? This action cannot be undone.',
-        )
-      ) {
       if (
         window.confirm(
           'Are you sure you want to delete your account? This action cannot be undone.',
@@ -204,9 +174,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
           if (response.ok) {
             navigate('/');
           } else {
-          } else {
             console.error('Error deleting account:');
-            navigate('/');
             navigate('/');
           }
         } catch (error) {
@@ -221,11 +189,9 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
       username: contextUsername || '',
       currentPassword: '',
       newPassword: '',
-      newPassword: '',
     });
     setErrors({
       username: false,
-      currentPassword: false,
       currentPassword: false,
     });
     onClose();
@@ -240,17 +206,8 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
           fontWeight: 'bold',
         }}
       >
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle
-        sx={{
-          fontFamily: typography.fontFamily,
-          textAlign: 'center',
-          fontWeight: 'bold',
-        }}
-      >
         Account Settings
       </DialogTitle>
-
 
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -298,8 +255,6 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
         <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
           <Button
             variant="contained"
-          <Button
-            variant="contained"
             onClick={handleSaveChanges}
             fullWidth
             sx={{ fontFamily: typography.fontFamily }}
@@ -315,7 +270,6 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
             Cancel
           </Button>
         </Box>
-
 
         <Button
           variant="contained"

@@ -327,4 +327,28 @@ userRouter.delete(
   },
 );
 
+userRouter.get('/:userId/permissions/:fileId', async (req, res) => {
+  try {
+    const { userId, fileId } = req.params;
+
+    if (!userId || !fileId) {
+      return res.status(400).json({ error: 'Missing userId or fileId' });
+    }
+
+    // Check if the file is favorited by the user
+    const permission = await PermissionModel.getByUserAndFile(userId, fileId);
+
+    if (!permission) {
+      return res
+        .status(404)
+        .json({ error: 'No permission found for this file' });
+    }
+
+    return res.json({ isFavorited: permission.isFavorited || false });
+  } catch (error) {
+    console.error('Error checking if file is favorited:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 export default userRouter;

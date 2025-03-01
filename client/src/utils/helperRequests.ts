@@ -34,14 +34,20 @@ export async function getUsernameById(userId: string): Promise<string> {
     return '';
   }
 }
-
-export async function getIsFavoritedByFileId(fileId: string): Promise<boolean> {
+/**
+ * This just checks whether a given file is favorited.
+ * @param fileId This is the fileId that we're checking
+ * @returns boolean denoting whether it's favorited by someone somewhere.
+ */
+export async function getIsFavoritedByFileId(
+  fileId: string,
+  userId: string,
+): Promise<boolean> {
   try {
     const response = await axios.get(
       `http://localhost:5001/api/user/permissions/${fileId}`,
       { withCredentials: true },
     );
-
     return response.data?.isFavorited || false;
   } catch (error) {
     console.error('Error fetching isFavorited status: ', error);

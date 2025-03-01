@@ -1,4 +1,4 @@
- import express, { Application, Request, Response } from 'express';
+import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import apiRoutes from './routes/api'; // Collects all API routes
 import { query } from './db_models/db';
@@ -11,6 +11,7 @@ dotenv.config(); // we need this to be able to access things like userId in our 
 // Middleware
 app.use(
   cors({
+    // for development purposes; UNCOMMENT THIS For most purposes.
     origin: process.env.CLIENT_BASE_URL, // Allow requests from React frontend
     credentials: true, // Allow cookies to be sent with requests
   }),

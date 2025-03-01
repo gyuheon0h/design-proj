@@ -7,7 +7,6 @@ const router = Router();
 
 // Collect all API routes
 router.use('/auth', authRouter);
-
 router.use('/user', userRouter);
 router.use('/file', fileRouter);
 router.use('/folder', folderRouter);
