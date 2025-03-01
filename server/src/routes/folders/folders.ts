@@ -90,6 +90,12 @@ folderRouter.post(
         parentFolder: parentFolder || null,
       });
 
+      await PermissionModel.createPermission({
+        fileId: newFolder.id,
+        userId: owner,
+        role: 'owner',
+      });
+
       return res.status(201).json(newFolder);
     } catch (error) {
       console.error('Error creating folder:', error);
@@ -114,7 +120,7 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
 });
 
 /**
- * PATCH /api/files/favorite/:folderId
+ * PATCH /api/folder/favorite/:folderId
  * Route to favorite/unfavorite a folder
  */
 folderRouter.patch('/:folderId/favorite/', authorize, async (req, res) => {
