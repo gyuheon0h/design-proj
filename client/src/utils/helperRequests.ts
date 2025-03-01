@@ -9,7 +9,7 @@ export async function getBlobGcskey(
 ): Promise<Blob> {
   try {
     const response = await axios.post(
-      `http://localhost:5001/api/file/view`,
+      `${process.env.REACT_APP_API_BASE_URL}/api/file/view`,
       { gcsKey, fileType },
       { responseType: 'blob' },
     );
@@ -23,9 +23,12 @@ export async function getBlobGcskey(
 
 export async function getUsernameById(id: string): Promise<string> {
   try {
-    const response = await axios.get(`http://localhost:5001/api/user/`, {
-      params: { id },
-    });
+    const response = await axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/api/user`,
+      {
+        params: { id },
+      },
+    );
     return response.data?.user.username || '';
   } catch (error) {
     console.error('Error fetching username:', error);
@@ -52,7 +55,7 @@ export async function downloadFile(
 ): Promise<void> {
   try {
     const response = await axios.get(
-      `http://localhost:5001/api/file/download/${fileId}`,
+      `${process.env.REACT_APP_API_BASE_URL}/api/file/download/${fileId}`,
       {
         responseType: 'blob',
         withCredentials: true,
@@ -77,7 +80,9 @@ export async function fetchFolderNames(
 ): Promise<{ [key: string]: string }> {
   try {
     const nameRequests = folderIds.map((id) =>
-      axios.get(`http://localhost:5001/api/folder/foldername/${id}`),
+      axios.get(
+        `${process.env.REACT_APP_API_BASE_URL}/api/folder/foldername/${id}`,
+      ),
     );
     const nameResponses = await Promise.all(nameRequests);
 

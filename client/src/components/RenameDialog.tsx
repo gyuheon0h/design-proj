@@ -37,7 +37,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
       try {
         if (resourceType === 'file') {
           await axios.patch(
-            `http://localhost:5001/api/file/rename/${fileId}`,
+            `${process.env.REACT_APP_API_BASE_URL}/api/file/rename/${fileId}`,
             { fileName: newFileName },
             { withCredentials: true },
           );
@@ -45,7 +45,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
 
         if (resourceType === 'folder') {
           await axios.patch(
-            `http://localhost:5001/api/folder/rename/${fileId}`,
+            `${process.env.REACT_APP_API_BASE_URL}/api/folder/rename/${fileId}`,
             { folderName: newFileName },
             { withCredentials: true },
           );

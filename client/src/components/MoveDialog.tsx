@@ -78,7 +78,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
     setLoading(true);
     try {
       const res = await axios.post(
-        'http://localhost:5001/api/folder/parent',
+        `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent`,
         { folderId: folderId ?? null }, // ensure null is passed for root
         { withCredentials: true },
       );
@@ -122,7 +122,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
     if (selectedFolderId === parentFolderId) return;
     try {
       await axios.patch(
-        `http://localhost:5001/api/${resourceType}/move/${fileId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/move/${fileId}`,
         { parentFolderId: selectedFolderId },
         { withCredentials: true },
       );

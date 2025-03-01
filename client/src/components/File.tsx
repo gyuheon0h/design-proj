@@ -230,7 +230,7 @@ const FileComponent = (props: FileComponentProps) => {
     // Note: still calling the patch through the file endpoint, but it's using the permission model
     try {
       await axios.patch(
-        `http://localhost:5001/api/file/favorite/${fileId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/favorite/${fileId}`,
         {},
         { withCredentials: true },
       );
@@ -257,7 +257,7 @@ const FileComponent = (props: FileComponentProps) => {
     // }
     try {
       await axios.patch(
-        `http://localhost:5001/api/file/restore/${fileId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/restore/${fileId}`,
         {},
         { withCredentials: true },
       );
