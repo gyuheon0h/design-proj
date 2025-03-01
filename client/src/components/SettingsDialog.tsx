@@ -23,58 +23,62 @@ interface SettingsDialogProps {
 }
 
 const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
-  const { username: contextUsername, setUsername: updateContextUsername } = useUser();
+  const { username: contextUsername, setUsername: updateContextUsername } =
+    useUser();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     username: '',
     currentPassword: '',
-    newPassword: ''
+    newPassword: '',
   });
 
   const [errors, setErrors] = useState({
     username: false,
-    currentPassword: false
+    currentPassword: false,
   });
 
   useEffect(() => {
     if (contextUsername) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        username: contextUsername
+        username: contextUsername,
       }));
     }
   }, [contextUsername]);
 
-  const handleInputChange = (field: keyof typeof formData) => (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: event.target.value
-    }));
-    if (errors[field as keyof typeof errors]) {
-      setErrors(prev => ({
+  const handleInputChange =
+    (field: keyof typeof formData) =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({
         ...prev,
-        [field]: false
+        [field]: event.target.value,
       }));
-    }
-  };
+      if (errors[field as keyof typeof errors]) {
+        setErrors((prev) => ({
+          ...prev,
+          [field]: false,
+        }));
+      }
+    };
 
   const verifyPassword = async (password: string): Promise<boolean> => {
     try {
       const hashedPassword = SHA256(password).toString();
-      const response = await fetch('http://localhost:5001/api/settings/verify-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ passwordHash: hashedPassword }),
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_API_BASE_URL}/api/settings/verify-password`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ passwordHash: hashedPassword }),
+        },
+      );
 
       if (!response.ok) {
-        setErrors(prev => ({
+        setErrors((prev) => ({
           ...prev,
-          currentPassword: true
+          currentPassword: true,
         }));
         return false;
       }
@@ -87,9 +91,9 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
 
   const handleSaveChanges = async () => {
     if (!formData.currentPassword) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        currentPassword: true
+        currentPassword: true,
       }));
       return;
     }
@@ -111,12 +115,15 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
           return;
         }
 
-        const response = await fetch('http://localhost:5001/api/settings/update-profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(updateData),
-        });
+        const response = await fetch(
+          `${process.env.REACT_APP_API_BASE_URL}/api/settings/update-profile`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(updateData),
+          },
+        );
 
         if (response.ok) {
           if (updateData.username) {
@@ -126,9 +133,9 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
         } else {
           const error = await response.json();
           if (error.error === 'Username already taken') {
-            setErrors(prev => ({
+            setErrors((prev) => ({
               ...prev,
-              username: true
+              username: true,
             }));
           }
         }
@@ -140,25 +147,32 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
 
   const handleDeleteAccount = async () => {
     if (!formData.currentPassword) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        currentPassword: true
+        currentPassword: true,
       }));
       return;
     }
 
     if (await verifyPassword(formData.currentPassword)) {
-      if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      if (
+        window.confirm(
+          'Are you sure you want to delete your account? This action cannot be undone.',
+        )
+      ) {
         try {
-          const response = await fetch('http://localhost:5001/api/settings/delete-account', {
-            method: 'DELETE',
-            credentials: 'include',
-          });
+          const response = await fetch(
+            `${process.env.REACT_APP_API_BASE_URL}/api/settings/delete-account`,
+            {
+              method: 'DELETE',
+              credentials: 'include',
+            },
+          );
           if (response.ok) {
             navigate('/');
-          }else{
+          } else {
             console.error('Error deleting account:');
-            navigate('/'); 
+            navigate('/');
           }
         } catch (error) {
           console.error('Error deleting account:', error);
@@ -171,30 +185,27 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
     setFormData({
       username: contextUsername || '',
       currentPassword: '',
-      newPassword: ''
+      newPassword: '',
     });
     setErrors({
       username: false,
-      currentPassword: false
+      currentPassword: false,
     });
     onClose();
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={handleClose}
-      maxWidth="sm"
-      fullWidth
-    >
-      <DialogTitle sx={{ 
-        fontFamily: typography.fontFamily,
-        textAlign: 'center',
-        fontWeight: 'bold'
-      }}>
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <DialogTitle
+        sx={{
+          fontFamily: typography.fontFamily,
+          textAlign: 'center',
+          fontWeight: 'bold',
+        }}
+      >
         Account Settings
       </DialogTitle>
-      
+
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           <Typography variant="body2" sx={{ textAlign: 'center', mb: 1 }}>
@@ -239,8 +250,8 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
 
       <DialogActions sx={{ flexDirection: 'column', padding: 3, gap: 1 }}>
         <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleSaveChanges}
             fullWidth
             sx={{ fontFamily: typography.fontFamily }}
@@ -256,7 +267,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
             Cancel
           </Button>
         </Box>
-        
+
         <Button
           variant="contained"
           color="error"
