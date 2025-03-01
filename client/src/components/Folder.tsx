@@ -34,20 +34,6 @@ const FolderComponent = (props: FolderProps) => {
   const open = Boolean(anchorEl);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchIsFavorited = async () => {
-      try {
-        const isFavorited = await getIsFavoritedByFileId(props.folder.id);
-        setIsFavorited(isFavorited);
-      } catch (error) {
-        console.error('Error fetching isFavorited for folder', error);
-        setError('Error fetching isFavorited for folder');
-      }
-    };
-
-    fetchIsFavorited();
-  }, [props.folder.id]);
-
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);

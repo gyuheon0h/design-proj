@@ -127,6 +127,9 @@ folderRouter.patch('/:folderId/favorite/', authorize, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const { folderId } = req.params;
+
+    // TODO: im thinking this is because we don't create a permission for yourself
+
     const permission = await PermissionModel.getPermissionByFileAndUser(
       folderId,
       userId,

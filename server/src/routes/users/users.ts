@@ -151,8 +151,8 @@ userRouter.get(
 );
 
 /**
- * GET /api/files/favorites/:ownerId
- * Route to get favorited files owned by a certain user (ownerId).
+ * GET /api/:userId/favorites/folder
+ * Route to get favorited folders (including shared).
  * This is protected by authorize
  */
 
@@ -166,14 +166,16 @@ userRouter.get(
       }
       const userId = req.user.userId;
 
-      const favoritedFolders = await PermissionModel.getAllByOwnerAndColumn(
-        userId,
-        'isFavorited',
-        true,
+      const permissions = await PermissionModel.getFoldersByUserId(userId);
+      const favoritedFolders = await Promise.all(
+        permissions
+          .filter((perm) => perm.isFavorited === true)
+          .map((perm) => FolderModel.getById(perm.fileId)),
       );
+
       return res.json(favoritedFolders);
     } catch (error) {
-      console.error('Error getting files by owner:', error);
+      console.error('Error getting folders favorited by user:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   },
@@ -195,14 +197,44 @@ userRouter.get(
       }
       const userId = req.user.userId;
 
-      const favoritedFiles = await PermissionModel.getAllByOwnerAndColumn(
-        userId,
-        'isFavorited',
-        true,
+      const permissions = await PermissionModel.getFilesByUserId(userId); // TODO: does this include files that you own? how does shared pages work then? does it filter those out?
+      const favoritedFiles = await Promise.all(
+        permissions
+          .filter((perm) => perm.isFavorited === true)
+          .map((perm) => FileModel.getById(perm.fileId)),
       );
+
       return res.json(favoritedFiles);
     } catch (error) {
-      console.error('Error getting files by owner:', error);
+      console.error('Error getting files favorited by user:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
+/**
+ * PATCH /api/userId/favorites/:fileId
+ */
+userRouter.patch(
+  '/:userId/favorites/:fileId',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const userId = req.user.userId;
+
+      const permissions = await PermissionModel.getFilesByUserId(userId); // TODO: does this include files that you own? how does shared pages work then? does it filter those out?
+      const favoritedFiles = await Promise.all(
+        permissions
+          .filter((perm) => perm.isFavorited === true)
+          .map((perm) => FileModel.getById(perm.fileId)),
+      );
+
+      return res.json(favoritedFiles);
+    } catch (error) {
+      console.error('Error getting files favorited by user:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   },
