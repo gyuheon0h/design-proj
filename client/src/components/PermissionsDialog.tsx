@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -18,6 +18,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { User } from '../interfaces/User';
 import { Permission } from '../interfaces/Permission';
+import { useUser } from '../context/UserContext';
 
 interface PermissionDialogProps {
   open: boolean;
@@ -47,6 +48,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
   fileId,
   folderId,
 }) => {
+  const { userId } = useUser();
   const [users, setUsers] = useState<User[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -193,7 +195,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
             </Typography>
             {permissions.length > 0 ? (
               permissions
-                .filter((perm) => !perm.deletedAt) // skip any that might be "deleted"
+                .filter((perm) => !perm.deletedAt && perm.userId !== userId) // skip any that might be "deleted"
                 .map((perm) => {
                   const user = users.find((u) => u.id === perm.userId);
                   return (

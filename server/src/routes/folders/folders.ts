@@ -109,18 +109,23 @@ folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
     const userId = (req as any).user.userId;
     const { folderId } = req.params;
 
-    
     // TODO: im thinking this is because we don't create a permission for yourself
 
-    const permission = await PermissionModel.getPermissionByFileAndUser(folderId, userId);
+    const permission = await PermissionModel.getPermissionByFileAndUser(
+      folderId,
+      userId,
+    );
 
     if (!permission) {
       return res.status(404).json({ message: 'Folder not found' });
     }
 
-    const permissionMetadata = await PermissionModel.updatePermission(permission.id, {
-      isFavorited: !permission.isFavorited,
-    });
+    const permissionMetadata = await PermissionModel.updatePermission(
+      permission.id,
+      {
+        isFavorited: !permission.isFavorited,
+      },
+    );
 
     return res.status(200).json({
       message: 'Folder favorited successfully',
