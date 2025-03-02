@@ -110,12 +110,13 @@ const PageComponent: React.FC<PageComponentProps> = ({
       console.log('firstly: ' + folderId);
       console.log(userId);
       if (folderId === null) {
+        console.log('Attempting to fetch from the null endpoint File.');
         filesRes = await axios.get(
           `http://localhost:5001/api/user/${userId}/${page}/file`,
           { withCredentials: true },
         );
       } else {
-        console.log('We are not at the parent ? ');
+        console.log('Attempting to fetch from the non-null endpoint.');
         console.log(folderId);
         filesRes = await axios.get(
           `http://localhost:5001/api/folder/parent/${folderId}`,
@@ -129,11 +130,20 @@ const PageComponent: React.FC<PageComponentProps> = ({
     }
   };
 
+  /**
+   * This is a function that fetches data for the folders
+   * @param folderId This is the input folder Id.
+   * It may be null in the event of being called on a home directory.
+   * It is defined otherwise.
+   */
   const fetchFolderData = async (folderId: string | null) => {
     try {
       console.log('Fetching folders!');
       let folderRes;
       if (folderId === null) {
+        console.log(
+          'Attempting to fetch from the null endpoint Folder version.',
+        );
         folderRes = await axios.get(
           `http://localhost:5001/api/user/${userId}/${page}/folder`,
           { withCredentials: true },

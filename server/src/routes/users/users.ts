@@ -368,7 +368,10 @@ userRouter.get('/:userId/permissions/:fileId', async (req, res) => {
     }
 
     // Check if the file is favorited by the user
-    const permission = await PermissionModel.getByUserAndFile(userId, fileId);
+    const permission = await PermissionModel.getPermissionByFileAndUser(
+      fileId,
+      userId,
+    );
 
     if (!permission) {
       return res
