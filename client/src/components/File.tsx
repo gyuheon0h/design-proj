@@ -134,7 +134,10 @@ const FileComponent = (props: FileComponentProps) => {
   useEffect(() => {
     const fetchIsFavorited = async () => {
       try {
-        const isFavorited = await getIsFavoritedByFileId(props.file.id);
+        const isFavorited = await getIsFavoritedByFileId(
+          props.file.id,
+          localStorage.getItem('userId'),
+        );
         setIsFavorited(isFavorited);
       } catch (error) {
         console.error('Error fetching isFavorited for file', error);

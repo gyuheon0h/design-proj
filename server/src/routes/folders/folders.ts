@@ -66,10 +66,11 @@ folderRouter.post('/parent/shared', async (req, res) => {
  * Protected route to create a new folder.
  * TODO: make this authorized
  */
-folderRouter.post(
+folderRouter.patch(
   '/create',
   authorize,
   async (req: AuthenticatedRequest, res) => {
+    console.log('hello');
     try {
       const { name, parentFolder } = req.body;
 
@@ -120,21 +121,21 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
 });
 
 /**
- * PATCH /api/folder/favorite/:folderId
+ * PATCH /api/folder/:folderId/favorite
  * Route to favorite/unfavorite a folder
  */
-folderRouter.patch('/:folderId/favorite/', authorize, async (req, res) => {
+folderRouter.patch('/:folderId/favorite', authorize, async (req, res) => {
+  // console.log('PATCH request received at /api/folder/:folderId/favorite');
   try {
+    console.log('PATCH request received at /api/folder/:folderId/favorite');
     const userId = (req as any).user.userId;
     const { folderId } = req.params;
 
     // TODO: im thinking this is because we don't create a permission for yourself
-
     const permission = await PermissionModel.getPermissionByFileAndUser(
       folderId,
       userId,
     );
-
     if (!permission) {
       return res.status(404).json({ message: 'Folder not found' });
     }

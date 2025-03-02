@@ -131,8 +131,8 @@ const PageComponent: React.FC<PageComponentProps> = ({
 
   const fetchFolderData = async (folderId: string | null) => {
     try {
+      console.log('Fetching folders!');
       let folderRes;
-      console.log('secondary: ' + folderId);
       if (folderId === null) {
         folderRes = await axios.get(
           `http://localhost:5001/api/user/${userId}/${page}/folder`,

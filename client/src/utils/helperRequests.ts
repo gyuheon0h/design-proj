@@ -41,7 +41,7 @@ export async function getUsernameById(userId: string): Promise<string> {
  */
 export async function getIsFavoritedByFileId(
   fileId: string,
-  userId: string,
+  userId: string | null,
 ): Promise<boolean> {
   try {
     const response = await axios.get(
