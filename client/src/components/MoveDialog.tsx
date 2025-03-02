@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -55,6 +55,41 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // fetch subfolders for the given parent folder ID
+  const fetchSubFolders = useCallback(
+    async (folderId: string | null, userId: string | null) => {
+      setLoading(true);
+      try {
+        if (folderId === null) {
+          const res = await axios.get(
+            `http://localhost:5001/api/user/${userId}/${page}/folder`,
+            // { folderId: folderId ?? null }, // ensure null is passed for root
+            { withCredentials: true },
+          );
+          console.log(
+            'I think this is a very concerning area to be in so just logging here.',
+          );
+          setFolders(res.data || []);
+        } else {
+          const res = await axios.get(
+            `http://localhost:5001/api/folder/${folderId}/parent`,
+            // { folderId: folderId ?? null }, // ensure null is passed for root
+            { withCredentials: true },
+          );
+          console.log(
+            'I think this is a very concerning area to be in so just logging here.',
+          );
+          setFolders(res.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching folders:', error);
+        setError('Failed to load folders. Please try again.');
+      }
+      setLoading(false);
+    },
+    [page],
+  );
+
   // reset states when opening dialog
   useEffect(() => {
     if (open) {
@@ -63,7 +98,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
       setSelectedFolderId(null); // automatically select the root directory
       fetchSubFolders(null, userContext.userId); // load subfolders of root directory
     }
-  }, [open]);
+  }, [open, fetchSubFolders, userContext.userId]);
 
   // fetch subfolders whenever the current parent folder changes
   useEffect(() => {
@@ -75,36 +110,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
         setSelectedFolderId(null);
       }
     }
-  }, [currentParentFolderId]);
-
-  // fetch subfolders for the given parent folder ID
-  const fetchSubFolders = async (
-    folderId: string | null,
-    userId: string | null,
-  ) => {
-    setLoading(true);
-    try {
-      if (folderId === null) {
-        const res = await axios.get(
-          `http://localhost:5001/api/user/${userId}/${page}/folder`,
-          // { folderId: folderId ?? null }, // ensure null is passed for root
-          { withCredentials: true },
-        );
-        setFolders(res.data);
-      } else {
-        const res = await axios.get(
-          `http://localhost:5001/api/folder/${folderId}/parent`,
-          // { folderId: folderId ?? null }, // ensure null is passed for root
-          { withCredentials: true },
-        );
-        setFolders(res.data);
-      }
-    } catch (error) {
-      console.error('Error fetching folders:', error);
-      setError('Failed to load folders. Please try again.');
-    }
-    setLoading(false);
-  };
+  }, [currentParentFolderId, fetchSubFolders, userContext.userId]);
 
   // select the folder without navigating into it
   const handleSelectFolder = (event: React.MouseEvent, folderId: string) => {
