@@ -118,7 +118,7 @@ const PageComponent: React.FC<PageComponentProps> = ({
         console.log('We are not at the parent ? ');
         console.log(folderId);
         filesRes = await axios.get(
-          `http://localhost:5001/api/file/parent?${folderId}`,
+          `http://localhost:5001/api/folder/parent/${folderId}`,
           { withCredentials: true },
         );
       }
@@ -140,7 +140,7 @@ const PageComponent: React.FC<PageComponentProps> = ({
         );
       } else {
         folderRes = await axios.get(
-          `http://localhost:5001/api/folder/parent?${folderId}`,
+          `http://localhost:5001/api/folder/parent/${folderId}`,
           { withCredentials: true },
         );
       }

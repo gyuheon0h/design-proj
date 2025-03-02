@@ -10,8 +10,8 @@ const folderRouter = Router();
  * GET /api/folders/parent/:folderId
  * Protected route to get subfolders of a specific folder.
  */
-folderRouter.post(
-  '/parent',
+folderRouter.get(
+  '/parent/:folderId',
   authorize,
   async (req: AuthenticatedRequest, res) => {
     try {
@@ -109,7 +109,7 @@ folderRouter.patch(
  * GET /api/folder/foldername/:folderId
  * Get the name of a folder by id
  */
-folderRouter.get('/foldername/:folderId', async (req, res) => {
+folderRouter.get('/:folderId/foldername', async (req, res) => {
   try {
     const { folderId } = req.params;
     const folderName = await FolderModel.getFolderName(folderId);
