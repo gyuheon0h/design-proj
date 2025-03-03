@@ -45,9 +45,10 @@ export async function getIsFavoritedByFileId(
 ): Promise<boolean> {
   try {
     const response = await axios.get(
-      `${process.env.REACT_APP_API_BASE_URL}/api/user/permissions/${fileId}`,
+      `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/permissions/${fileId}`,
       { withCredentials: true },
     );
+    console.log(response.data);
     return response.data?.isFavorited || false;
   } catch (error) {
     console.error('Error fetching isFavorited status: ', error);

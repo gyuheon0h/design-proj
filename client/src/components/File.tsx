@@ -104,6 +104,7 @@ const FileComponent = (props: FileComponentProps) => {
       if (props.file.owner) {
         try {
           const username = await getUsernameById(props.file.owner);
+          console.log(username);
           setOwnerUserName(username || 'Unknown');
         } catch (error) {
           console.error('Error fetching username:', error);

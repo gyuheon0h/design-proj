@@ -55,6 +55,10 @@ const FolderComponent = (props: FolderProps) => {
   };
 
   // FAVORITE Event Handlers
+  /**
+   * This is what is triggered when the favorite icon is formally clicked.
+   * @param event
+   */
   const handleFavoriteFolderClick = async (event: React.MouseEvent) => {
     event.stopPropagation();
     if (props.page === 'trash') {
@@ -66,6 +70,10 @@ const FolderComponent = (props: FolderProps) => {
     props.refreshFolders(props.folder.parentFolder);
   };
 
+  /**
+   * The main difference I can see between this and the above is that this is for managing the backend.
+   * @param folderId
+   */
   const handleFavoriteFolder = async (folderId: string) => {
     try {
       // NOTE: using the user based permission to favorite but still calling the PATCH within the folder router

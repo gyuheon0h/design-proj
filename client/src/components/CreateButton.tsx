@@ -68,7 +68,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
     }
 
     try {
-      const response = await axios.patch(
+      const response = await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/api/file/upload`,
         formData,
         { withCredentials: true },
