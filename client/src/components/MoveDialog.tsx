@@ -69,7 +69,9 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           console.log(
             'I think this is a very concerning area to be in so just logging here.',
           );
-          setFolders(res.data || []);
+
+          console.log('Fetched folders:', res.data);
+          setFolders(res.data.folders || {});
         } else {
           const res = await axios.get(
             `http://localhost:5001/api/folder/${folderId}/parent`,
@@ -79,16 +81,24 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           console.log(
             'I think this is a very concerning area to be in so just logging here.',
           );
-          setFolders(res.data || []);
+          console.log('Fetched folders:', res.data);
+          setFolders(res.data.folders || []);
         }
       } catch (error) {
         console.error('Error fetching folders:', error);
         setError('Failed to load folders. Please try again.');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     },
     [page],
   );
+
+  useEffect(() => {
+    if (open && userContext.userId) {
+      fetchSubFolders(null, userContext.userId);
+    }
+  }, [open, fetchSubFolders, userContext.userId]);
 
   // reset states when opening dialog
   useEffect(() => {
