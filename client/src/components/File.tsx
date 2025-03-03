@@ -205,9 +205,12 @@ const FileComponent = (props: FileComponentProps) => {
 
   const handleDeleteFile = async (fileId: string) => {
     try {
-      await axios.delete(`http://localhost:5001/api/file/delete/${fileId}`, {
-        withCredentials: true,
-      });
+      await axios.delete(
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/delete/${fileId}`,
+        {
+          withCredentials: true,
+        },
+      );
     } catch (error) {
       console.error('Error deleting file:', error);
     }
