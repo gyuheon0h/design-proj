@@ -241,7 +241,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
       // Add to queue
       batchQueueRef.current.push(batch);
       processBatchQueue();
-    }, 100), // 30ms
+    }, 10), // 30ms
   ).current;
 
   // process the batch queue
