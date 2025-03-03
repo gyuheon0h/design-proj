@@ -12,7 +12,7 @@ const userRouter = Router();
 userRouter.get('/all', async (_, res) => {
   try {
     const users = await UserModel.getAll();
-    return res.status(201).json(users);
+    return res.status(200).json(users);
   } catch (error) {
     console.error('Error getting all users:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
