@@ -84,10 +84,25 @@ const TextEditor: React.FC<TextEditorProps> = ({
   const currentBatchOperationsRef = useRef<Operation[]>([]);
   const lastAcknowledgedBatchIdRef = useRef(0);
   const localContentRef = useRef('');
+  const serverUrl = process.env.REACT_APP_API_BASE_URL;
+  let wsUrl: string;
+
+  if (!serverUrl) {
+    wsUrl = 'ws://localhost:5001';
+  } else {
+    // Replace http:// or https:// with ws:// or wss:// respectively
+    if (serverUrl.startsWith('https://')) {
+      wsUrl = 'wss://' + serverUrl.substring(8);
+    } else if (serverUrl.startsWith('http://')) {
+      wsUrl = 'ws://' + serverUrl.substring(7);
+    } else {
+      wsUrl = 'ws://' + serverUrl;
+    }
+  }
 
   useEffect(() => {
     // Single WebSocket connection
-    const ws = new WebSocket('ws://localhost:5001');
+    const ws = new WebSocket(wsUrl);
     socketRef.current = ws;
 
     ws.onopen = () => {
