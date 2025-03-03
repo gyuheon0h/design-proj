@@ -20,7 +20,8 @@ type Operation = InsertOperation | DeleteOperation;
 
 interface ClientInfo {
   id: string;
-  pendingOps: number; // Track pending opsfor this client
+  lastKnownRevision: number; // Track what revision this client knows about
+  pendingOps: number; // Track pending ops for this client
 }
 
 // Document state with revision history
@@ -209,8 +210,12 @@ export default function setupWebSocketServer(server: Server) {
 
             const doc = documents.get(fileId)!;
 
-            // add client to the document
-            doc.clients.set(ws, { id: clientId, pendingOps: 0 });
+            // add client to the document with current revision
+            doc.clients.set(ws, {
+              id: clientId,
+              lastKnownRevision: doc.revision,
+              pendingOps: 0,
+            });
 
             // send current document state
             ws.send(
@@ -221,7 +226,9 @@ export default function setupWebSocketServer(server: Server) {
               }),
             );
 
-            console.log(`Client ${clientId} joined document ${fileId}`);
+            console.log(
+              `Client ${clientId} joined document ${fileId} at revision ${doc.revision}`,
+            );
             break;
           }
 
@@ -249,19 +256,52 @@ export default function setupWebSocketServer(server: Server) {
               return;
             }
 
-            // Extract batch information
-            const { operation, batchId, isLastInBatch } = data;
+            // Extract batch information and base revision
+            const { operation, batchId, baseRevision, isLastInBatch } = data;
+
+            // Check if the client's base revision is too old (conflict detection)
+            if (baseRevision < doc.revision - doc.history.length) {
+              // Client's base is too old, we can't properly transform
+              console.log(
+                `Client ${clientInfo.id} operation based on revision ${baseRevision} is too old (current: ${doc.revision})`,
+              );
+
+              ws.send(
+                JSON.stringify({
+                  type: 'operation-conflict',
+                  batchId,
+                }),
+              );
+
+              // Send full document update
+              ws.send(
+                JSON.stringify({
+                  type: 'document-update',
+                  content: doc.content,
+                  revision: doc.revision,
+                }),
+              );
+
+              // Update client's known revision
+              clientInfo.lastKnownRevision = doc.revision;
+              return;
+            }
 
             // Increment right when we receive a new operation
             clientInfo.pendingOps++;
 
-            // transform operation against all operations that the client hasn't seen
+            // transform operation against all operations since the client's base revision
             let transformedOp: Operation | null = operation;
-            const clientRevision = doc.revision - clientInfo.pendingOps + 1;
 
-            for (let i = clientRevision; i < doc.revision; i++) {
+            for (let i = baseRevision; i < doc.revision; i++) {
+              const historyIndex = i - (doc.revision - doc.history.length);
+              if (historyIndex < 0) continue; // Skip if history entry is no longer available
+
               if (!transformedOp) break;
-              transformedOp = transform(transformedOp, doc.history[i]);
+              transformedOp = transform(
+                transformedOp,
+                doc.history[historyIndex],
+              );
             }
 
             // don't apply ops nullified by transformations
@@ -271,7 +311,7 @@ export default function setupWebSocketServer(server: Server) {
                 JSON.stringify({
                   type: 'operation-ack',
                   revision: doc.revision,
-                  batchId, // include batch info in acknowledgment
+                  batchId,
                   isLastInBatch,
                 }),
               );
@@ -283,23 +323,32 @@ export default function setupWebSocketServer(server: Server) {
             doc.revision++;
             doc.history.push(transformedOp);
 
+            // Prune history if it gets too large (optional)
+            if (doc.history.length > 1000) {
+              doc.history.shift();
+            }
+
             clientInfo.pendingOps--;
+            // Update client's known revision
+            clientInfo.lastKnownRevision = doc.revision;
 
             // acknowledge the operation to the sender
             ws.send(
               JSON.stringify({
                 type: 'operation-ack',
                 revision: doc.revision,
-                batchId, // include batch info in acknowledgment
+                batchId,
                 isLastInBatch,
               }),
             );
 
-            // If this is the last operation in a batch and there have been multiple
-            // operations, send a full document update to all clients
+            // If this is the last operation in a batch, send a full document update to all clients
             if (isLastInBatch) {
               // broadcast to all clients
               doc.clients.forEach((info, client) => {
+                // Update each client's known revision
+                info.lastKnownRevision = doc.revision;
+
                 client.send(
                   JSON.stringify({
                     type: 'document-update',
@@ -319,6 +368,9 @@ export default function setupWebSocketServer(server: Server) {
                       revision: doc.revision,
                     }),
                   );
+
+                  // Update other client's known revision too
+                  info.lastKnownRevision = doc.revision;
                 }
               });
             }
@@ -340,7 +392,7 @@ export default function setupWebSocketServer(server: Server) {
             }
             break;
           }
-          // TODO UPDATE FILE METADATA
+
           case 'save-document': {
             const doc = documents.get(fileId);
             if (doc) {

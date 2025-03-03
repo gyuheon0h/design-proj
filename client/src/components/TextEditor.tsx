@@ -27,6 +27,7 @@ interface DeleteOperation {
 interface OperationBatch {
   operations: Operation[];
   batchId: number;
+  baseRevision: number; // Track revision this batch is based on
 }
 
 type Operation = InsertOperation | DeleteOperation;
@@ -84,6 +85,12 @@ const TextEditor: React.FC<TextEditorProps> = ({
   const currentBatchOperationsRef = useRef<Operation[]>([]);
   const lastAcknowledgedBatchIdRef = useRef(0);
   const localContentRef = useRef('');
+
+  // Add tracking for server revision
+  const serverRevisionRef = useRef(0);
+  // Track expected acknowledgments
+  const pendingAcksRef = useRef<{ [batchId: number]: boolean }>({});
+
   const serverUrl = process.env.REACT_APP_API_BASE_URL;
   let wsUrl: string;
 
@@ -126,12 +133,28 @@ const TextEditor: React.FC<TextEditorProps> = ({
         localContentRef.current = message.content;
         lastSyncedContentRef.current = message.content;
 
-        // Clear q when full update
+        // Update server revision
+        serverRevisionRef.current = message.revision;
+
+        // Clear queues and state when receiving a full update
         batchQueueRef.current = [];
         currentBatchOperationsRef.current = [];
+        pendingAcksRef.current = {};
         setIsProcessingBatch(false);
+
+        console.log(
+          `Received full document update at revision ${message.revision}`,
+        );
       } else if (message.type === 'operation-ack') {
+        // Mark this batch id as acknowledged
         if (message.batchId) {
+          pendingAcksRef.current[message.batchId] = true;
+
+          // Update server revision
+          if (message.revision) {
+            serverRevisionRef.current = message.revision;
+          }
+
           if (currentBatchOperationsRef.current.length > 0) {
             // Send next op in the current batch
             const nextOp = currentBatchOperationsRef.current.shift()!;
@@ -143,6 +166,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
                   fileId,
                   operation: nextOp,
                   batchId: message.batchId,
+                  baseRevision: serverRevisionRef.current,
                   isLastInBatch: currentBatchOperationsRef.current.length === 0,
                   totalInBatch:
                     batchQueueRef.current[0]?.operations.length || 0,
@@ -150,21 +174,31 @@ const TextEditor: React.FC<TextEditorProps> = ({
               );
             }
           } else {
-            // batch is complete
+            // Batch is complete
             lastAcknowledgedBatchIdRef.current = message.batchId;
 
-            // Remove it
+            // Remove it from queue and tracking
             if (
               batchQueueRef.current.length > 0 &&
               batchQueueRef.current[0].batchId === message.batchId
             ) {
               batchQueueRef.current.shift();
+              delete pendingAcksRef.current[message.batchId];
             }
 
             setIsProcessingBatch(false);
             processBatchQueue();
           }
         }
+      } else if (message.type === 'operation-conflict') {
+        // Handle conflict - server rejected our operation
+        console.log('Operation conflict detected, waiting for server update');
+
+        // Clear current batch processing to prepare for server update
+        currentBatchOperationsRef.current = [];
+        setIsProcessingBatch(false);
+
+        // Don't reprocess queue until we receive a full document update
       }
     };
 
@@ -187,7 +221,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileId]);
 
-  // set up debounced change handler, prevent overloading client
+  // Set up debounced change handler, prevent overloading client
   const debouncedProcessChanges = useRef(
     debounce((newContent: string) => {
       if (!socketRef.current) {
@@ -207,22 +241,23 @@ const TextEditor: React.FC<TextEditorProps> = ({
         return;
       }
 
-      // Create a new batch
+      // Create a new batch with current server revision
       const newBatchId = lastBatchId + 1;
       setLastBatchId(newBatchId);
 
       const batch: OperationBatch = {
         operations,
         batchId: newBatchId,
+        baseRevision: serverRevisionRef.current,
       };
 
-      // Add to q
+      // Add to queue
       batchQueueRef.current.push(batch);
       processBatchQueue();
     }, 30), // 30ms
   ).current;
 
-  // process the batch queue
+  // Process the batch queue
   const processBatchQueue = () => {
     if (
       isProcessingBatch ||
@@ -247,12 +282,16 @@ const TextEditor: React.FC<TextEditorProps> = ({
           fileId,
           operation: firstOp,
           batchId: currentBatch.batchId,
+          baseRevision: currentBatch.baseRevision, // Send base revision with op
           isLastInBatch: currentBatchOperationsRef.current.length === 0,
           totalInBatch: currentBatch.operations.length,
         }),
       );
+
+      // Track this batch as pending acknowledgment
+      pendingAcksRef.current[currentBatch.batchId] = false;
     } else {
-      // somehow we have an empty batch, remove it and process the next one
+      // Empty batch, remove it and process the next one
       batchQueueRef.current.shift();
       setIsProcessingBatch(false);
       processBatchQueue();
@@ -267,7 +306,6 @@ const TextEditor: React.FC<TextEditorProps> = ({
     debouncedProcessChanges(newContent);
   };
 
-  // TODO UPDATE FILE METADATA
   const handleSave = () => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.send(
