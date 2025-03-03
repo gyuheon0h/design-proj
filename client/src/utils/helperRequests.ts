@@ -38,13 +38,14 @@ export async function getUsernameById(id: string): Promise<string> {
 
 export async function getIsFavoritedByFileId(fileId: string): Promise<boolean> {
   try {
-    const response = await axios.get(`http://localhost:5001/api/user/permissions/${fileId}`, 
-      { withCredentials: true }
+    const response = await axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/api/user/permissions/${fileId}`,
+      { withCredentials: true },
     );
-     
+
     return response.data?.isFavorited || false;
   } catch (error) {
-    console.error("Error fetching isFavorited status: ", error);
+    console.error('Error fetching isFavorited status: ', error);
     return false;
   }
 }
