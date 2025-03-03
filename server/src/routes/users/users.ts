@@ -9,20 +9,6 @@ import jwt from 'jsonwebtoken';
 
 const userRouter = Router();
 
-// userRouter.get('/', async (req, res) => {
-//   try {
-//     const userId = req.query.id;
-//     const user = await UserModel.getById(userId as string);
-//     return res.status(201).json({ user });
-//   } catch (error) {
-//     console.error('Error getting user:', error);
-//     return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
-
-/**
- * I believe req isn't used and so I've underscored it
- */
 userRouter.get('/all', async (_, res) => {
   try {
     const users = await UserModel.getAll();

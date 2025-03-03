@@ -63,13 +63,12 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
         if (folderId === null) {
           const res = await axios.get(
             `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/${page}/folder`,
-            // { folderId: folderId ?? null }, // ensure null is passed for root
             { withCredentials: true },
           );
           console.log('Fetched folders:', res.data);
           console.log('the current page we are on: ', `${page}`);
           if (`${page}` === 'shared') {
-            // the shared page interesting has a different behavior than the other home pages.
+            // the shared page interestingly has a different behavior than the other home pages.
             setFolders(res.data.folders || {});
           } else {
             setFolders(res.data || {});
@@ -77,7 +76,6 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
         } else {
           const res = await axios.get(
             `${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}/parent`,
-            // { folderId: folderId ?? null }, // ensure null is passed for root
             { withCredentials: true },
           );
           console.log(
@@ -156,7 +154,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
     if (selectedFolderId === parentFolderId) return;
     try {
       await axios.patch(
-        `http://${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/move`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/move`,
         { parentFolderId: selectedFolderId },
         { withCredentials: true },
       );

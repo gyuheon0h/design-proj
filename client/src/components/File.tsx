@@ -212,7 +212,7 @@ const FileComponent = (props: FileComponentProps) => {
   const handleDeleteFile = async (fileId: string) => {
     try {
       await axios.delete(
-        `http://${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/delete`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/delete`,
         {
           withCredentials: true,
         },
@@ -265,7 +265,7 @@ const FileComponent = (props: FileComponentProps) => {
     // }
     try {
       await axios.patch(
-        `http://${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/restore`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/restore`,
         {},
         { withCredentials: true },
       );
