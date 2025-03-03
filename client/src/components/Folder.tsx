@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import SendIcon from '@mui/icons-material/Send';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -13,7 +13,6 @@ import { colors } from '../Styles';
 import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import MoveDialog from './MoveDialog';
-// import { getIsFavoritedByFileId } from '../utils/helperRequests';
 import ErrorAlert from '../components/ErrorAlert';
 import { Folder } from '../interfaces/Folder';
 import axios from 'axios';

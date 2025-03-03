@@ -69,7 +69,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
     try {
       const hashedPassword = SHA256(password).toString();
       const response = await fetch(
-        'http://${process.env.REACT_APP_API_BASE_URL}/api/auth/verify-password',
+        `http://${process.env.REACT_APP_API_BASE_URL}/api/auth/verify-password`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

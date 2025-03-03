@@ -35,6 +35,7 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FileViewerDialog from './FileViewerDialog';
 import { colors } from '../Styles';
 import MoveDialog from './MoveDialog';
+import { useUser } from '../context/UserContext';
 import {
   isSupportedFileTypeText,
   isSupportedFileTypeVideo,
@@ -90,6 +91,7 @@ const FileComponent = (props: FileComponentProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const fileCache = useRef(new Map<string, string>());
   const [isFavorited, setIsFavorited] = useState(false);
+  const userContext = useUser();
 
   // For the image viewer
   const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
@@ -136,7 +138,7 @@ const FileComponent = (props: FileComponentProps) => {
       try {
         const isFavorited = await getIsFavoritedByFileId(
           props.file.id,
-          localStorage.getItem('userId'),
+          userContext.userId,
         );
         setIsFavorited(isFavorited);
       } catch (error) {
@@ -146,7 +148,7 @@ const FileComponent = (props: FileComponentProps) => {
     };
 
     fetchIsFavorited();
-  }, [props.file.id]);
+  }, [props.file.id, userContext.userId]);
 
   const open = Boolean(anchorEl);
 
