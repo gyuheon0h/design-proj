@@ -36,7 +36,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
     if (newResourceName.trim()) {
       try {
         await axios.patch(
-          `http://localhost:5001/api/${resourceType}/${resourceId}/rename`,
+          `http://${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/rename`,
           { resourceName: newResourceName },
           { withCredentials: true },
         );

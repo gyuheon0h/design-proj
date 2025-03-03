@@ -87,7 +87,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
 
   useEffect(() => {
     // Single WebSocket connection
-    const ws = new WebSocket('ws://localhost:5001');
+    const ws = new WebSocket('ws://${process.env.REACT_APP_API_BASE_URL}');
     socketRef.current = ws;
 
     ws.onopen = () => {

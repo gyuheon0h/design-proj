@@ -13,7 +13,7 @@ import { colors } from '../Styles';
 import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import MoveDialog from './MoveDialog';
-import { getIsFavoritedByFileId } from '../utils/helperRequests';
+// import { getIsFavoritedByFileId } from '../utils/helperRequests';
 import ErrorAlert from '../components/ErrorAlert';
 import { Folder } from '../interfaces/Folder';
 import axios from 'axios';
@@ -71,7 +71,7 @@ const FolderComponent = (props: FolderProps) => {
     try {
       // NOTE: using the user based permission to favorite but still calling the PATCH within the folder router
       await axios.patch(
-        `http://localhost:5001/api/folder/${folderId}/favorite`,
+        `http://${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}/favorite`,
         {},
         {
           withCredentials: true,
@@ -100,7 +100,7 @@ const FolderComponent = (props: FolderProps) => {
     // }
     try {
       await axios.patch(
-        `http://localhost:5001/api/folder/${folderId}/restore`,
+        `http://${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}/restore`,
         {},
         {
           withCredentials: true,
@@ -122,7 +122,7 @@ const FolderComponent = (props: FolderProps) => {
   const handleDeleteFolder = async (folderId: string) => {
     try {
       await axios.delete(
-        `http://localhost:5001/api/folder/${folderId}/delete`,
+        `http://${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}/delete`,
         {
           withCredentials: true,
         },

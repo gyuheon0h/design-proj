@@ -10,7 +10,7 @@ export async function getBlobGcskey(
 ): Promise<Blob> {
   try {
     const response = await axios.post(
-      `http://localhost:5001/api/file/${fileId}/view`,
+      `http://${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/view`,
       { gcsKey, fileType },
       { responseType: 'blob' },
     );
@@ -25,7 +25,7 @@ export async function getBlobGcskey(
 export async function getUsernameById(userId: string): Promise<string> {
   try {
     const response = await axios.get(
-      `http://localhost:5001/api/user/${userId}`,
+      `http://${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}`,
       {},
     );
     return response.data?.user.username || '';
@@ -45,7 +45,7 @@ export async function getIsFavoritedByFileId(
 ): Promise<boolean> {
   try {
     const response = await axios.get(
-      `http://localhost:5001/api/user/permissions/${fileId}`,
+      `http://${process.env.REACT_APP_API_BASE_URL}/api/user/permissions/${fileId}`,
       { withCredentials: true },
     );
     return response.data?.isFavorited || false;
@@ -61,7 +61,7 @@ export async function downloadFile(
 ): Promise<void> {
   try {
     const response = await axios.get(
-      `http://localhost:5001/api/file/${fileId}/download`,
+      `http://${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/download`,
       {
         responseType: 'blob',
         withCredentials: true,
@@ -92,7 +92,9 @@ export async function fetchFolderNames(
 ): Promise<{ [key: string]: string }> {
   try {
     const nameRequests = folderIds.map((folderId) =>
-      axios.get(`http://localhost:5001/api/folder/${folderId}/foldername/`),
+      axios.get(
+        `http://${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}/foldername/`,
+      ),
     );
     const nameResponses = await Promise.all(nameRequests);
 

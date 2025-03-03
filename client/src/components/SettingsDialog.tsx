@@ -69,7 +69,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
     try {
       const hashedPassword = SHA256(password).toString();
       const response = await fetch(
-        'http://localhost:5001/api/auth/verify-password',
+        'http://${process.env.REACT_APP_API_BASE_URL}/api/auth/verify-password',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -119,7 +119,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
         }
 
         const response = await fetch(
-          `http://localhost:5001/api/user/${userId}/update-profile`,
+          `http://${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/update-profile`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -165,7 +165,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
       ) {
         try {
           const response = await fetch(
-            `http://localhost:5001/api/user/${userId}/delete`,
+            `http://${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/delete`,
             {
               method: 'DELETE',
               credentials: 'include',

@@ -112,14 +112,14 @@ const PageComponent: React.FC<PageComponentProps> = ({
       if (folderId === null) {
         console.log('Attempting to fetch from the null endpoint File.');
         filesRes = await axios.get(
-          `http://localhost:5001/api/user/${userId}/${page}/file`,
+          `http://${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/${page}/file`,
           { withCredentials: true },
         );
       } else {
         console.log('Attempting to fetch from the non-null endpoint.');
         console.log(folderId);
         filesRes = await axios.get(
-          `http://localhost:5001/api/folder/parent/${folderId}`,
+          `http://${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`,
           { withCredentials: true },
         );
       }
@@ -145,12 +145,12 @@ const PageComponent: React.FC<PageComponentProps> = ({
           'Attempting to fetch from the null endpoint Folder version.',
         );
         folderRes = await axios.get(
-          `http://localhost:5001/api/user/${userId}/${page}/folder`,
+          `http://${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/${page}/folder`,
           { withCredentials: true },
         );
       } else {
         folderRes = await axios.get(
-          `http://localhost:5001/api/folder/parent/${folderId}`,
+          `http://${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`,
           { withCredentials: true },
         );
       }

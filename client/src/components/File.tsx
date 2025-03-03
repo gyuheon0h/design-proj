@@ -209,9 +209,12 @@ const FileComponent = (props: FileComponentProps) => {
 
   const handleDeleteFile = async (fileId: string) => {
     try {
-      await axios.delete(`http://localhost:5001/api/file/${fileId}/delete`, {
-        withCredentials: true,
-      });
+      await axios.delete(
+        `http://${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/delete`,
+        {
+          withCredentials: true,
+        },
+      );
     } catch (error) {
       console.error('Error deleting file:', error);
     }
@@ -233,7 +236,7 @@ const FileComponent = (props: FileComponentProps) => {
     // Note: still calling the patch through the file endpoint, but it's using the permission model
     try {
       await axios.patch(
-        `http://localhost:5001/api/file/${fileId}/favorite`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/favorite`,
         {},
         { withCredentials: true },
       );
@@ -260,7 +263,7 @@ const FileComponent = (props: FileComponentProps) => {
     // }
     try {
       await axios.patch(
-        `http://localhost:5001/api/file/${fileId}/restore`,
+        `http://${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/restore`,
         {},
         { withCredentials: true },
       );

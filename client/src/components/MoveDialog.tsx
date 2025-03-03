@@ -62,7 +62,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
       try {
         if (folderId === null) {
           const res = await axios.get(
-            `http://localhost:5001/api/user/${userId}/${page}/folder`,
+            `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/${page}/folder`,
             // { folderId: folderId ?? null }, // ensure null is passed for root
             { withCredentials: true },
           );
@@ -71,10 +71,10 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           );
 
           console.log('Fetched folders:', res.data);
-          setFolders(res.data.folders || {});
+          setFolders(res.data || {});
         } else {
           const res = await axios.get(
-            `http://localhost:5001/api/folder/${folderId}/parent`,
+            `${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}/parent`,
             // { folderId: folderId ?? null }, // ensure null is passed for root
             { withCredentials: true },
           );
@@ -154,7 +154,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
     if (selectedFolderId === parentFolderId) return;
     try {
       await axios.patch(
-        `http://localhost:5001/api/${resourceType}/${resourceId}/move`,
+        `http://${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/move`,
         { parentFolderId: selectedFolderId },
         { withCredentials: true },
       );

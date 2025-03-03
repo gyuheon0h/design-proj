@@ -26,12 +26,15 @@ const Login = () => {
 
     try {
       const hashedPassword = SHA256(password).toString();
-      const response = await fetch('http://localhost:5001/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ username, passwordHash: hashedPassword }),
-      });
+      const response = await fetch(
+        'http://${process.env.REACT_APP_API_BASE_URL}/api/auth/login',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ username, passwordHash: hashedPassword }),
+        },
+      );
 
       if (response.ok) {
         const data = await response.json();
