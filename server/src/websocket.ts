@@ -19,6 +19,7 @@ interface DeleteOperation {
 type Operation = InsertOperation | DeleteOperation;
 
 interface QueuedOperation {
+  sourceClientId: string;
   operation: Operation;
   sourceRevision: number;
   batchId: number;
@@ -185,33 +186,59 @@ function processClientQueue(
 ) {
   if (clientInfo.operationQueue.length === 0) return;
 
-  // Sort operations by sourceRevision to ensure they're processed in order
-  clientInfo.operationQueue.sort((a, b) => a.sourceRevision - b.sourceRevision);
+  console.log(
+    `Processing queue for client ${clientInfo.id}. Queue length: ${clientInfo.operationQueue.length}`,
+  );
+  console.log(
+    `Client revision: ${clientInfo.revision}, Document revision: ${doc.revision}`,
+  );
+
+  // Sort operations first by sourceRevision, then by batch order
+  clientInfo.operationQueue.sort((a, b) => {
+    if (a.sourceRevision !== b.sourceRevision) {
+      return a.sourceRevision - b.sourceRevision;
+    }
+    // If same revision, preserve batch order
+    return a.batchId - b.batchId;
+  });
 
   // Try to process the first operation in the queue
   const nextOp = clientInfo.operationQueue[0];
 
-  // Only process if this operation is next in sequence
-  if (nextOp.sourceRevision === clientInfo.revision) {
-    clientInfo.operationQueue.shift(); // Remove from queue
+  console.log(
+    `Next operation source revision: ${nextOp.sourceRevision}, current client revision: ${clientInfo.revision}`,
+  );
 
-    // Transform operation against all operations since the source revision
-    let transformedOp: Operation | null = nextOp.operation;
+  console.log(
+    `Processing operation from client ${clientInfo.id} at revision ${nextOp.sourceRevision}`,
+  );
 
-    for (let i = nextOp.sourceRevision; i < doc.revision; i++) {
-      if (!transformedOp) break;
-      transformedOp = transform(transformedOp, doc.history[i]);
-    }
+  clientInfo.operationQueue.shift(); // Remove from queue
 
-    // Apply the operation if it wasn't nullified by transformations
-    if (transformedOp) {
-      doc.content = applyOperation(doc.content, transformedOp);
-      doc.revision++;
-      doc.history.push(transformedOp);
-    }
+  // Transform operation against all operations since the source revision
+  let transformedOp: Operation | null = nextOp.operation;
+
+  console.log(
+    `Transforming operation against ${doc.revision - nextOp.sourceRevision} operations`,
+  );
+
+  for (let i = nextOp.sourceRevision; i < doc.revision; i++) {
+    if (!transformedOp) break;
+
+    console.log(`Transforming against operation at revision ${i}`);
+    transformedOp = transform(transformedOp, doc.history[i]);
+  }
+
+  if (transformedOp) {
+    console.log(`Applying transformed operation to document`);
+    doc.content = applyOperation(doc.content, transformedOp);
+    doc.revision++;
+    doc.history.push(transformedOp);
 
     // Update client's revision
     clientInfo.revision = doc.revision;
+
+    console.log(`Document updated to revision ${doc.revision}`);
 
     // Acknowledge the operation
     ws.send(
@@ -223,35 +250,37 @@ function processClientQueue(
       }),
     );
 
-    // If this is the last operation in a batch, send full document update to all clients
-    if (nextOp.isLastInBatch) {
-      doc.clients.forEach((info, client) => {
+    // IMPORTANT: Always broadcast changes to all clients
+    console.log(`Broadcasting update to all clients`);
+    doc.clients.forEach((info, client) => {
+      if (info.id !== clientInfo.id) {
+        console.log(`Sending update to client ${info.id}`);
         client.send(
           JSON.stringify({
             type: 'document-update',
             content: doc.content,
             revision: doc.revision,
+            sourceClientId: clientInfo.id,
           }),
         );
-      });
-    } else {
-      // For intermediate operations, only broadcast to other clients
-      doc.clients.forEach((info, client) => {
-        if (client !== ws) {
-          client.send(
-            JSON.stringify({
-              type: 'document-update',
-              content: doc.content,
-              revision: doc.revision,
-            }),
-          );
-        }
-      });
-    }
+      }
+    });
+  } else {
+    console.log(`Operation was nullified by transformations`);
 
-    // Recursively process more operations if available
-    processClientQueue(doc, clientInfo, ws);
+    // Still acknowledge even if nullified
+    ws.send(
+      JSON.stringify({
+        type: 'operation-ack',
+        revision: doc.revision,
+        batchId: nextOp.batchId,
+        isLastInBatch: nextOp.isLastInBatch,
+      }),
+    );
   }
+
+  // Recursively process more operations if available
+  processClientQueue(doc, clientInfo, ws);
 }
 
 // WebSocket Server Setup
@@ -293,6 +322,7 @@ export default function setupWebSocketServer(server: Server) {
             }
 
             const doc = documents.get(fileId)!;
+            const clientId = generateClientId();
 
             // add client to the document with current revision
             doc.clients.set(ws, {
@@ -301,12 +331,20 @@ export default function setupWebSocketServer(server: Server) {
               operationQueue: [],
             });
 
+            ws.send(
+              JSON.stringify({
+                type: 'client-id-assigned',
+                clientId,
+              }),
+            );
+
             // send current document state
             ws.send(
               JSON.stringify({
                 type: 'document-update',
                 content: doc.content,
                 revision: doc.revision,
+                forceUpdate: true,
               }),
             );
 
@@ -343,12 +381,32 @@ export default function setupWebSocketServer(server: Server) {
             // Extract batch and operation information
             const { operation, batchId, isLastInBatch, clientRevision } = data;
 
+            console.log(
+              `Received operation from client ${clientInfo.id} with source revision ${clientRevision}`,
+            );
+            console.log(
+              `Current document revision: ${doc.revision}, client's recorded revision: ${clientInfo.revision}`,
+            );
+
+            // IMPORTANT: If client's reported revision differs significantly from what we think their revision is,
+            // update our record to match their report
+            if (
+              clientRevision !== undefined &&
+              Math.abs(clientRevision - clientInfo.revision) > 5
+            ) {
+              console.log(
+                `Client revision mismatch detected. Updating client ${clientInfo.id} recorded revision from ${clientInfo.revision} to ${clientRevision}`,
+              );
+              clientInfo.revision = clientRevision;
+            }
+
             // Queue the operation with the revision it's based on
             clientInfo.operationQueue.push({
               operation,
               sourceRevision: clientRevision || clientInfo.revision,
               batchId,
               isLastInBatch,
+              sourceClientId: clientInfo.id,
             });
 
             // Try to process the queue
