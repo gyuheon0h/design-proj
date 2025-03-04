@@ -367,9 +367,9 @@ folderRouter.patch('/restore/:folderId', authorize, async (req, res) => {
 folderRouter.patch('/rename/:folderId', authorize, async (req, res) => {
   try {
     const { folderId } = req.params;
-    const { folderName } = req.body;
+    const { resourceName } = req.body;
 
-    if (!folderName) {
+    if (!resourceName) {
       return res.status(400).json({ message: 'No new folder name provided' });
     }
 
@@ -385,7 +385,7 @@ folderRouter.patch('/rename/:folderId', authorize, async (req, res) => {
     }
 
     const updatedFolder = await FolderModel.updateFolderMetadata(folderId, {
-      name: folderName,
+      name: resourceName,
     });
 
     return res.status(200).json({
