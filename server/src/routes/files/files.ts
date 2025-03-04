@@ -248,8 +248,13 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
       return res.status(404).json({ message: 'File not found' });
     }
 
+    const fileExtension = file.name.split('.').pop();
+    const newBaseName=file.name.split('.').slice(0, -1).join('.');
+    const newFileName='${newBaseName}.${fileExtension}';
+    
+
     const fileMetadata = await FileModel.updateFileMetadata(fileId, {
-      name: fileName,
+      name: newFileName,
       lastModifiedBy: userId, //TODO: may need to get userName thru userId
       lastModifiedAt: new Date(),
     });

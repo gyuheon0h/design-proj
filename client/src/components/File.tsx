@@ -268,7 +268,6 @@ const FileComponent = (props: FileComponentProps) => {
     }
   };
 
-  //DIALOG CLICK TRIGGERS (Rename, Permissions/Share, Move)
   const handleRenameClick = (event: React.MouseEvent) => {
     event.stopPropagation();
     setIsRenameDialogOpen(true);
