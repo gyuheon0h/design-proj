@@ -40,8 +40,8 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
       try {
         await axios.patch(
           `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/rename/${fileId}`,
-          { fileName: `${baseName}.${extension}` },
-          { withCredentials: true }
+          { resourceName: `${baseName}.${extension}` },
+          { withCredentials: true },
         );
         onSuccess();
         onClose();
@@ -76,7 +76,9 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">Cancel</Button>
+        <Button onClick={onClose} color="primary">
+          Cancel
+        </Button>
         <Button
           onClick={handleRename}
           color="primary"

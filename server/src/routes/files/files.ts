@@ -82,7 +82,6 @@ fileRouter.post(
   },
 );
 
-
 /**
  * POST /api/files/upload
  * Route to upload a file
@@ -209,15 +208,21 @@ fileRouter.patch('/favorite/:fileId', authorize, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const { fileId } = req.params;
-    const permission = await PermissionModel.getPermissionByFileAndUser(fileId, userId);
+    const permission = await PermissionModel.getPermissionByFileAndUser(
+      fileId,
+      userId,
+    );
 
     if (!permission) {
       return res.status(404).json({ message: 'File not found' });
-    };
+    }
 
-    const permissionMetadata = await PermissionModel.updatePermission(permission.id, {
-      isFavorited: !permission.isFavorited,
-    });
+    const permissionMetadata = await PermissionModel.updatePermission(
+      permission.id,
+      {
+        isFavorited: !permission.isFavorited,
+      },
+    );
 
     return res.status(200).json({
       message: 'File favorited successfully',
@@ -235,8 +240,8 @@ fileRouter.patch('/favorite/:fileId', authorize, async (req, res) => {
  */
 fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
   try {
-    const { fileName } = req.body;
-    if (!fileName) {
+    const { resourceName } = req.body;
+    if (!resourceName) {
       return res.status(400).json({ message: 'No new file name provided' });
     }
 
@@ -248,13 +253,8 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
       return res.status(404).json({ message: 'File not found' });
     }
 
-    const fileExtension = file.name.split('.').pop();
-    const newBaseName=file.name.split('.').slice(0, -1).join('.');
-    const newFileName='${newBaseName}.${fileExtension}';
-    
-
     const fileMetadata = await FileModel.updateFileMetadata(fileId, {
-      name: newFileName,
+      name: resourceName,
       lastModifiedBy: userId, //TODO: may need to get userName thru userId
       lastModifiedAt: new Date(),
     });
