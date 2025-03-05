@@ -180,12 +180,20 @@ const PageComponent: React.FC<PageComponentProps> = ({
     try {
       let folderRes;
       if (page === 'home') {
-        folderRes = await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent`,
-          // `http://localhost:5001/api/folder/parent?${queryParams.toString()}`,
-          { folderId },
-          { withCredentials: true },
-        );
+        if (!folderId) {
+          folderRes = await axios.get(
+            `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/home/folder`,
+            // `http://localhost:5001/api/folder/parent?${queryParams.toString()}`,
+            // { folderId },
+            { withCredentials: true },
+          );
+        } else {
+          axios.get(
+            `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`, // parent's folderId
+            // { folderId },
+            { withCredentials: true },
+          );
+        }
       }
 
       if (page === 'favorites') {
@@ -197,9 +205,9 @@ const PageComponent: React.FC<PageComponentProps> = ({
             },
           );
         } else {
-          axios.post(
-            `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent`,
-            { folderId },
+          axios.get(
+            `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`, // parent's folderId
+            // { folderId },
             { withCredentials: true },
           );
         }
@@ -208,15 +216,15 @@ const PageComponent: React.FC<PageComponentProps> = ({
       if (page === 'shared') {
         if (!folderId) {
           folderRes = await axios.get(
-            `${process.env.REACT_APP_API_BASE_URL}/api/folder/shared`,
+            `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/shared/folder`,
             {
               withCredentials: true,
             },
           );
         } else {
-          folderRes = await axios.post(
-            `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/shared`,
-            { folderId },
+          folderRes = await axios.get(
+            `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`,
+            // { folderId },
             { withCredentials: true },
           );
         }
@@ -224,7 +232,7 @@ const PageComponent: React.FC<PageComponentProps> = ({
 
       if (page === 'trash') {
         folderRes = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/api/folder/trash`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/trash/folder`,
           {
             withCredentials: true,
           },
@@ -233,13 +241,13 @@ const PageComponent: React.FC<PageComponentProps> = ({
 
       //TODO: eventually use this when the backend routes r completed
       //   if (!folderId) {
-      //     folderRes = await axios.post(
+      //     folderRes = await axios.get(
       //       // 'http://localhost:5001/api/folder/parent',
       //       `http://localhost:5001/api/user/${userId}/${page}/folder`,
       //       { withCredentials: true },
       //     );
       //   } else {
-      //     folderRes = await axios.post(
+      //     folderRes = await axios.get(
       //       // 'http://localhost:5001/api/folder/parent',
       //       `http://localhost:5001/api/folder/parent?${folderId}`,
       //       { withCredentials: true },

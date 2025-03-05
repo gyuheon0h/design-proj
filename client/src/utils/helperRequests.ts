@@ -6,10 +6,11 @@ import { File } from '../interfaces/File';
 export async function getBlobGcskey(
   gcsKey: string,
   fileType: string,
+  fileId: string,
 ): Promise<Blob> {
   try {
     const response = await axios.post(
-      `${process.env.REACT_APP_API_BASE_URL}/api/file/view`,
+      `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/view`,
       { gcsKey, fileType },
       { responseType: 'blob' },
     );

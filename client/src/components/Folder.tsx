@@ -13,12 +13,10 @@ import { colors } from '../Styles';
 import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import MoveDialog from './MoveDialog';
-import { getIsFavoritedByFileId } from "../utils/helperRequests";
+import { getIsFavoritedByFileId } from '../utils/helperRequests';
 import ErrorAlert from '../components/ErrorAlert';
 import { Folder } from '../interfaces/Folder';
 import axios from 'axios';
-
-
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -36,20 +34,19 @@ const FolderComponent = (props: FolderProps) => {
   const open = Boolean(anchorEl);
   const [error, setError] = useState<string | null>(null);
 
-
   useEffect(() => {
-      const fetchIsFavorited = async () => {
-        try {
-          const isFavorited = await getIsFavoritedByFileId(props.folder.id); 
-          setIsFavorited(isFavorited);
-        } catch (error) {
-          console.error("Error fetching isFavorited for folder", error);
-          setError("Error fetching isFavorited for folder");
-        }
-      };
-  
-      fetchIsFavorited();
-    }, [props.folder.id]);
+    const fetchIsFavorited = async () => {
+      try {
+        const isFavorited = await getIsFavoritedByFileId(props.folder.id);
+        setIsFavorited(isFavorited);
+      } catch (error) {
+        console.error('Error fetching isFavorited for folder', error);
+        setError('Error fetching isFavorited for folder');
+      }
+    };
+
+    fetchIsFavorited();
+  }, [props.folder.id]);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -78,7 +75,7 @@ const FolderComponent = (props: FolderProps) => {
     if (props.page === 'trash') {
       alert('Restore the folder to update it!');
     } else {
-      await handleFavoriteFolder(props.folder.id); 
+      await handleFavoriteFolder(props.folder.id);
       setIsFavorited(!isFavorited); // toggle state locally
     }
     props.refreshFolders(props.folder.parentFolder);
@@ -88,7 +85,7 @@ const FolderComponent = (props: FolderProps) => {
     try {
       // NOTE: using the user based permission to favorite but still calling the PATCH within the folder router
       await axios.patch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/folder/favorite/${folderId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}/favorite`,
         {},
         {
           withCredentials: true,
@@ -117,7 +114,7 @@ const FolderComponent = (props: FolderProps) => {
     // }
     try {
       await axios.patch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/folder/restore/${folderId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}/restore`,
         {},
         {
           withCredentials: true,
@@ -139,7 +136,7 @@ const FolderComponent = (props: FolderProps) => {
   const handleDeleteFolder = async (folderId: string) => {
     try {
       await axios.delete(
-        `${process.env.REACT_APP_API_BASE_URL}/api/folder/delete/${folderId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}/delete`,
         {
           withCredentials: true,
         },
@@ -304,8 +301,8 @@ const FolderComponent = (props: FolderProps) => {
       {/* Rename Folder Dialog */}
       <RenameDialog
         open={isRenameDialogOpen}
-        fileName={props.folder.name}
-        fileId={props.folder.id}
+        resourceName={props.folder.name}
+        resourceId={props.folder.id}
         resourceType="folder"
         onClose={() => setIsRenameDialogOpen(false)}
         onSuccess={() => props.refreshFolders(props.folder.parentFolder)}
@@ -323,8 +320,9 @@ const FolderComponent = (props: FolderProps) => {
       <MoveDialog
         open={isMoveDialogOpen}
         onClose={() => setIsMoveDialogOpen(false)}
-        fileName={props.folder.name}
-        fileId={props.folder.id}
+        resourceName={props.folder.name}
+        page={props.page}
+        resourceId={props.folder.id}
         resourceType="folder"
         parentFolderId={props.folder.parentFolder}
         onSuccess={() => props.refreshFolders(props.folder.parentFolder)}

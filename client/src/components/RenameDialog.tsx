@@ -11,8 +11,8 @@ import axios from 'axios';
 
 interface RenameDialogProps {
   open: boolean;
-  fileName: string;
-  fileId: string;
+  resourceName: string;
+  resourceId: string;
   resourceType: 'folder' | 'file';
   onClose: () => void;
   onSuccess: () => void;
@@ -20,33 +20,33 @@ interface RenameDialogProps {
 
 const RenameDialog: React.FC<RenameDialogProps> = ({
   open,
-  fileName,
-  fileId,
+  resourceName,
+  resourceId,
   resourceType,
   onClose,
   onSuccess,
 }) => {
-  const [newFileName, setNewFileName] = useState(fileName);
+  const [newresourceName, setNewresourceName] = useState(resourceName);
 
   useEffect(() => {
-    setNewFileName(fileName);
-  }, [fileName]);
+    setNewresourceName(resourceName);
+  }, [resourceName]);
 
   const handleRename = async () => {
-    if (newFileName.trim()) {
+    if (newresourceName.trim()) {
       try {
         if (resourceType === 'file') {
           await axios.patch(
-            `${process.env.REACT_APP_API_BASE_URL}/api/file/rename/${fileId}`,
-            { fileName: newFileName },
+            `${process.env.REACT_APP_API_BASE_URL}/api/file/${resourceId}/rename`,
+            { fileName: newresourceName },
             { withCredentials: true },
           );
         }
 
         if (resourceType === 'folder') {
           await axios.patch(
-            `${process.env.REACT_APP_API_BASE_URL}/api/folder/rename/${fileId}`,
-            { folderName: newFileName },
+            `${process.env.REACT_APP_API_BASE_URL}/api/folder/${resourceId}/rename`,
+            { folderName: newresourceName },
             { withCredentials: true },
           );
         }
@@ -61,17 +61,17 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Rename {fileName}</DialogTitle>
+      <DialogTitle>Rename {resourceName}</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
           margin="dense"
-          label={newFileName}
+          label={newresourceName}
           type="text"
           fullWidth
           variant="outlined"
-          value={newFileName}
-          onChange={(e) => setNewFileName(e.target.value)}
+          value={newresourceName}
+          onChange={(e) => setNewresourceName(e.target.value)}
         />
       </DialogContent>
       <DialogActions>
@@ -82,7 +82,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
           onClick={handleRename}
           color="primary"
           variant="contained"
-          disabled={newFileName.trim() === fileName.trim()}
+          disabled={newresourceName.trim() === resourceName.trim()}
         >
           Rename
         </Button>

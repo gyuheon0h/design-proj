@@ -166,6 +166,7 @@ const FileComponent = (props: FileComponentProps) => {
         const blob = await getBlobGcskey(
           props.file.gcsKey,
           props.file.fileType,
+          props.file.id,
         );
         const objectUrl = URL.createObjectURL(blob);
         if (!isSupportedFileTypeText(props.file.fileType)) {
@@ -206,7 +207,7 @@ const FileComponent = (props: FileComponentProps) => {
   const handleDeleteFile = async (fileId: string) => {
     try {
       await axios.delete(
-        `${process.env.REACT_APP_API_BASE_URL}/api/file/delete/${fileId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/delete`,
         {
           withCredentials: true,
         },
@@ -232,7 +233,7 @@ const FileComponent = (props: FileComponentProps) => {
     // Note: still calling the patch through the file endpoint, but it's using the permission model
     try {
       await axios.patch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/file/favorite/${fileId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/favorite`,
         {},
         { withCredentials: true },
       );
@@ -259,7 +260,7 @@ const FileComponent = (props: FileComponentProps) => {
     // }
     try {
       await axios.patch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/file/restore/${fileId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/restore`,
         {},
         { withCredentials: true },
       );
@@ -493,8 +494,8 @@ const FileComponent = (props: FileComponentProps) => {
 
       <RenameDialog
         open={isRenameDialogOpen}
-        fileName={props.file.name}
-        fileId={props.file.id}
+        resourceName={props.file.name}
+        resourceId={props.file.id}
         resourceType="file"
         onClose={() => setIsRenameDialogOpen(false)}
         onSuccess={() => props.refreshFiles(props.file.parentFolder)}
@@ -521,15 +522,6 @@ const FileComponent = (props: FileComponentProps) => {
       <Modal open={isFileViewerOpen} onClose={handleCloseFileViewer}>
         <Fade in={isFileViewerOpen} timeout={300}>
           <Box>
-            <MoveDialog
-              open={isMoveDialogOpen}
-              onClose={() => setIsMoveDialogOpen(false)}
-              fileName={props.file.name}
-              fileId={props.file.id}
-              resourceType="file"
-              parentFolderId={props.file.parentFolder}
-              onSuccess={() => props.refreshFiles(props.file.parentFolder)}
-            />
             <FileViewerDialog
               open={isFileViewerOpen}
               onClose={handleCloseFileViewer}
@@ -546,6 +538,16 @@ const FileComponent = (props: FileComponentProps) => {
           </Box>
         </Fade>
       </Modal>
+      <MoveDialog
+        open={isMoveDialogOpen}
+        onClose={() => setIsMoveDialogOpen(false)}
+        page={props.page}
+        resourceName={props.file.name}
+        resourceId={props.file.id}
+        resourceType="file"
+        parentFolderId={props.file.parentFolder}
+        onSuccess={() => props.refreshFiles(props.file.parentFolder)}
+      />
     </div>
   );
 };

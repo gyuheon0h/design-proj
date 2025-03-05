@@ -82,7 +82,6 @@ fileRouter.post(
   },
 );
 
-
 /**
  * POST /api/files/upload
  * Route to upload a file
@@ -159,26 +158,26 @@ fileRouter.get('/download/:fileId', authorize, async (req, res) => {
   }
 });
 
-fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
-  try {
-    const { fileId } = req.params;
-    const file = await FileModel.getById(fileId);
+// fileRouter.delete('/:fileId/delete', authorize, async (req, res) => {
+//   try {
+//     const { fileId } = req.params;
+//     const file = await FileModel.getById(fileId);
 
-    if (!file) {
-      return res.status(404).json({ message: 'File not found' });
-    }
-    // TODO: think about good way to soft/hard delete from gcsKey. Should we have async process to
-    // hard delete files that have been soft deleted for a long time?
-    // await StorageService.deleteFile(file.gcsKey);
-    await FileModel.softDelete(fileId);
-    return res.json({ message: 'File deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting file:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+//     if (!file) {
+//       return res.status(404).json({ message: 'File not found' });
+//     }
+//     // TODO: think about good way to soft/hard delete from gcsKey. Should we have async process to
+//     // hard delete files that have been soft deleted for a long time?
+//     // await StorageService.deleteFile(file.gcsKey);
+//     await FileModel.softDelete(fileId);
+//     return res.json({ message: 'File deleted successfully' });
+//   } catch (error) {
+//     console.error('Error deleting file:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
 
-fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
+fileRouter.delete('/:fileId/delete', authorize, async (req, res) => {
   try {
     const { fileId } = req.params;
     const file = await FileModel.getById(fileId);
@@ -201,23 +200,29 @@ fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
 });
 
 /**
- * PATCH /api/files/favorite/:fileId
+ * PATCH /api/files/:fileId/favorite
  * Route to favorite/unfavorite a file
  */
 
-fileRouter.patch('/favorite/:fileId', authorize, async (req, res) => {
+fileRouter.patch('/:fileId/favorite', authorize, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const { fileId } = req.params;
-    const permission = await PermissionModel.getPermissionByFileAndUser(fileId, userId);
+    const permission = await PermissionModel.getPermissionByFileAndUser(
+      fileId,
+      userId,
+    );
 
     if (!permission) {
       return res.status(404).json({ message: 'File not found' });
-    };
+    }
 
-    const permissionMetadata = await PermissionModel.updatePermission(permission.id, {
-      isFavorited: !permission.isFavorited,
-    });
+    const permissionMetadata = await PermissionModel.updatePermission(
+      permission.id,
+      {
+        isFavorited: !permission.isFavorited,
+      },
+    );
 
     return res.status(200).json({
       message: 'File favorited successfully',
@@ -230,10 +235,10 @@ fileRouter.patch('/favorite/:fileId', authorize, async (req, res) => {
 });
 
 /**
- * PATCH /api/files/rename/:fileId
+ * PATCH /api/files/:fileId/rename
  * Route to rename a file (also updates lastModifiedBy and lastModifiedAt)
  */
-fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
+fileRouter.patch('/:fileId/rename', authorize, async (req, res) => {
   try {
     const { fileName } = req.body;
     if (!fileName) {
@@ -265,10 +270,10 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
 });
 
 /**
- * PATCH /api/files/move/:fileId
+ * PATCH /api/files/:fileId/move
  * Route to move a file (updates parentFolderId)
  */
-fileRouter.patch('/move/:fileId', authorize, async (req, res) => {
+fileRouter.patch('/:fileId/move', authorize, async (req, res) => {
   try {
     const { parentFolderId } = req.body;
     // if (!parentFolderId) {
@@ -491,7 +496,7 @@ fileRouter.get('/trash', authorize, async (req: AuthenticatedRequest, res) => {
   }
 });
 
-fileRouter.patch('/restore/:fileId', authorize, async (req, res) => {
+fileRouter.patch('/:fileId/restore', authorize, async (req, res) => {
   try {
     const { fileId } = req.params;
     const file = await FileModel.getByIdAll(fileId);
