@@ -221,6 +221,9 @@ const PageComponent: React.FC<PageComponentProps> = ({
               withCredentials: true,
             },
           );
+          // folderRes = folderRes.data.folder;
+          console.log(folderRes);
+          // folderRes = folderRes.data.folders; // we need this due to not knowing what type the folders are.
         } else {
           folderRes = await axios.get(
             `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`,

@@ -97,7 +97,11 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           // { folderId: folderId ?? null }, // ensure null is passed for root
           { withCredentials: true },
         );
-        setFolders(res.data);
+        if (page === 'shared') {
+          setFolders(res.data.folders);
+        } else {
+          setFolders(res.data);
+        }
       } else {
         const res = await axios.get(
           `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`,
@@ -138,7 +142,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   //   setFolderHistory((prev) => [...prev, folderId]);
   //   setCurrentParentFolderId(folderId);
   //   setSelectedFolderId(folderId);
-  // };
+  // };s
 
   // go back to the previous folder
   const handleGoBack = () => {

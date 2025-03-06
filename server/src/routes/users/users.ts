@@ -113,7 +113,7 @@ userRouter.get(
         permissions.map((perm) => FolderModel.getById(perm.fileId)),
       );
 
-      return res.json(folders); // this used to be {permissions, folders}
+      return res.json({ permissions, folders }); // this used to be {permissions, folders}
     } catch (error) {
       console.error('Error getting shared folders:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
@@ -417,28 +417,28 @@ userRouter.get(
   },
 );
 
-userRouter.get(
-  '/:userId/shared/folder',
-  authorize,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      const currentUserId = (req as any).user.userId;
-      if (!currentUserId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
+// userRouter.get(
+//   '/:userId/shared/folder',
+//   authorize,
+//   async (req: AuthenticatedRequest, res) => {
+//     try {
+//       const currentUserId = (req as any).user.userId;
+//       if (!currentUserId) {
+//         return res.status(401).json({ error: 'Not authenticated' });
+//       }
 
-      const permissions =
-        await PermissionModel.getFoldersByUserId(currentUserId);
+//       const permissions =
+//         await PermissionModel.getFoldersByUserId(currentUserId);
 
-      const folders = await Promise.all(
-        permissions.map((perm) => FolderModel.getById(perm.fileId)),
-      );
+//       const folders = await Promise.all(
+//         permissions.map((perm) => FolderModel.getById(perm.fileId)),
+//       );
 
-      return res.json({ permissions, folders });
-    } catch (error) {
-      console.error('Error getting shared folders:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  },
-);
+//       return res.json({ permissions, folders });
+//     } catch (error) {
+//       console.error('Error getting shared folders:', error);
+//       return res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//   },
+// );
 export default userRouter;
