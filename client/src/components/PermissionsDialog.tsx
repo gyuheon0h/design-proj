@@ -48,10 +48,11 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const filteredOptions = options.filter((option) =>
-    option.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    option.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredOptions =
+    searchQuery.trim() === '' ? options : options.filter((option) =>
+      option.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      option.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   return (
     <Box sx={{ position: 'relative', width: '100%' }}>
@@ -65,7 +66,8 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
           setSearchQuery(e.target.value);
           setShowDropdown(true);
         }}
-        onFocus={() => setShowDropdown(true)}
+        onFocus={() => setShowDropdown(true)} // Ensure dropdown shows when input is clicked
+        onBlur={() => setTimeout(() => setShowDropdown(false), 200)} // Hide dropdown on blur with delay
         sx={{
           backgroundColor: colors.white,
           borderRadius: '8px',
@@ -91,7 +93,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
       />
 
       {/* Dynamic User List (Styled Dropdown) */}
-      {showDropdown && searchQuery && (
+      {showDropdown && (
         <Paper
           elevation={3}
           sx={{
