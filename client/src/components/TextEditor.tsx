@@ -27,6 +27,7 @@ interface DeleteOperation {
 interface OperationBatch {
   operations: Operation[];
   batchId: number;
+  clientRevision: number;
 }
 
 type Operation = InsertOperation | DeleteOperation;
@@ -84,10 +85,29 @@ const TextEditor: React.FC<TextEditorProps> = ({
   const currentBatchOperationsRef = useRef<Operation[]>([]);
   const lastAcknowledgedBatchIdRef = useRef(0);
   const localContentRef = useRef('');
+  const clientIdRef = useRef<string>('');
+  // client revision tracking
+  const clientRevisionRef = useRef(0);
+
+  const serverUrl = process.env.REACT_APP_API_BASE_URL;
+  let wsUrl: string;
+
+  if (!serverUrl) {
+    wsUrl = 'ws://localhost:5001';
+  } else {
+    // Replace http:// or https:// with ws:// or wss:// respectively
+    if (serverUrl.startsWith('https://')) {
+      wsUrl = 'wss://' + serverUrl.substring(8);
+    } else if (serverUrl.startsWith('http://')) {
+      wsUrl = 'ws://' + serverUrl.substring(7);
+    } else {
+      wsUrl = 'ws://' + serverUrl;
+    }
+  }
 
   useEffect(() => {
     // Single WebSocket connection
-    const ws = new WebSocket('ws://localhost:5001');
+    const ws = new WebSocket(wsUrl);
     socketRef.current = ws;
 
     ws.onopen = () => {
@@ -98,6 +118,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
           type: 'join-document',
           fileId,
           gcsKey,
+          requestClientId: true, // Request a client ID
         }),
       );
     };
@@ -105,21 +126,76 @@ const TextEditor: React.FC<TextEditorProps> = ({
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
 
-      if (message.type === 'document-update') {
-        // Full document update from server
-        setContent(message.content);
-        localContentRef.current = message.content;
-        lastSyncedContentRef.current = message.content;
+      if (message.type === 'client-id-assigned') {
+        clientIdRef.current = message.clientId;
+        console.log(`Assigned client ID: ${clientIdRef.current}`);
+      } else if (message.type === 'document-update') {
+        console.log('update received');
+        // Only apply updates from other clients, not our own echoed changes
+        if (
+          !message.sourceClientId ||
+          message.sourceClientId !== clientIdRef.current
+        ) {
+          console.log('Received document update from another client');
 
-        // Clear q when full update
-        batchQueueRef.current = [];
-        currentBatchOperationsRef.current = [];
-        setIsProcessingBatch(false);
+          // Store current cursor position to restore it after update
+          const selection = window.getSelection();
+          const cursorPosition = selection?.focusOffset || 0;
+
+          setContent(message.content);
+          localContentRef.current = message.content;
+          lastSyncedContentRef.current = message.content;
+
+          // Update client revision
+          if (message.revision !== undefined) {
+            clientRevisionRef.current = message.revision;
+            console.log(
+              `Updated client revision to ${clientRevisionRef.current}`,
+            );
+          }
+
+          // Clear queue since we now have the latest state
+          batchQueueRef.current = [];
+          currentBatchOperationsRef.current = [];
+          setIsProcessingBatch(false);
+
+          // Attempt to restore cursor position after update
+          try {
+            setTimeout(() => {
+              const textElement = document.querySelector('textarea');
+              if (textElement) {
+                textElement.focus();
+                textElement.setSelectionRange(cursorPosition, cursorPosition);
+              }
+            }, 0);
+          } catch (e) {
+            console.log("Couldn't restore cursor position");
+          }
+        } else {
+          console.log('Ignoring echo of our own update');
+        }
       } else if (message.type === 'operation-ack') {
+        console.log(`Received operation-ack for batch ${message.batchId}`);
+        console.log(
+          `Server revision: ${message.revision}, Current client revision: ${clientRevisionRef.current}`,
+        );
+
+        // Always update client revision from server
+        if (message.revision !== undefined) {
+          const oldRevision = clientRevisionRef.current;
+          clientRevisionRef.current = message.revision;
+          console.log(
+            `Updated client revision from ${oldRevision} to ${clientRevisionRef.current}`,
+          );
+        }
+
         if (message.batchId) {
           if (currentBatchOperationsRef.current.length > 0) {
             // Send next op in the current batch
             const nextOp = currentBatchOperationsRef.current.shift()!;
+            console.log(
+              `Sending next operation in batch ${message.batchId}, ${currentBatchOperationsRef.current.length} remaining`,
+            );
 
             if (socketRef.current?.readyState === WebSocket.OPEN) {
               socketRef.current.send(
@@ -131,12 +207,22 @@ const TextEditor: React.FC<TextEditorProps> = ({
                   isLastInBatch: currentBatchOperationsRef.current.length === 0,
                   totalInBatch:
                     batchQueueRef.current[0]?.operations.length || 0,
+                  clientRevision: clientRevisionRef.current, // Use the updated revision
                 }),
               );
             }
           } else {
             // batch is complete
+            console.log(`Batch ${message.batchId} complete`);
             lastAcknowledgedBatchIdRef.current = message.batchId;
+
+            // If this was the last in batch, update our synced content
+            if (message.isLastInBatch) {
+              console.log(
+                `Last operation in batch acknowledged, updating lastSyncedContent`,
+              );
+              lastSyncedContentRef.current = localContentRef.current;
+            }
 
             // Remove it
             if (
@@ -144,6 +230,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
               batchQueueRef.current[0].batchId === message.batchId
             ) {
               batchQueueRef.current.shift();
+              console.log(`Removed batch ${message.batchId} from queue`);
             }
 
             setIsProcessingBatch(false);
@@ -196,15 +283,21 @@ const TextEditor: React.FC<TextEditorProps> = ({
       const newBatchId = lastBatchId + 1;
       setLastBatchId(newBatchId);
 
+      // IMPORTANT: Log the current revision we're using
+      console.log(
+        `Creating new batch ${newBatchId} at revision ${clientRevisionRef.current}`,
+      );
+
       const batch: OperationBatch = {
         operations,
         batchId: newBatchId,
+        clientRevision: clientRevisionRef.current,
       };
 
-      // Add to q
+      // Add to queue
       batchQueueRef.current.push(batch);
       processBatchQueue();
-    }, 30), // 30ms
+    }, 100),
   ).current;
 
   // process the batch queue
@@ -234,6 +327,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
           batchId: currentBatch.batchId,
           isLastInBatch: currentBatchOperationsRef.current.length === 0,
           totalInBatch: currentBatch.operations.length,
+          clientRevision: currentBatch.clientRevision,
         }),
       );
     } else {
@@ -252,7 +346,6 @@ const TextEditor: React.FC<TextEditorProps> = ({
     debouncedProcessChanges(newContent);
   };
 
-  // TODO UPDATE FILE METADATA
   const handleSave = () => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.send(
@@ -286,7 +379,11 @@ const TextEditor: React.FC<TextEditorProps> = ({
           />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span>{isConnected ? 'Connected' : 'Disconnected'}</span>
+          <span>
+            {isConnected
+              ? `Connected (Rev: ${clientRevisionRef.current})`
+              : 'Disconnected'}
+          </span>
           <button onClick={handleSave} disabled={!isConnected}>
             Save
           </button>
