@@ -26,6 +26,7 @@ const Login = () => {
 
     try {
       const hashedPassword = SHA256(password).toString();
+      // comment
       const response = await fetch(
         `${process.env.REACT_APP_API_BASE_URL}/api/auth/login`,
         {
