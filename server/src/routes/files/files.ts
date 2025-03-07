@@ -158,25 +158,6 @@ fileRouter.get('/download/:fileId', authorize, async (req, res) => {
   }
 });
 
-// fileRouter.delete('/:fileId/delete', authorize, async (req, res) => {
-//   try {
-//     const { fileId } = req.params;
-//     const file = await FileModel.getById(fileId);
-
-//     if (!file) {
-//       return res.status(404).json({ message: 'File not found' });
-//     }
-//     // TODO: think about good way to soft/hard delete from gcsKey. Should we have async process to
-//     // hard delete files that have been soft deleted for a long time?
-//     // await StorageService.deleteFile(file.gcsKey);
-//     await FileModel.softDelete(fileId);
-//     return res.json({ message: 'File deleted successfully' });
-//   } catch (error) {
-//     console.error('Error deleting file:', error);
-//     return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
-
 fileRouter.delete('/:fileId/delete', authorize, async (req, res) => {
   try {
     const { fileId } = req.params;
@@ -485,17 +466,6 @@ fileRouter.delete(
     }
   },
 );
-
-// fileRouter.get('/trash', authorize, async (req: AuthenticatedRequest, res) => {
-//   try {
-//     const userId = (req as any).user.userId;
-//     const deletdFiles = await FileModel.getAllByOwnerAndDeleted(userId);
-//     return res.json(deletdFiles);
-//   } catch (error) {
-//     console.error('Error getting deleted files:', error);
-//     return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
 
 fileRouter.patch('/:fileId/restore', authorize, async (req, res) => {
   try {

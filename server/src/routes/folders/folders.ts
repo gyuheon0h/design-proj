@@ -6,49 +6,13 @@ import PermissionModel from '../../db_models/PermissionModel';
 
 const folderRouter = Router();
 
-/**
- * GET /api/folders/parent/:folderId
- * Protected route to get subfolders of a specific folder.
- */
-// folderRouter.post(
-//   '/parent',
-//   authorize,
-//   async (req: AuthenticatedRequest, res) => {
-//     try {
-//       const { folderId } = req.body; // Get from request body
-//       if (!req.user) {
-//         return res.status(401).json({ error: 'Unauthorized' });
-//       }
-//       const userId = req.user.userId;
-
-//       // Handle null case properly
-//       const subfolders = await FolderModel.getSubfoldersByOwner(
-//         userId,
-//         folderId || null,
-//       );
-
-//       // sort in descending order
-//       const sortedSubfolders = subfolders.sort((a, b) => {
-//         return (
-//           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-//         );
-//       });
-
-//       return res.json(sortedSubfolders);
-//     } catch (error) {
-//       console.error('Error getting subfolders:', error);
-//       return res.status(500).json({ error: 'Internal Server Error' });
-//     }
-//   },
-// );
 folderRouter.get(
   '/parent/:folderId',
   authorize,
   async (req: AuthenticatedRequest, res) => {
     try {
-      // console.log('HELLOfklsdaj;oisjf;laksdfj;lkasdjf;lkasdjf;laksdfj;lakj');
       const { folderId } = req.params; // Get from request body
-      // console.log('Folder router: ' + folderId);
+
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
