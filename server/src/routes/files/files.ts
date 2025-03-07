@@ -52,35 +52,35 @@ const upload = multer(); // Using memory storage to keep things minimal (TODO: i
  * Route to get files in a certain folder.
  * this is also protected by authorize
  */
-fileRouter.post(
-  '/folder',
-  authorize,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      const { folderId } = req.body;
-      if (!req.user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-      const userId = req.user.userId;
+// fileRouter.post(
+//   '/:fileId/folder',
+//   authorize,
+//   async (req: AuthenticatedRequest, res) => {
+//     try {
+//       const { folderId } = req.body;
+//       if (!req.user) {
+//         return res.status(401).json({ error: 'Unauthorized' });
+//       }
+//       const userId = req.user.userId;
 
-      const files = await FileModel.getFilesByOwnerAndFolder(
-        userId,
-        folderId || null,
-      );
+//       const files = await FileModel.getFilesByOwnerAndFolder(
+//         userId,
+//         folderId || null,
+//       );
 
-      const sortedFiles = files.sort((a, b) => {
-        return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      });
+//       const sortedFiles = files.sort((a, b) => {
+//         return (
+//           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+//         );
+//       });
 
-      return res.json(sortedFiles);
-    } catch (error) {
-      console.error('Error getting files by folder:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  },
-);
+//       return res.json(sortedFiles);
+//     } catch (error) {
+//       console.error('Error getting files by folder:', error);
+//       return res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//   },
+// );
 
 /**
  * POST /api/files/upload
@@ -334,11 +334,12 @@ fileRouter.get('/shared', authorize, async (req: AuthenticatedRequest, res) => {
 });
 
 // Bypass auth for shared page. Need to add security here, maybe check permissions table
-fileRouter.post('/folder/shared', async (req: AuthenticatedRequest, res) => {
+// Returns sorted files on a given parent folder. Therefore, we need to
+fileRouter.get('/parent/:folderId', async (req: AuthenticatedRequest, res) => {
   try {
-    const { folderId } = req.body;
-
-    const files = await FileModel.getFilesByFolder(folderId || null);
+    const { folderId } = req.params;
+    // console.log('we are on shared page searching for folderId: ' + folderId);
+    const files = await FileModel.getFilesByFolder(folderId); // ||null was originally here
 
     const sortedFiles = files.sort((a, b) => {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -485,16 +486,16 @@ fileRouter.delete(
   },
 );
 
-fileRouter.get('/trash', authorize, async (req: AuthenticatedRequest, res) => {
-  try {
-    const userId = (req as any).user.userId;
-    const deletdFiles = await FileModel.getAllByOwnerAndDeleted(userId);
-    return res.json(deletdFiles);
-  } catch (error) {
-    console.error('Error getting deleted files:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+// fileRouter.get('/trash', authorize, async (req: AuthenticatedRequest, res) => {
+//   try {
+//     const userId = (req as any).user.userId;
+//     const deletdFiles = await FileModel.getAllByOwnerAndDeleted(userId);
+//     return res.json(deletdFiles);
+//   } catch (error) {
+//     console.error('Error getting deleted files:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
 
 fileRouter.patch('/:fileId/restore', authorize, async (req, res) => {
   try {
@@ -513,7 +514,7 @@ fileRouter.patch('/:fileId/restore', authorize, async (req, res) => {
   }
 });
 
-fileRouter.post('/view', async (req, res) => {
+fileRouter.post('/:fileId/view', async (req, res) => {
   try {
     const { gcsKey, fileType } = req.body;
 

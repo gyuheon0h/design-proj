@@ -102,73 +102,78 @@ const PageComponent: React.FC<PageComponentProps> = ({
     try {
       let filesRes;
 
-      if (page === 'home') {
-        filesRes = await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}/api/file/folder`,
-          //   `http://localhost:5001/api/file/folder?${queryParams.toString()}`,
-          { folderId },
-          { withCredentials: true },
-        );
-      }
+      // if (page === 'home') {
+      //   filesRes = await axios.get(
+      //     `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/home/file`,
+      //     //   `http://localhost:5001/api/file/folder?${queryParams.toString()}`,
+      //     // { folderId },
+      //     { withCredentials: true },
+      //   );
+      // }
 
-      if (page === 'favorites') {
-        if (!folderId) {
-          filesRes = await axios.get(
-            `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/favorites/file`,
-            {
-              withCredentials: true,
-            },
-          );
-        } else {
-          filesRes = await axios.post(
-            `${process.env.REACT_APP_API_BASE_URL}/api/file/folder`,
-            { folderId },
-            { withCredentials: true },
-          );
-        }
-      }
-
-      if (page === 'shared') {
-        if (!folderId) {
-          filesRes = await axios.get(
-            `${process.env.REACT_APP_API_BASE_URL}/api/file/shared`,
-            {
-              withCredentials: true,
-            },
-          );
-        } else {
-          filesRes = await axios.post(
-            `${process.env.REACT_APP_API_BASE_URL}/api/file/folder/shared`,
-            { folderId },
-            { withCredentials: true },
-          );
-        }
-      }
-
-      if (page === 'trash') {
-        filesRes = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/api/file/trash`,
-          {
-            withCredentials: true,
-          },
-        );
-      }
-
-      //TODO: eventually use this when the backend routes r completed
+      // if (page === 'favorites') {
+      //   console.log(
+      //     'ON favorites page: RECEIVED FOLDERID in fetchfiledata: ' + folderId,
+      //   );
       //   if (!folderId) {
-      //     filesRes = await axios.post(
-      //       // 'http://localhost:5001/api/folder/parent',
-      //       `http://localhost:5001/api/user/${userId}/${page}/file`,
-      //       { withCredentials: true },
+      //     filesRes = await axios.get(
+      //       `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/favorites/file`,
+      //       {
+      //         withCredentials: true,
+      //       },
       //     );
       //   } else {
-      //     filesRes = await axios.post(
-      //       // 'http://localhost:5001/api/folder/parent',
-      //       `http://localhost:5001/api/folder/parent?${folderId}`,
-      //       { folderId },
+      //     filesRes = await axios.get(
+      //       `${process.env.REACT_APP_API_BASE_URL}/api/file/parent/${folderId}`,
+      //       // { folderId },
       //       { withCredentials: true },
       //     );
       //   }
+      // }
+
+      // if (page === 'shared') {
+      //   console.log(
+      //     'ON shared page: RECEIVED FOLDERID in fetchfiledata: ' + folderId,
+      //   );
+      //   if (!folderId) {
+      //     filesRes = await axios.get(
+      //       `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/shared/file`,
+      //       {
+      //         withCredentials: true,
+      //       },
+      //     );
+      //   } else {
+      //     filesRes = await axios.get(
+      //       `${process.env.REACT_APP_API_BASE_URL}/api/file/parent/${folderId}`,
+      //       // { folderId },
+      //       { withCredentials: true },
+      //     );
+      //   }
+      // }
+
+      // if (page === 'trash') {
+      //   filesRes = await axios.get(
+      //     `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/trash/file`,
+      //     {
+      //       withCredentials: true,
+      //     },
+      //   );
+      // }
+
+      //TODO: eventually use this when the backend routes r completed
+      if (!folderId) {
+        filesRes = await axios.get(
+          // 'http://localhost:5001/api/folder/parent',
+          `http://localhost:5001/api/user/${userId}/${page}/file`,
+          { withCredentials: true },
+        );
+      } else {
+        filesRes = await axios.get(
+          // 'http://localhost:5001/api/folder/parent',
+          `http://localhost:5001/api/file/parent/${folderId}`,
+          { withCredentials: true },
+        );
+      }
 
       setFiles(filesRes?.data);
     } catch (error) {
@@ -179,84 +184,85 @@ const PageComponent: React.FC<PageComponentProps> = ({
   const fetchFolderData = async (folderId: string | null) => {
     try {
       let folderRes;
-      if (page === 'home') {
-        if (!folderId) {
-          folderRes = await axios.get(
-            `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/home/folder`,
-            // `http://localhost:5001/api/folder/parent?${queryParams.toString()}`,
-            // { folderId },
-            { withCredentials: true },
-          );
-        } else {
-          axios.get(
-            `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`, // parent's folderId
-            // { folderId },
-            { withCredentials: true },
-          );
-        }
-      }
-
-      if (page === 'favorites') {
-        if (!folderId) {
-          folderRes = await axios.get(
-            `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/favorites/folder`,
-            {
-              withCredentials: true,
-            },
-          );
-        } else {
-          axios.get(
-            `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`, // parent's folderId
-            // { folderId },
-            { withCredentials: true },
-          );
-        }
-      }
-
-      if (page === 'shared') {
-        if (!folderId) {
-          folderRes = await axios.get(
-            `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/shared/folder`,
-            {
-              withCredentials: true,
-            },
-          );
-          // folderRes = folderRes.data.folder;
-          console.log(folderRes);
-          // folderRes = folderRes.data.folders; // we need this due to not knowing what type the folders are.
-        } else {
-          folderRes = await axios.get(
-            `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`,
-            // { folderId },
-            { withCredentials: true },
-          );
-        }
-      }
-
-      if (page === 'trash') {
-        folderRes = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/trash/folder`,
-          {
-            withCredentials: true,
-          },
-        );
-      }
-
-      //TODO: eventually use this when the backend routes r completed
+      // if (page === 'home') {
       //   if (!folderId) {
       //     folderRes = await axios.get(
-      //       // 'http://localhost:5001/api/folder/parent',
-      //       `http://localhost:5001/api/user/${userId}/${page}/folder`,
+      //       `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/home/folder`,
+      //       // `http://localhost:5001/api/folder/parent?${queryParams.toString()}`,
+      //       // { folderId },
       //       { withCredentials: true },
       //     );
       //   } else {
-      //     folderRes = await axios.get(
-      //       // 'http://localhost:5001/api/folder/parent',
-      //       `http://localhost:5001/api/folder/parent?${folderId}`,
+      //     axios.get(
+      //       `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`, // parent's folderId
+      //       // { folderId },
       //       { withCredentials: true },
       //     );
       //   }
+      // }
 
+      // if (page === 'favorites') {
+      //   if (!folderId) {
+      //     folderRes = await axios.get(
+      //       `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/favorites/folder`,
+      //       {
+      //         withCredentials: true,
+      //       },
+      //     );
+      //   } else {
+      //     axios.get(
+      //       `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`, // parent's folderId
+      //       // { folderId },
+      //       { withCredentials: true },
+      //     );
+      //   }
+      // }
+
+      // if (page === 'shared') {
+      //   if (!folderId) {
+      //     folderRes = await axios.get(
+      //       `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/shared/folder`,
+      //       {
+      //         withCredentials: true,
+      //       },
+      //     );
+      //     // folderRes = folderRes.data.folder;
+      //     console.log(folderRes);
+      //     // folderRes = folderRes.data.folders; // we need this due to not knowing what type the folders are.
+      //   } else {
+      //     folderRes = await axios.get(
+      //       `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`,
+      //       // { folderId },
+      //       { withCredentials: true },
+      //     );
+      //   }
+      // }
+
+      // if (page === 'trash') {
+      //   // this endpoint is different because we can't actually access nay of the child folders.
+      //   folderRes = await axios.get(
+      //     `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/trash/folder`,
+      //     {
+      //       withCredentials: true,
+      //     },
+      //   );
+      // }
+
+      // TODO: eventually use this when the backend routes r completed
+      if (!folderId) {
+        folderRes = await axios.get(
+          // 'http://localhost:5001/api/folder/parent',
+          `http://localhost:5001/api/user/${userId}/${page}/folder`,
+          { withCredentials: true },
+        );
+      } else {
+        folderRes = await axios.get(
+          // 'http://localhost:5001/api/folder/parent',
+          `http://localhost:5001/api/folder/parent/${folderId}`,
+          { withCredentials: true },
+        );
+      }
+      // console.log(folderRes);
       setFolders(folderRes?.data);
     } catch (error) {
       console.error('Error fetching folder data:', error);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -53,17 +53,6 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // reset states when opening dialog
-  useEffect(() => {
-    if (open) {
-      // setCurrentParentFolderId(null); //set to root directory
-      setCurrentParentFolder(null); // set parent folder to null/root
-      setFolderHistory([]); // reset history
-      setSelectedFolder(null); // automatically select the root directory
-      fetchSubFolders(null); // load subfolders of root directory
-    }
-  }, [open]);
-
   // fetch subfolders whenever the current parent folder changes
   // useEffect(() => {
   //   if (currentParentFolderId !== undefined) {
@@ -75,6 +64,55 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   //     }
   //   }
   // }, [currentParentFolderId]);
+  // fetch subfolders for the given parent folder ID
+  const fetchSubFolders = useCallback(
+    async (folderId: string | null) => {
+      setLoading(true);
+      try {
+        if (folderId === undefined || folderId === null) {
+          const res = await axios.get(
+            `${process.env.REACT_APP_API_BASE_URL}/api/user/${userContext.userId}/${page}/folder`,
+            // { folderId: folderId ?? null }, // ensure null is passed for root
+            { withCredentials: true },
+          );
+          if (page === 'shared') {
+            // we merely need this check to deal with the permissions thing properly.
+            setFolders(res.data.folders);
+          } else {
+            setFolders(res.data);
+          }
+        } else {
+          const res = await axios.get(
+            `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`,
+            // { folderId: folderId ?? null }, // ensure null is passed for root
+            { withCredentials: true },
+          );
+          setFolders(res.data);
+        }
+        // const res = await axios.post(
+        //   `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent`,
+        //   { folderId: folderId ?? null }, // ensure null is passed for root
+        //   { withCredentials: true },
+        // );
+      } catch (error) {
+        console.error('Error fetching folders:', error);
+        setError('Failed to load folders. Please try again.');
+      }
+      setLoading(false);
+    },
+    [page, userContext.userId],
+  );
+
+  // reset states when opening dialog
+  useEffect(() => {
+    if (open) {
+      // setCurrentParentFolderId(null); //set to root directory
+      setCurrentParentFolder(null); // set parent folder to null/root
+      setFolderHistory([]); // reset history
+      setSelectedFolder(null); // automatically select the root directory
+      fetchSubFolders(null); // load subfolders of root directory
+    }
+  }, [fetchSubFolders, open]);
 
   useEffect(() => {
     fetchSubFolders(
@@ -85,42 +123,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
       // note that this still expects an ID, not a folder prop
       setSelectedFolder(null);
     }
-  }, [currentParentFolder]);
-
-  // fetch subfolders for the given parent folder ID
-  const fetchSubFolders = async (folderId: string | null) => {
-    setLoading(true);
-    try {
-      if (folderId === undefined || folderId === null) {
-        const res = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/api/user/${userContext.userId}/${page}/folder`,
-          // { folderId: folderId ?? null }, // ensure null is passed for root
-          { withCredentials: true },
-        );
-        if (page === 'shared') {
-          setFolders(res.data.folders);
-        } else {
-          setFolders(res.data);
-        }
-      } else {
-        const res = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`,
-          // { folderId: folderId ?? null }, // ensure null is passed for root
-          { withCredentials: true },
-        );
-        setFolders(res.data);
-      }
-      // const res = await axios.post(
-      //   `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent`,
-      //   { folderId: folderId ?? null }, // ensure null is passed for root
-      //   { withCredentials: true },
-      // );
-    } catch (error) {
-      console.error('Error fetching folders:', error);
-      setError('Failed to load folders. Please try again.');
-    }
-    setLoading(false);
-  };
+  }, [currentParentFolder, fetchSubFolders]);
 
   // select the folder without navigating into it
   const handleSelectFolder = (event: React.MouseEvent, folder: Folder) => {

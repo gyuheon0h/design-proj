@@ -35,7 +35,7 @@ userRouter.get('/all', async (req, res) => {
  * Route to get files in a certain folder.
  * this is also protected by authorize
  */
-userRouter.post(
+userRouter.get(
   '/:userId/home/file',
   authorize,
   async (req: AuthenticatedRequest, res) => {
@@ -65,7 +65,7 @@ userRouter.post(
  * GET /api/user/parent/:folderId
  * Protected route to get subfolders of a specific folder.
  */
-userRouter.post(
+userRouter.get(
   '/:userId/home/folder',
   authorize,
   async (req: AuthenticatedRequest, res) => {
@@ -360,7 +360,6 @@ userRouter.delete(
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
-
       const userId = req.user.userId;
 
       const userFiles = await FileModel.getFilesByOwner(userId);
@@ -412,6 +411,21 @@ userRouter.get(
       return res.json(sortedSubfolders);
     } catch (error) {
       console.error('Error getting subfolders:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
+userRouter.get(
+  '/:userId/trash/file',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = (req as any).user.userId;
+      const deletdFiles = await FileModel.getAllByOwnerAndDeleted(userId);
+      return res.json(deletdFiles);
+    } catch (error) {
+      console.error('Error getting deleted files:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   },

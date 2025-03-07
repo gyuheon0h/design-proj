@@ -17,6 +17,7 @@ import { getIsFavoritedByFileId } from '../utils/helperRequests';
 import ErrorAlert from '../components/ErrorAlert';
 import { Folder } from '../interfaces/Folder';
 import axios from 'axios';
+import { useLocation } from 'react-router-dom';
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -33,6 +34,7 @@ const FolderComponent = (props: FolderProps) => {
   const [isFavorited, setIsFavorited] = useState(false);
   const open = Boolean(anchorEl);
   const [error, setError] = useState<string | null>(null);
+  const curr_loc = useLocation();
 
   useEffect(() => {
     const fetchIsFavorited = async () => {
@@ -78,7 +80,23 @@ const FolderComponent = (props: FolderProps) => {
       await handleFavoriteFolder(props.folder.id);
       setIsFavorited(!isFavorited); // toggle state locally
     }
-    props.refreshFolders(props.folder.parentFolder);
+
+    // console.log(props.page);
+    if (
+      (props.page === 'shared' &&
+        (curr_loc.pathname === '/shared' ||
+          curr_loc.pathname === '/shared/')) ||
+      (props.page === 'favorites' && curr_loc.pathname === '/favorites') ||
+      curr_loc.pathname === '/favorites/'
+    ) {
+      // we shouldn't attempt to navigate away from the favorites page:
+      props.refreshFolders(null);
+    } else {
+      props.refreshFolders(props.folder.parentFolder);
+    }
+    // console.log(
+    //   'The parent of the favorited folder is: ' + props.folder.parentFolder,
+    // );
   };
 
   const handleFavoriteFolder = async (folderId: string) => {
