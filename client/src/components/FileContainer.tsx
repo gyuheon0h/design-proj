@@ -7,7 +7,7 @@ import { Grow } from '@mui/material';
 interface FileContainerProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
   files: File[];
-  currentFolderId: string | null;
+  currentFolderId: string | null; // currentparentfolderid
   refreshFiles: (folderId: string | null) => void;
   username: string; // logged-in user
   searchQuery: string; // New prop for search input

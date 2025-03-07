@@ -22,11 +22,13 @@ export async function getBlobGcskey(
   }
 }
 
-export async function getUsernameById(userId: string): Promise<string> {
+export async function getUsernameById(id: string): Promise<string> {
   try {
     const response = await axios.get(
-      `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}`,
-      {},
+      `${process.env.REACT_APP_API_BASE_URL}/api/user`,
+      {
+        params: { id },
+      },
     );
     return response.data?.user.username || '';
   } catch (error) {
@@ -34,21 +36,14 @@ export async function getUsernameById(userId: string): Promise<string> {
     return '';
   }
 }
-/**
- * This just checks whether a given file is favorited.
- * @param fileId This is the fileId that we're checking
- * @returns boolean denoting whether it's favorited by someone somewhere.
- */
-export async function getIsFavoritedByFileId(
-  fileId: string,
-  userId: string | null,
-): Promise<boolean> {
+
+export async function getIsFavoritedByFileId(fileId: string): Promise<boolean> {
   try {
     const response = await axios.get(
-      `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/permissions/${fileId}`,
+      `${process.env.REACT_APP_API_BASE_URL}/api/user/permissions/${fileId}`,
       { withCredentials: true },
     );
-    console.log(response.data);
+
     return response.data?.isFavorited || false;
   } catch (error) {
     console.error('Error fetching isFavorited status: ', error);
@@ -62,7 +57,7 @@ export async function downloadFile(
 ): Promise<void> {
   try {
     const response = await axios.get(
-      `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/download`,
+      `${process.env.REACT_APP_API_BASE_URL}/api/file/download/${fileId}`,
       {
         responseType: 'blob',
         withCredentials: true,
@@ -82,19 +77,13 @@ export async function downloadFile(
   }
 }
 
-/**
- * This function is for breadcrumbing. Given a list of folderIds, convert it to their
- * folder name equivalent.
- * @param folderIds List of folder Ids.
- * @returns Promise that's an array of key/strings.
- */
 export async function fetchFolderNames(
   folderIds: string[],
 ): Promise<{ [key: string]: string }> {
   try {
-    const nameRequests = folderIds.map((folderId) =>
+    const nameRequests = folderIds.map((id) =>
       axios.get(
-        `${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}/foldername/`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/folder/foldername/${id}`,
       ),
     );
     const nameResponses = await Promise.all(nameRequests);

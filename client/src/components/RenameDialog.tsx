@@ -26,23 +26,34 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const [newResourceName, setnewResourceName] = useState(resourceName);
+  const [newresourceName, setNewresourceName] = useState(resourceName);
 
   useEffect(() => {
-    setnewResourceName(resourceName);
+    setNewresourceName(resourceName);
   }, [resourceName]);
 
   const handleRename = async () => {
-    if (newResourceName.trim()) {
+    if (newresourceName.trim()) {
       try {
-        await axios.patch(
-          `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/rename`,
-          { resourceName: newResourceName },
-          { withCredentials: true },
-        );
+        if (resourceType === 'file') {
+          await axios.patch(
+            `${process.env.REACT_APP_API_BASE_URL}/api/file/${resourceId}/rename`,
+            { fileName: newresourceName },
+            { withCredentials: true },
+          );
+        }
+
+        if (resourceType === 'folder') {
+          await axios.patch(
+            `${process.env.REACT_APP_API_BASE_URL}/api/folder/${resourceId}/rename`,
+            { folderName: newresourceName },
+            { withCredentials: true },
+          );
+        }
+
         onSuccess();
       } catch (error) {
-        console.error('Error renaming resource:', error);
+        console.error('Error renaming folder:', error);
       }
       onClose();
     }
@@ -55,12 +66,12 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
         <TextField
           autoFocus
           margin="dense"
-          label={newResourceName}
+          label={newresourceName}
           type="text"
           fullWidth
           variant="outlined"
-          value={newResourceName}
-          onChange={(e) => setnewResourceName(e.target.value)}
+          value={newresourceName}
+          onChange={(e) => setNewresourceName(e.target.value)}
         />
       </DialogContent>
       <DialogActions>
@@ -71,7 +82,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
           onClick={handleRename}
           color="primary"
           variant="contained"
-          disabled={newResourceName.trim() === resourceName.trim()}
+          disabled={newresourceName.trim() === resourceName.trim()}
         >
           Rename
         </Button>

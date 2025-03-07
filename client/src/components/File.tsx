@@ -35,7 +35,6 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FileViewerDialog from './FileViewerDialog';
 import { colors } from '../Styles';
 import MoveDialog from './MoveDialog';
-import { useUser } from '../context/UserContext';
 import {
   isSupportedFileTypeText,
   isSupportedFileTypeVideo,
@@ -91,7 +90,6 @@ const FileComponent = (props: FileComponentProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const fileCache = useRef(new Map<string, string>());
   const [isFavorited, setIsFavorited] = useState(false);
-  const userContext = useUser();
 
   // For the image viewer
   const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
@@ -104,7 +102,6 @@ const FileComponent = (props: FileComponentProps) => {
       if (props.file.owner) {
         try {
           const username = await getUsernameById(props.file.owner);
-          console.log(username);
           setOwnerUserName(username || 'Unknown');
         } catch (error) {
           console.error('Error fetching username:', error);
@@ -137,10 +134,7 @@ const FileComponent = (props: FileComponentProps) => {
   useEffect(() => {
     const fetchIsFavorited = async () => {
       try {
-        const isFavorited = await getIsFavoritedByFileId(
-          props.file.id,
-          userContext.userId,
-        );
+        const isFavorited = await getIsFavoritedByFileId(props.file.id);
         setIsFavorited(isFavorited);
       } catch (error) {
         console.error('Error fetching isFavorited for file', error);
@@ -149,7 +143,7 @@ const FileComponent = (props: FileComponentProps) => {
     };
 
     fetchIsFavorited();
-  }, [props.file.id, userContext.userId]);
+  }, [props.file.id]);
 
   const open = Boolean(anchorEl);
 
@@ -528,16 +522,6 @@ const FileComponent = (props: FileComponentProps) => {
       <Modal open={isFileViewerOpen} onClose={handleCloseFileViewer}>
         <Fade in={isFileViewerOpen} timeout={300}>
           <Box>
-            <MoveDialog
-              page={props.page}
-              open={isMoveDialogOpen}
-              onClose={() => setIsMoveDialogOpen(false)}
-              fileName={props.file.name}
-              resourceId={props.file.id}
-              resourceType="file"
-              parentFolderId={props.file.parentFolder}
-              onSuccess={() => props.refreshFiles(props.file.parentFolder)}
-            />
             <FileViewerDialog
               open={isFileViewerOpen}
               onClose={handleCloseFileViewer}
@@ -554,6 +538,16 @@ const FileComponent = (props: FileComponentProps) => {
           </Box>
         </Fade>
       </Modal>
+      <MoveDialog
+        open={isMoveDialogOpen}
+        onClose={() => setIsMoveDialogOpen(false)}
+        page={props.page}
+        resourceName={props.file.name}
+        resourceId={props.file.id}
+        resourceType="file"
+        parentFolderId={props.file.parentFolder}
+        onSuccess={() => props.refreshFiles(props.file.parentFolder)}
+      />
     </div>
   );
 };

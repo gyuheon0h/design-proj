@@ -87,15 +87,12 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   ) => {
     const requestBody = { name: folderName, parentFolder };
     try {
-      console.log('hello1');
-      const response = await axios.patch(
+      const response = await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/api/folder/create`,
         requestBody,
         { withCredentials: true },
       );
-      console.log('hello2');
       refreshFolders(currentFolderId);
-      console.log('hello3');
       return response.data;
     } catch (error) {
       console.error('Folder creation failed:', error);

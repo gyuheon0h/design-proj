@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SendIcon from '@mui/icons-material/Send';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -13,9 +13,11 @@ import { colors } from '../Styles';
 import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import MoveDialog from './MoveDialog';
+import { getIsFavoritedByFileId } from '../utils/helperRequests';
 import ErrorAlert from '../components/ErrorAlert';
 import { Folder } from '../interfaces/Folder';
 import axios from 'axios';
+import { useLocation } from 'react-router-dom';
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -32,6 +34,21 @@ const FolderComponent = (props: FolderProps) => {
   const [isFavorited, setIsFavorited] = useState(false);
   const open = Boolean(anchorEl);
   const [error, setError] = useState<string | null>(null);
+  const curr_loc = useLocation();
+
+  useEffect(() => {
+    const fetchIsFavorited = async () => {
+      try {
+        const isFavorited = await getIsFavoritedByFileId(props.folder.id);
+        setIsFavorited(isFavorited);
+      } catch (error) {
+        console.error('Error fetching isFavorited for folder', error);
+        setError('Error fetching isFavorited for folder');
+      }
+    };
+
+    fetchIsFavorited();
+  }, [props.folder.id]);
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -55,10 +72,6 @@ const FolderComponent = (props: FolderProps) => {
   };
 
   // FAVORITE Event Handlers
-  /**
-   * This is what is triggered when the favorite icon is formally clicked.
-   * @param event
-   */
   const handleFavoriteFolderClick = async (event: React.MouseEvent) => {
     event.stopPropagation();
     if (props.page === 'trash') {
@@ -67,13 +80,25 @@ const FolderComponent = (props: FolderProps) => {
       await handleFavoriteFolder(props.folder.id);
       setIsFavorited(!isFavorited); // toggle state locally
     }
-    props.refreshFolders(props.folder.parentFolder);
+
+    // console.log(props.page);
+    if (
+      (props.page === 'shared' &&
+        (curr_loc.pathname === '/shared' ||
+          curr_loc.pathname === '/shared/')) ||
+      (props.page === 'favorites' && curr_loc.pathname === '/favorites') ||
+      curr_loc.pathname === '/favorites/'
+    ) {
+      // we shouldn't attempt to navigate away from the favorites page:
+      props.refreshFolders(null);
+    } else {
+      props.refreshFolders(props.folder.parentFolder);
+    }
+    // console.log(
+    //   'The parent of the favorited folder is: ' + props.folder.parentFolder,
+    // );
   };
 
-  /**
-   * The main difference I can see between this and the above is that this is for managing the backend.
-   * @param folderId
-   */
   const handleFavoriteFolder = async (folderId: string) => {
     try {
       // NOTE: using the user based permission to favorite but still calling the PATCH within the folder router
@@ -294,7 +319,7 @@ const FolderComponent = (props: FolderProps) => {
       {/* Rename Folder Dialog */}
       <RenameDialog
         open={isRenameDialogOpen}
-        resourceName={props.folder.name} // renamed these in order to use resourceName/resourceId consistenlty
+        resourceName={props.folder.name}
         resourceId={props.folder.id}
         resourceType="folder"
         onClose={() => setIsRenameDialogOpen(false)}
@@ -311,10 +336,10 @@ const FolderComponent = (props: FolderProps) => {
         // onShareSuccess={() => props.refreshFolders(props.folder.parentFolder)}
       />
       <MoveDialog
-        page={props.page}
         open={isMoveDialogOpen}
         onClose={() => setIsMoveDialogOpen(false)}
-        fileName={props.folder.name}
+        resourceName={props.folder.name}
+        page={props.page}
         resourceId={props.folder.id}
         resourceType="folder"
         parentFolderId={props.folder.parentFolder}

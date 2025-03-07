@@ -9,10 +9,21 @@ import jwt from 'jsonwebtoken';
 
 const userRouter = Router();
 
-userRouter.get('/all', async (_, res) => {
+userRouter.get('/', async (req, res) => {
+  try {
+    const userId = req.query.id;
+    const user = await UserModel.getById(userId as string);
+    return res.status(201).json({ user });
+  } catch (error) {
+    console.error('Error getting user:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+userRouter.get('/all', async (req, res) => {
   try {
     const users = await UserModel.getAll();
-    return res.status(200).json(users);
+    return res.status(201).json(users);
   } catch (error) {
     console.error('Error getting all users:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
@@ -51,7 +62,7 @@ userRouter.get(
 );
 
 /**
- * GET /api/folders/parent/:folderId
+ * GET /api/user/parent/:folderId
  * Protected route to get subfolders of a specific folder.
  */
 userRouter.get(
@@ -102,7 +113,7 @@ userRouter.get(
         permissions.map((perm) => FolderModel.getById(perm.fileId)),
       );
 
-      return res.json({ permissions, folders });
+      return res.json({ permissions, folders }); // this used to be {permissions, folders}
     } catch (error) {
       console.error('Error getting shared folders:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
@@ -168,11 +179,42 @@ userRouter.get(
 );
 
 /**
- * GET /api/files/favorites/
- * Route to get favorited files owned by a certain user (ownerId).
- * This is protected by authorize
+ * GET /api/user/permissions/:fileId
+ * Route to get the permission for the user for the individual folder or file
+ * (mainly used to access the isFavorited status).
+ *
+ * Note: you don't need :userId because it's implicitly passed in through the session token,
+ * unless we want it to be consistent with the other routes.
  */
 
+userRouter.get(
+  '/permissions/:fileId',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const userId = req.user.userId;
+      const { fileId } = req.params;
+
+      const permission = await PermissionModel.getPermissionByFileAndUser(
+        fileId,
+        userId,
+      );
+      return res.json(permission);
+    } catch (error) {
+      console.error('Error getting permission by user and file: ', error);
+      return res.status(500).json({ error: 'Internal Service Error' });
+    }
+  },
+);
+
+/**
+ * GET /api/:userId/favorites/file
+ * Route to get [userId]'s favorite files (including shared files).
+ */
 userRouter.get(
   '/:userId/favorites/file',
   authorize,
@@ -199,7 +241,8 @@ userRouter.get(
 );
 
 /**
- * PATCH /api/userId/favorites/:fileId
+ * THis shoud not be here accoridng to ethan the tech lead gotat
+ * PATCH /api/user/userId/favorites/:fileId
  */
 userRouter.patch(
   '/:userId/favorites/:fileId',
@@ -317,7 +360,6 @@ userRouter.delete(
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
-
       const userId = req.user.userId;
 
       const userFiles = await FileModel.getFilesByOwner(userId);
@@ -345,31 +387,72 @@ userRouter.delete(
   },
 );
 
-userRouter.get('/:userId/permissions/:fileId', async (req, res) => {
-  try {
-    const { userId, fileId } = req.params;
+userRouter.get(
+  '/:userId/home/folder',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      // const { folderId } = req.body; // Get from request body
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const userId = req.user.userId;
 
-    if (!userId || !fileId) {
-      return res.status(400).json({ error: 'Missing userId or fileId' });
+      // Handle null case properly
+      const subfolders = await FolderModel.getSubfoldersByOwner(userId, null);
+
+      // sort in descending order
+      const sortedSubfolders = subfolders.sort((a, b) => {
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      });
+
+      return res.json(sortedSubfolders);
+    } catch (error) {
+      console.error('Error getting subfolders:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
     }
+  },
+);
 
-    // Check if the file is favorited by the user
-    const permission = await PermissionModel.getPermissionByFileAndUser(
-      fileId,
-      userId,
-    );
-
-    if (!permission) {
-      return res
-        .status(404)
-        .json({ error: 'No permission found for this file' });
+userRouter.get(
+  '/:userId/trash/file',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = (req as any).user.userId;
+      const deletdFiles = await FileModel.getAllByOwnerAndDeleted(userId);
+      return res.json(deletdFiles);
+    } catch (error) {
+      console.error('Error getting deleted files:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
     }
+  },
+);
 
-    return res.json({ isFavorited: permission.isFavorited || false });
-  } catch (error) {
-    console.error('Error checking if file is favorited:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+// userRouter.get(
+//   '/:userId/shared/folder',
+//   authorize,
+//   async (req: AuthenticatedRequest, res) => {
+//     try {
+//       const currentUserId = (req as any).user.userId;
+//       if (!currentUserId) {
+//         return res.status(401).json({ error: 'Not authenticated' });
+//       }
 
+//       const permissions =
+//         await PermissionModel.getFoldersByUserId(currentUserId);
+
+//       const folders = await Promise.all(
+//         permissions.map((perm) => FolderModel.getById(perm.fileId)),
+//       );
+
+//       return res.json({ permissions, folders });
+//     } catch (error) {
+//       console.error('Error getting shared folders:', error);
+//       return res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//   },
+// );
 export default userRouter;

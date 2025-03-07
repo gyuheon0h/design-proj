@@ -23,11 +23,9 @@ interface SettingsDialogProps {
 }
 
 const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
-  const {
-    username: contextUsername,
-    setUsername: updateContextUsername,
-    userId,
-  } = useUser();
+  const userContext = useUser();
+  const { username: contextUsername, setUsername: updateContextUsername } =
+    useUser();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -119,7 +117,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
         }
 
         const response = await fetch(
-          `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/update-profile`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/user/${userContext.userId}/update-profile`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -165,7 +163,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
       ) {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/delete`,
+            `${process.env.REACT_APP_API_BASE_URL}/api/user/${userContext.userId}/delete-account`,
             {
               method: 'DELETE',
               credentials: 'include',

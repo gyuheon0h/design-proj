@@ -10,18 +10,52 @@ const folderRouter = Router();
  * GET /api/folders/parent/:folderId
  * Protected route to get subfolders of a specific folder.
  */
+// folderRouter.post(
+//   '/parent',
+//   authorize,
+//   async (req: AuthenticatedRequest, res) => {
+//     try {
+//       const { folderId } = req.body; // Get from request body
+//       if (!req.user) {
+//         return res.status(401).json({ error: 'Unauthorized' });
+//       }
+//       const userId = req.user.userId;
+
+//       // Handle null case properly
+//       const subfolders = await FolderModel.getSubfoldersByOwner(
+//         userId,
+//         folderId || null,
+//       );
+
+//       // sort in descending order
+//       const sortedSubfolders = subfolders.sort((a, b) => {
+//         return (
+//           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+//         );
+//       });
+
+//       return res.json(sortedSubfolders);
+//     } catch (error) {
+//       console.error('Error getting subfolders:', error);
+//       return res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//   },
+// );
 folderRouter.get(
   '/parent/:folderId',
   authorize,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const { folderId } = req.params; // Get from request parameters
+      // console.log('HELLOfklsdaj;oisjf;laksdfj;lkasdjf;lkasdjf;laksdfj;lakj');
+      const { folderId } = req.params; // Get from request body
+      // console.log('Folder router: ' + folderId);
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
       const userId = req.user.userId;
 
       // Handle null case properly
+      console.log('Folder router: ' + folderId);
       const subfolders = await FolderModel.getSubfoldersByOwner(
         userId,
         folderId || null,
@@ -42,35 +76,15 @@ folderRouter.get(
   },
 );
 
-// Bypassing auth for now. Will need to add back in later by checking permissions table
-folderRouter.post('/parent/shared', async (req, res) => {
-  try {
-    const { folderId } = req.body; // Get from request body
-
-    const subfolders = await FolderModel.getSubfolders(folderId || null);
-
-    // sort in descending order
-    const sortedSubfolders = subfolders.sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-
-    return res.json(sortedSubfolders);
-  } catch (error) {
-    console.error('Error getting subfolders:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
 /**
  * POST /api/folders/create
  * Protected route to create a new folder.
  * TODO: make this authorized
  */
-folderRouter.patch(
+folderRouter.post(
   '/create',
   authorize,
   async (req: AuthenticatedRequest, res) => {
-    console.log('hello');
     try {
       const { name, parentFolder } = req.body;
 
@@ -109,7 +123,7 @@ folderRouter.patch(
  * GET /api/folder/foldername/:folderId
  * Get the name of a folder by id
  */
-folderRouter.get('/:folderId/foldername', async (req, res) => {
+folderRouter.get('/foldername/:folderId', async (req, res) => {
   try {
     const { folderId } = req.params;
     const folderName = await FolderModel.getFolderName(folderId);
@@ -125,17 +139,17 @@ folderRouter.get('/:folderId/foldername', async (req, res) => {
  * Route to favorite/unfavorite a folder
  */
 folderRouter.patch('/:folderId/favorite', authorize, async (req, res) => {
-  // console.log('PATCH request received at /api/folder/:folderId/favorite');
   try {
-    console.log('PATCH request received at /api/folder/:folderId/favorite');
     const userId = (req as any).user.userId;
     const { folderId } = req.params;
 
     // TODO: im thinking this is because we don't create a permission for yourself
+
     const permission = await PermissionModel.getPermissionByFileAndUser(
       folderId,
       userId,
     );
+
     if (!permission) {
       return res.status(404).json({ message: 'Folder not found' });
     }
@@ -185,39 +199,40 @@ folderRouter.get(
   },
 );
 
-// Bypassing auth for now. Will need to add back in later by checking permissions table
-folderRouter.post('/parent/shared', async (req, res) => {
-  try {
-    const { folderId } = req.body; // Get from request body
-    const subfolders = await FolderModel.getSubfolders(folderId || null);
+// // Bypassing auth for now. Will need to add back in later by checking permissions table
+// folderRouter.post('/parent/shared', async (req, res) => {
+//   try {
+//     const { folderId } = req.body; // Get from request body
+//     const subfolders = await FolderModel.getSubfolders(folderId || null);
 
-    // sort in descending order
-    const sortedSubfolders = subfolders.sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+//     // sort in descending order
+//     const sortedSubfolders = subfolders.sort((a, b) => {
+//       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+//     });
 
-    return res.json(sortedSubfolders);
-  } catch (error) {
-    console.error('Error getting subfolders:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+//     return res.json(sortedSubfolders);
+//   } catch (error) {
+//     console.error('Error getting subfolders:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
 
 /**
  * GETS all permissions pertaining to the fileId
  */
 folderRouter.get(
-  '/:folderId/permissions/:userId',
+  '/:folderId/permissions',
   authorize,
   async (req: AuthenticatedRequest, res) => {
     try {
-      // const currentUserId = (req as any).user.userId;
-      const { resourceId, userId } = req.params;
-      if (!userId) {
+      const currentUserId = (req as any).user.userId;
+      if (!currentUserId) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
-      const sharedWith =
-        await PermissionModel.getPermissionsByFileId(resourceId);
+
+      const { folderId } = req.params;
+      const fileId = folderId;
+      const sharedWith = await PermissionModel.getPermissionsByFileId(fileId);
       return res.json(sharedWith);
     } catch (error) {
       console.error('Error getting permissions:', error);
@@ -366,7 +381,7 @@ folderRouter.get('/trash', authorize, async (req, res) => {
   }
 });
 
-folderRouter.patch('/:folderId/restore/', authorize, async (req, res) => {
+folderRouter.patch('/:folderId/restore', authorize, async (req, res) => {
   try {
     const { folderId } = req.params;
     const folder = await FolderModel.getByIdAll(folderId);
@@ -383,7 +398,7 @@ folderRouter.patch('/:folderId/restore/', authorize, async (req, res) => {
   }
 });
 
-folderRouter.patch('/rename/:folderId', authorize, async (req, res) => {
+folderRouter.patch('/:folderId/rename', authorize, async (req, res) => {
   try {
     const { folderId } = req.params;
     const { folderName } = req.body;
@@ -418,12 +433,13 @@ folderRouter.patch('/rename/:folderId', authorize, async (req, res) => {
 });
 
 /**
- * PATCH /api/files/move/:folderId
+ * PATCH /api/files/:folderId/move
  * Route to move a folder (updates parentFolderId)
  */
-folderRouter.patch('/move/:folderId', authorize, async (req, res) => {
+folderRouter.patch('/:folderId/move', authorize, async (req, res) => {
   try {
     const { parentFolderId } = req.body;
+    console.log(parentFolderId);
     // if (!parentFolderId) {
     //   return res
     //     .status(400)
