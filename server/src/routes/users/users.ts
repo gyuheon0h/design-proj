@@ -387,6 +387,35 @@ userRouter.delete(
   },
 );
 
+// returns the total storage used by {userId} in bytes
+userRouter.get(
+  '/:userId/storage-used',
+  authorize,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const userId = req.user.userId;
+
+      const userFiles = await FileModel.getFilesByOwner(userId);
+
+      // calculate total storage used
+      const totalStorageUsed = userFiles.reduce(
+        (sum, file) => sum + file.fileSize,
+        0,
+      );
+
+      console.log(totalStorageUsed);
+
+      return res.json({ totalStorageUsed });
+    } catch (error) {
+      console.error('Error fetching storage used for account:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
 userRouter.get(
   '/:userId/home/folder',
   authorize,

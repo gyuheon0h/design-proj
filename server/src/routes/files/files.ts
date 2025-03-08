@@ -96,9 +96,25 @@ fileRouter.post(
         return res.status(400).json({ message: 'No file uploaded' });
       }
 
-      let { originalname, buffer, mimetype } = req.file;
+      let { originalname, buffer, mimetype, size } = req.file;
       const { parentFolder = null, fileName } = req.body;
       const userId = (req as any).user.userId;
+
+      const userFiles = await FileModel.getFilesByOwner(userId);
+      const totalStorageUsed = userFiles.reduce(
+        (sum, file) => sum + file.fileSize,
+        0,
+      );
+
+      // define storage limit
+      const STORAGE_LIMIT = 15 * 1024 * 1024 * 1024; // 15GB
+
+      if (totalStorageUsed + size > STORAGE_LIMIT) {
+        return res
+          .status(400)
+          .json({ error: 'Storage limit exceeded. Cannot upload file.' });
+      }
+
       // If the MIME type is 'application/octet-stream', try to infer it
       if (mimetype === 'application/octet-stream') {
         mimetype = inferMimeType(originalname);
@@ -122,6 +138,7 @@ fileRouter.post(
         parentFolder: parentFolder || null, // Allow null for root files
         gcsKey: gcsFilePath,
         fileType: mimetype,
+        fileSize: size,
       });
 
       await PermissionModel.createPermission({
