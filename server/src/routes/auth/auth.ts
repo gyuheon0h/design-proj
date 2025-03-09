@@ -33,9 +33,10 @@ authRouter.post('/login', async (req: Request, res: Response) => {
     );
 
     res.cookie('authToken', token, {
-      httpOnly: true, // dont expose token
+      httpOnly: true,
       sameSite: 'none',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day expiry
+      secure: true,
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
     return res
