@@ -103,13 +103,15 @@ const PageComponent: React.FC<PageComponentProps> = ({
       let filesRes;
       if (!folderId) {
         filesRes = await axios.get(
-          `http://localhost:5001/api/user/${userId}/${page}/file`,
+          // `http://localhost:5001/api/user/${userId}/${page}/file`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/${page}/file`,
           { withCredentials: true },
         );
       } else {
         filesRes = await axios.get(
           // 'http://localhost:5001/api/folder/parent',
-          `http://localhost:5001/api/file/parent/${folderId}`,
+          // `http://localhost:5001/api/file/parent/${folderId}`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/file/parent/${folderId}`,
           { withCredentials: true },
         );
       }
@@ -125,12 +127,14 @@ const PageComponent: React.FC<PageComponentProps> = ({
       let folderRes;
       if (!folderId) {
         folderRes = await axios.get(
-          `http://localhost:5001/api/user/${userId}/${page}/folder`,
+          // `http://localhost:5001/api/user/${userId}/${page}/folder`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/${page}/folder`,
           { withCredentials: true },
         );
       } else {
         folderRes = await axios.get(
-          `http://localhost:5001/api/folder/parent/${folderId}`,
+          // `http://localhost:5001/api/folder/parent/${folderId}`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`,
           { withCredentials: true },
         );
       }
