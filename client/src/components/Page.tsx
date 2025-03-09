@@ -127,13 +127,11 @@ const PageComponent: React.FC<PageComponentProps> = ({
       let folderRes;
       if (!folderId) {
         folderRes = await axios.get(
-          // `http://localhost:5001/api/user/${userId}/${page}/folder`,
           `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/${page}/folder`,
           { withCredentials: true },
         );
       } else {
         folderRes = await axios.get(
-          // `http://localhost:5001/api/folder/parent/${folderId}`,
           `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`,
           { withCredentials: true },
         );
