@@ -188,7 +188,15 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      fullWidth
+      maxWidth="sm"
+      onClick={() => {
+        setSelectedFolder(currentParentFolder);
+      }}
+    >
       <DialogTitle>Move "{resourceName}"</DialogTitle>
       <DialogContent>
         <Typography>
