@@ -30,17 +30,27 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
   const [extension, setExtension] = useState('');
 
   useEffect(() => {
-    const splitName = resourceName.split('.');
-    setBaseName(splitName.slice(0, -1).join('.'));
-    setExtension(splitName.pop() || '');
-  }, [resourceName]);
+    if (resourceType === 'folder') {
+      setBaseName(resourceName);
+      setExtension('');
+    } else {
+      const splitName = resourceName.split('.');
+      if (splitName.length === 1) {
+        setBaseName(resourceName); // No extension case
+        setExtension('');
+      } else {
+        setBaseName(splitName.slice(0, -1).join('.'));
+        setExtension(splitName.pop() || '');
+      }
+    }
+  }, [resourceName, resourceType]);
 
   const handleRename = async () => {
     if (baseName.trim()) {
       try {
         await axios.patch(
-          `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/rename/${resourceId}`,
-          { resourceName: `${baseName}.${extension}` },
+          `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/rename`,
+          { resourceName: resourceType === 'folder' ? baseName : `${baseName}.${extension}` },
           { withCredentials: true },
         );
         onSuccess();
@@ -65,15 +75,17 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
           value={baseName}
           onChange={(e) => setBaseName(e.target.value)}
         />
-        <TextField
-          margin="dense"
-          label="Extension"
-          type="text"
-          fullWidth
-          variant="outlined"
-          value={extension}
-          disabled
-        />
+        {resourceType === 'file' && (
+          <TextField
+            margin="dense"
+            label="Extension"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={extension}
+            disabled
+          />
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="primary">
@@ -83,8 +95,11 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
           onClick={handleRename}
           color="primary"
           variant="contained"
-          disabled={baseName.trim() === ''}
-
+          disabled={
+            baseName.trim() === '' ||
+            (resourceType === 'file' && `${baseName}${extension ? '.' + extension : ''}` === resourceName) ||
+            (resourceType === 'folder' && baseName === resourceName)
+          }
         >
           Rename
         </Button>
