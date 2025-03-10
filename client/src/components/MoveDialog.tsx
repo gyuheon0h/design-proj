@@ -243,7 +243,10 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
                 />
 
                 {/* Navigate Into Folder */}
-                <IconButton onClick={(e) => handleGoIntoFolder(e, folder)}>
+                <IconButton
+                  onClick={(e) => handleGoIntoFolder(e, folder)}
+                  disabled={resourceId == folder.id}
+                >
                   <ArrowForwardIosIcon />
                 </IconButton>
               </ListItem>
