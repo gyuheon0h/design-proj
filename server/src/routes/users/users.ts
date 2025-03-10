@@ -339,7 +339,7 @@ userRouter.post(
         res.cookie('authToken', token, {
           httpOnly: true,
           secure: false,
-          sameSite: 'strict',
+          sameSite: 'none',
           maxAge: 24 * 60 * 60 * 1000,
         });
       }
