@@ -11,17 +11,17 @@ import axios from 'axios';
 
 interface RenameDialogProps {
   open: boolean;
-  fileName: string;
-  fileId: string;
-  resourceType: 'file' | 'folder';
+  resourceName: string;
+  resourceId: string;
+  resourceType: 'folder' | 'file';
   onClose: () => void;
   onSuccess: () => void;
 }
 
 const RenameDialog: React.FC<RenameDialogProps> = ({
   open,
-  fileName,
-  fileId,
+  resourceName,
+  resourceId,
   resourceType,
   onClose,
   onSuccess,
@@ -30,16 +30,16 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
   const [extension, setExtension] = useState('');
 
   useEffect(() => {
-    const splitName = fileName.split('.');
+    const splitName = resourceName.split('.');
     setBaseName(splitName.slice(0, -1).join('.'));
     setExtension(splitName.pop() || '');
-  }, [fileName]);
+  }, [resourceName]);
 
   const handleRename = async () => {
     if (baseName.trim()) {
       try {
         await axios.patch(
-          `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/rename/${fileId}`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/rename/${resourceId}`,
           { resourceName: `${baseName}.${extension}` },
           { withCredentials: true },
         );
@@ -53,7 +53,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Rename {fileName}</DialogTitle>
+      <DialogTitle>Rename {resourceName}</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
@@ -84,6 +84,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
           color="primary"
           variant="contained"
           disabled={baseName.trim() === ''}
+
         >
           Rename
         </Button>
