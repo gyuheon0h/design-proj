@@ -221,8 +221,8 @@ fileRouter.patch('/:fileId/favorite', authorize, async (req, res) => {
  */
 fileRouter.patch('/:fileId/rename', authorize, async (req, res) => {
   try {
-    const { fileName } = req.body;
-    if (!fileName) {
+    const { resourceName } = req.body;
+    if (!resourceName) {
       return res.status(400).json({ message: 'No new file name provided' });
     }
 
@@ -235,7 +235,7 @@ fileRouter.patch('/:fileId/rename', authorize, async (req, res) => {
     }
 
     const fileMetadata = await FileModel.updateFileMetadata(fileId, {
-      name: fileName,
+      name: resourceName,
       lastModifiedBy: userId, //TODO: may need to get userName thru userId
       lastModifiedAt: new Date(),
     });
