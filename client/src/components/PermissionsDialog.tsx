@@ -84,7 +84,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
           },
         }}
         InputProps={{
-          startAdornment: (
+          startAdornment: ( 
             <InputAdornment position="start">
               <SearchIcon sx={{ color: colors.darkGrey }} />
             </InputAdornment>
