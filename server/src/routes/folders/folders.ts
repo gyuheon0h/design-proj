@@ -6,22 +6,20 @@ import PermissionModel from '../../db_models/PermissionModel';
 
 const folderRouter = Router();
 
-/**
- * GET /api/folders/parent/:folderId
- * Protected route to get subfolders of a specific folder.
- */
-folderRouter.post(
-  '/parent',
+folderRouter.get(
+  '/parent/:folderId',
   authorize,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const { folderId } = req.body; // Get from request body
+      const { folderId } = req.params; // Get from request body
+
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
       const userId = req.user.userId;
 
       // Handle null case properly
+      console.log('Folder router: ' + folderId);
       const subfolders = await FolderModel.getSubfoldersByOwner(
         userId,
         folderId || null,
@@ -101,10 +99,10 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
 });
 
 /**
- * PATCH /api/folder/favorite/:folderId
+ * PATCH /api/folder/:folderId/favorite
  * Route to favorite/unfavorite a folder
  */
-folderRouter.patch('/favorite/:folderId', authorize, async (req, res) => {
+folderRouter.patch('/:folderId/favorite', authorize, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const { folderId } = req.params;
@@ -165,23 +163,23 @@ folderRouter.get(
   },
 );
 
-// Bypassing auth for now. Will need to add back in later by checking permissions table
-folderRouter.post('/parent/shared', async (req, res) => {
-  try {
-    const { folderId } = req.body; // Get from request body
-    const subfolders = await FolderModel.getSubfolders(folderId || null);
+// // Bypassing auth for now. Will need to add back in later by checking permissions table
+// folderRouter.post('/parent/shared', async (req, res) => {
+//   try {
+//     const { folderId } = req.body; // Get from request body
+//     const subfolders = await FolderModel.getSubfolders(folderId || null);
 
-    // sort in descending order
-    const sortedSubfolders = subfolders.sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+//     // sort in descending order
+//     const sortedSubfolders = subfolders.sort((a, b) => {
+//       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+//     });
 
-    return res.json(sortedSubfolders);
-  } catch (error) {
-    console.error('Error getting subfolders:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+//     return res.json(sortedSubfolders);
+//   } catch (error) {
+//     console.error('Error getting subfolders:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
 
 /**
  * GETS all permissions pertaining to the fileId
@@ -319,7 +317,7 @@ folderRouter.delete(
   },
 );
 
-folderRouter.delete('/delete/:folderId', authorize, async (req, res) => {
+folderRouter.delete('/:folderId/delete', authorize, async (req, res) => {
   try {
     const { folderId } = req.params;
     const folder = await FolderModel.getById(folderId);
@@ -347,7 +345,7 @@ folderRouter.get('/trash', authorize, async (req, res) => {
   }
 });
 
-folderRouter.patch('/restore/:folderId', authorize, async (req, res) => {
+folderRouter.patch('/:folderId/restore', authorize, async (req, res) => {
   try {
     const { folderId } = req.params;
     const folder = await FolderModel.getByIdAll(folderId);
@@ -364,12 +362,12 @@ folderRouter.patch('/restore/:folderId', authorize, async (req, res) => {
   }
 });
 
-folderRouter.patch('/rename/:folderId', authorize, async (req, res) => {
+folderRouter.patch('/:folderId/rename', authorize, async (req, res) => {
   try {
     const { folderId } = req.params;
-    const { folderName } = req.body;
+    const { resourceName } = req.body;
 
-    if (!folderName) {
+    if (!resourceName) {
       return res.status(400).json({ message: 'No new folder name provided' });
     }
 
@@ -385,7 +383,7 @@ folderRouter.patch('/rename/:folderId', authorize, async (req, res) => {
     }
 
     const updatedFolder = await FolderModel.updateFolderMetadata(folderId, {
-      name: folderName,
+      name: resourceName,
     });
 
     return res.status(200).json({
@@ -399,12 +397,13 @@ folderRouter.patch('/rename/:folderId', authorize, async (req, res) => {
 });
 
 /**
- * PATCH /api/files/move/:folderId
+ * PATCH /api/files/:folderId/move
  * Route to move a folder (updates parentFolderId)
  */
-folderRouter.patch('/move/:folderId', authorize, async (req, res) => {
+folderRouter.patch('/:folderId/move', authorize, async (req, res) => {
   try {
     const { parentFolderId } = req.body;
+    console.log(parentFolderId);
     // if (!parentFolderId) {
     //   return res
     //     .status(400)
