@@ -8,4 +8,5 @@ export interface File {
   parentFolder: string | null;
   gcsKey: string;
   fileType: string;
+  fileSize: number;
 }
