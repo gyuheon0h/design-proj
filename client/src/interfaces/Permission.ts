@@ -4,4 +4,5 @@ export interface Permission {
   userId: string;
   role: 'owner' | 'editor' | 'viewer';
   deletedAt: Date | null;
+  isFavorited: boolean;
 }

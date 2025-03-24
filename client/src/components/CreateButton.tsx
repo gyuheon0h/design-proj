@@ -8,12 +8,14 @@ import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
 
 interface CreateButtonProps {
   currentFolderId: string | null;
-  refresh: (folderId: string | null) => void;
+  refreshFiles: (folderId: string | null) => void;
+  refreshFolders: (folderId: string | null) => void;
 }
 
 const CreateButton: React.FC<CreateButtonProps> = ({
   currentFolderId,
-  refresh,
+  refreshFiles,
+  refreshFolders,
 }) => {
   const nodeRef = useRef<HTMLDivElement>(null);
 
@@ -67,11 +69,11 @@ const CreateButton: React.FC<CreateButtonProps> = ({
 
     try {
       const response = await axios.post(
-        'http://localhost:5001/api/file/upload',
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/upload`,
         formData,
         { withCredentials: true },
       );
-      refresh(currentFolderId);
+      refreshFiles(currentFolderId);
       return response.data;
     } catch (error) {
       console.error('Upload failed:', error);
@@ -86,11 +88,11 @@ const CreateButton: React.FC<CreateButtonProps> = ({
     const requestBody = { name: folderName, parentFolder };
     try {
       const response = await axios.post(
-        'http://localhost:5001/api/folder/create',
+        `${process.env.REACT_APP_API_BASE_URL}/api/folder/create`,
         requestBody,
         { withCredentials: true },
       );
-      refresh(currentFolderId);
+      refreshFolders(currentFolderId);
       return response.data;
     } catch (error) {
       console.error('Folder creation failed:', error);

@@ -1,15 +1,16 @@
 import axios from 'axios';
-import { FileComponentProps } from '../components/File';
 import { useLocation } from 'react-router-dom';
 import { useState } from 'react';
+import { File } from '../interfaces/File';
 
 export async function getBlobGcskey(
   gcsKey: string,
   fileType: string,
+  fileId: string,
 ): Promise<Blob> {
   try {
     const response = await axios.post(
-      `http://localhost:5001/api/file/view`,
+      `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/view`,
       { gcsKey, fileType },
       { responseType: 'blob' },
     );
@@ -23,13 +24,30 @@ export async function getBlobGcskey(
 
 export async function getUsernameById(id: string): Promise<string> {
   try {
-    const response = await axios.get(`http://localhost:5001/api/user/`, {
-      params: { id },
-    });
+    const response = await axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/api/user`,
+      {
+        params: { id },
+      },
+    );
     return response.data?.user.username || '';
   } catch (error) {
     console.error('Error fetching username:', error);
     return '';
+  }
+}
+
+export async function getIsFavoritedByFileId(fileId: string): Promise<boolean> {
+  try {
+    const response = await axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/api/user/permissions/${fileId}`,
+      { withCredentials: true },
+    );
+
+    return response.data?.isFavorited || false;
+  } catch (error) {
+    console.error('Error fetching isFavorited status: ', error);
+    return false;
   }
 }
 
@@ -39,7 +57,7 @@ export async function downloadFile(
 ): Promise<void> {
   try {
     const response = await axios.get(
-      `http://localhost:5001/api/file/download/${fileId}`,
+      `${process.env.REACT_APP_API_BASE_URL}/api/file/download/${fileId}`,
       {
         responseType: 'blob',
         withCredentials: true,
@@ -64,7 +82,9 @@ export async function fetchFolderNames(
 ): Promise<{ [key: string]: string }> {
   try {
     const nameRequests = folderIds.map((id) =>
-      axios.get(`http://localhost:5001/api/folder/foldername/${id}`),
+      axios.get(
+        `${process.env.REACT_APP_API_BASE_URL}/api/folder/foldername/${id}`,
+      ),
     );
     const nameResponses = await Promise.all(nameRequests);
 
@@ -81,12 +101,26 @@ export async function fetchFolderNames(
 }
 
 export function applyFilters(
-  files: FileComponentProps[],
+  files: File[],
   fileTypeFilter: string | null,
   createdAtFilter: string | null,
   modifiedAtFilter: string | null,
-): FileComponentProps[] {
-  return files.filter((file) => {
+): File[] {
+  let filesArray: File[] = [];
+
+  if (Array.isArray(files)) {
+    filesArray = files;
+  } else {
+    filesArray =
+      typeof files === 'object' &&
+      files !== null &&
+      'files' in files &&
+      'permissions' in files
+        ? (files as { files: File[]; permissions: any }).files
+        : [];
+  }
+
+  return filesArray.filter((file) => {
     const fileType =
       '.' + file.fileType.substring(file.fileType.indexOf('/') + 1);
     const matchesFileType = fileTypeFilter ? fileType === fileTypeFilter : true;
@@ -162,7 +196,7 @@ export function useFilters() {
   const setModifiedAtFilter = (date: string | null) =>
     setFilters((prev) => ({ ...prev, modifiedAt: date }));
 
-  const [filteredFiles, setFilteredFiles] = useState<FileComponentProps[]>([]);
+  const [filteredFiles, setFilteredFiles] = useState<File[]>([]);
 
   return {
     filters,

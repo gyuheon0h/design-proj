@@ -4,13 +4,14 @@ import apiRoutes from './routes/api'; // Collects all API routes
 import { query } from './db_models/db';
 import StorageService from './storage';
 import cookieParser from 'cookie-parser';
+import dotenv from 'dotenv';
 
 const app: Application = express();
-
+dotenv.config(); // we need this to be able to access things like userId in our environment as a whole.
 // Middleware
 app.use(
   cors({
-    origin: 'http://localhost:3000', // Allow requests from React frontend
+    origin: process.env.CLIENT_BASE_URL, // Allow requests from React frontend
     credentials: true, // Allow cookies to be sent with requests
   }),
 );

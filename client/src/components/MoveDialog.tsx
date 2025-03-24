@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -15,91 +15,137 @@ import {
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIos';
 import axios from 'axios';
-
-export interface FolderProps {
-  id: string;
-  name: string;
-  parentFolder: string | null;
-}
+import { useUser } from '../context/UserContext';
+import ErrorAlert from '../components/ErrorAlert';
+import { Folder } from '../interfaces/Folder';
 
 interface MoveDialogProps {
   open: boolean;
-  fileName: string;
-  fileId: string;
+  resourceName: string;
+  resourceId: string;
   resourceType: 'folder' | 'file';
   parentFolderId: string | null;
+  page: 'home' | 'shared' | 'trash' | 'favorites';
   onClose: () => void;
+  onSuccess: () => void;
 }
 
 const MoveDialog: React.FC<MoveDialogProps> = ({
   open,
-  fileName,
-  fileId,
+  resourceName,
+  resourceId,
   resourceType,
+  page,
   parentFolderId,
   onClose,
+  onSuccess,
 }) => {
-  const [currentParentFolderId, setCurrentParentFolderId] = useState<
-    string | null
-  >(null);
-  const [folders, setFolders] = useState<FolderProps[]>([]);
-  const [folderHistory, setFolderHistory] = useState<string[]>([]);
+  const userContext = useUser();
+  // const [currentParentFolderId, setCurrentParentFolderId] = useState<
+  // string | (null > null);
+  const [currentParentFolder, setCurrentParentFolder] = useState<Folder | null>(
+    null,
+  ); // null at root
+  const [folders, setFolders] = useState<Folder[]>([]); // child folders of parent
+  const [folderHistory, setFolderHistory] = useState<Folder[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  // const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // fetch subfolders whenever the current parent folder changes
+  // useEffect(() => {
+  //   if (currentParentFolderId !== undefined) {
+  //     fetchSubFolders(currentParentFolderId);
+
+  //     // automatically select the root directory when at the root
+  //     if (currentParentFolderId === null) {
+  //       setSelectedFolderId(null);
+  //     }
+  //   }
+  // }, [currentParentFolderId]);
+  // fetch subfolders for the given parent folder ID
+  const fetchSubFolders = useCallback(
+    async (folderId: string | null) => {
+      setLoading(true);
+      try {
+        if (folderId === undefined || folderId === null) {
+          const res = await axios.get(
+            `${process.env.REACT_APP_API_BASE_URL}/api/user/${userContext.userId}/${page}/folder`,
+            // { folderId: folderId ?? null }, // ensure null is passed for root
+            { withCredentials: true },
+          );
+          if (page === 'shared') {
+            // we merely need this check to deal with the permissions thing properly.
+            setFolders(res.data.folders);
+          } else {
+            setFolders(res.data);
+          }
+        } else {
+          const res = await axios.get(
+            `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`,
+            // { folderId: folderId ?? null }, // ensure null is passed for root
+            { withCredentials: true },
+          );
+          setFolders(res.data);
+        }
+        // const res = await axios.post(
+        //   `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent`,
+        //   { folderId: folderId ?? null }, // ensure null is passed for root
+        //   { withCredentials: true },
+        // );
+      } catch (error) {
+        console.error('Error fetching folders:', error);
+        setError('Failed to load folders. Please try again.');
+      }
+      setLoading(false);
+    },
+    [page, userContext.userId],
+  );
 
   // reset states when opening dialog
   useEffect(() => {
     if (open) {
-      setCurrentParentFolderId(null); //set to root directory
+      // setCurrentParentFolderId(null); //set to root directory
+      setCurrentParentFolder(null); // set parent folder to null/root
       setFolderHistory([]); // reset history
-      setSelectedFolderId(null); // automatically select the root directory
+      setSelectedFolder(null); // automatically select the root directory
       fetchSubFolders(null); // load subfolders of root directory
     }
-  }, [open]);
+  }, [fetchSubFolders, open]);
 
-  // fetch subfolders whenever the current parent folder changes
   useEffect(() => {
-    if (currentParentFolderId !== undefined) {
-      fetchSubFolders(currentParentFolderId);
-
-      // automatically select the root directory when at the root
-      if (currentParentFolderId === null) {
-        setSelectedFolderId(null);
-      }
+    fetchSubFolders(
+      currentParentFolder === null ? null : currentParentFolder.id,
+    ); // SWAGMEAT it's because the null can't really be passed in equivalently
+    // automatically select the root directory when at the root
+    if (currentParentFolder === null) {
+      // note that this still expects an ID, not a folder prop
+      setSelectedFolder(null);
     }
-  }, [currentParentFolderId]);
-
-  // fetch subfolders for the given parent folder ID
-  const fetchSubFolders = async (folderId: string | null) => {
-    setLoading(true);
-    try {
-      const res = await axios.post(
-        'http://localhost:5001/api/folder/parent',
-        { folderId: folderId ?? null }, // ensure null is passed for root
-        { withCredentials: true },
-      );
-      setFolders(res.data);
-    } catch (error) {
-      console.error('Error fetching folders:', error);
-      alert('Failed to load folders. Please try again.');
-    }
-    setLoading(false);
-  };
+  }, [currentParentFolder, fetchSubFolders]);
 
   // select the folder without navigating into it
-  const handleSelectFolder = (event: React.MouseEvent, folderId: string) => {
+  const handleSelectFolder = (event: React.MouseEvent, folder: Folder) => {
     event.stopPropagation();
-    setSelectedFolderId(folderId);
+    setSelectedFolder(folder);
   };
 
   // navigate into the clicked folder and select it
-  const handleGoIntoFolder = (event: React.MouseEvent, folderId: string) => {
+  const handleGoIntoFolder = (event: React.MouseEvent, folder: Folder) => {
     event.stopPropagation();
-    console.log('Navigating into:', folderId);
-    setFolderHistory((prev) => [...prev, folderId]);
-    setCurrentParentFolderId(folderId);
-    setSelectedFolderId(folderId);
+    setFolderHistory((prev) => [...prev, folder]);
+    setCurrentParentFolder(folder);
+    setSelectedFolder(folder);
   };
+
+  // // navigate into the clicked folder and select it
+  // const handleGoIntoFolder = (event: React.MouseEvent, folderId: string) => {
+  //   event.stopPropagation();
+  //   setFolderHistory((prev) => [...prev, folderId]);
+  //   setCurrentParentFolderId(folderId);
+  //   setSelectedFolderId(folderId);
+  // };s
 
   // go back to the previous folder
   const handleGoBack = () => {
@@ -109,44 +155,55 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
       const previousFolder =
         newHistory.length > 0 ? newHistory[newHistory.length - 1] : null;
       setFolderHistory(newHistory);
-      setCurrentParentFolderId(previousFolder);
-      setSelectedFolderId(previousFolder);
+      setCurrentParentFolder(previousFolder);
+      // setCurrentParentFolderId(previousFolder);
+      setSelectedFolder(previousFolder);
     }
   };
 
   // move the file to the selected folder
   const handleMove = async () => {
-    if (selectedFolderId === parentFolderId) return;
+    // if (selectedFolderId === parentFolderId) return;
     try {
       await axios.patch(
-        `http://localhost:5001/api/${resourceType}/move/${fileId}`,
-        { parentFolderId: selectedFolderId },
+        `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/move`,
+        { parentFolderId: selectedFolder === null ? null : selectedFolder.id }, // sorry for the ugliness
         { withCredentials: true },
       );
+
+      onSuccess();
     } catch (error) {
       console.error('Error moving file:', error);
-      alert('Failed to move file. Please try again.');
+      setError('Failed to move file. Please try again.');
     }
     handleClose();
   };
 
   // close the dialog and reset state
   const handleClose = () => {
-    setCurrentParentFolderId(null);
-    setSelectedFolderId(null);
+    setCurrentParentFolder(null);
+    setSelectedFolder(null);
     setFolderHistory([]);
     onClose();
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle>Move "{fileName}"</DialogTitle>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      fullWidth
+      maxWidth="sm"
+      onClick={() => {
+        setSelectedFolder(currentParentFolder);
+      }}
+    >
+      <DialogTitle>Move "{resourceName}"</DialogTitle>
       <DialogContent>
         <Typography>
           Current Folder:{' '}
-          {currentParentFolderId === null
+          {currentParentFolder === null
             ? 'Root Directory'
-            : currentParentFolderId}
+            : currentParentFolder.name}
         </Typography>
 
         {/* Back Button */}
@@ -172,7 +229,8 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   backgroundColor:
-                    selectedFolderId === folder.id
+                    (selectedFolder === null ? null : selectedFolder.id) ===
+                    folder.id
                       ? 'rgba(0, 0, 255, 0.1)'
                       : 'transparent',
                 }}
@@ -180,12 +238,15 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
                 {/* Select Folder (Highlight Only) */}
                 <ListItemText
                   primary={folder.name}
-                  onClick={(e) => handleSelectFolder(e, folder.id)}
+                  onClick={(e) => handleSelectFolder(e, folder)}
                   sx={{ cursor: 'pointer' }}
                 />
 
                 {/* Navigate Into Folder */}
-                <IconButton onClick={(e) => handleGoIntoFolder(e, folder.id)}>
+                <IconButton
+                  onClick={(e) => handleGoIntoFolder(e, folder)}
+                  disabled={resourceId == folder.id}
+                >
                   <ArrowForwardIosIcon />
                 </IconButton>
               </ListItem>
@@ -201,11 +262,22 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           onClick={handleMove}
           color="primary"
           variant="contained"
-          disabled={!selectedFolderId && parentFolderId === null}
+          disabled={
+            (selectedFolder === null && parentFolderId === null) ||
+            (selectedFolder !== null && selectedFolder.id === parentFolderId) ||
+            (selectedFolder !== null && selectedFolder.id === resourceId)
+          }
         >
           Move
         </Button>
       </DialogActions>
+      {error && (
+        <ErrorAlert
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </Dialog>
   );
 };

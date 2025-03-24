@@ -168,10 +168,8 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
               credentials: 'include',
             },
           );
+
           if (response.ok) {
-            navigate('/');
-          } else {
-            console.error('Error deleting account:');
             navigate('/');
           }
         } catch (error) {

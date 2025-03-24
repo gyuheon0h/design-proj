@@ -5,128 +5,82 @@ import { v4 as uuidv4 } from 'uuid';
 import StorageService from '../../storage';
 import FileModel from '../../db_models/FileModel';
 import PermissionModel from '../../db_models/PermissionModel';
+import { inferMimeType } from './fileHelpers';
 
 const fileRouter = Router();
 const upload = multer(); // Using memory storage to keep things minimal (TODO: implement streaming)
 
-fileRouter.get('/root', authorize, async (req: AuthenticatedRequest, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+// fileRouter.get('/root', authorize, async (req: AuthenticatedRequest, res) => {
+//   try {
+//     if (!req.user) {
+//       return res.status(401).json({ error: 'Unauthorized' });
+//     }
 
-    const userId = req.user.userId;
-    const files = await FileModel.getFilesByOwnerAndFolder(userId, null);
-    return res.json(files);
-  } catch (error) {
-    console.error('Error getting root folder files:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+//     const userId = req.user.userId;
+//     const files = await FileModel.getFilesByOwnerAndFolder(userId, null);
+//     return res.json(files);
+//   } catch (error) {
+//     console.error('Error getting root folder files:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
 
 /**
  * GET /api/files/owner/:ownerId
  * Route to get files owned by a certain user (ownerId).
  * This is protected by authorize
  */
-fileRouter.get('/owner/:ownerId', authorize, async (req, res) => {
-  try {
-    const { ownerId } = req.params;
+// fileRouter.get('/owner/:ownerId', authorize, async (req, res) => {
+//   try {
+//     const { ownerId } = req.params;
 
-    // ******** CHECK THIS OUT If we only want to let users get their own files
-    // if ((req as any).user.userId !== ownerId) {
-    //   return res.status(403).json({ message: 'Forbidden: You can only access your own files.' });
-    // }
+//     // ******** CHECK THIS OUT If we only want to let users get their own files
+//     // if ((req as any).user.userId !== ownerId) {
+//     //   return res.status(403).json({ message: 'Forbidden: You can only access your own files.' });
+//     // }
 
-    const files = await FileModel.getFilesByOwner(ownerId);
-    return res.json(files);
-  } catch (error) {
-    console.error('Error getting files by owner:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+//     const files = await FileModel.getFilesByOwner(ownerId);
+//     return res.json(files);
+//   } catch (error) {
+//     console.error('Error getting files by owner:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
 
 /**
  * GET /api/files/folder/:folderId
  * Route to get files in a certain folder.
  * this is also protected by authorize
  */
-fileRouter.post(
-  '/folder',
-  authorize,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      const { folderId } = req.body;
-      if (!req.user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-      const userId = req.user.userId;
+// fileRouter.post(
+//   '/:fileId/folder',
+//   authorize,
+//   async (req: AuthenticatedRequest, res) => {
+//     try {
+//       const { folderId } = req.body;
+//       if (!req.user) {
+//         return res.status(401).json({ error: 'Unauthorized' });
+//       }
+//       const userId = req.user.userId;
 
-      const files = await FileModel.getFilesByOwnerAndFolder(
-        userId,
-        folderId || null,
-      );
+//       const files = await FileModel.getFilesByOwnerAndFolder(
+//         userId,
+//         folderId || null,
+//       );
 
-      const sortedFiles = files.sort((a, b) => {
-        return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      });
+//       const sortedFiles = files.sort((a, b) => {
+//         return (
+//           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+//         );
+//       });
 
-      return res.json(sortedFiles);
-    } catch (error) {
-      console.error('Error getting files by folder:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  },
-);
-
-// Bypass auth for shared page. Need to add security here, maybe check permissions table
-fileRouter.post('/folder/shared', async (req: AuthenticatedRequest, res) => {
-  try {
-    const { folderId } = req.body;
-
-    const files = await FileModel.getFilesByFolder(folderId || null);
-
-    const sortedFiles = files.sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-
-    return res.json(sortedFiles);
-  } catch (error) {
-    console.error('Error getting files by folder:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-/**
- * GET /api/files/favorites/
- * Route to get favorited files owned by a certain user (ownerId).
- * This is protected by authorize
- */
-
-fileRouter.get(
-  '/favorites',
-  authorize,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-      const userId = req.user.userId;
-
-      const favoritedFiles = await FileModel.getAllByOwnerAndColumn(
-        userId,
-        'isFavorited',
-        true,
-      );
-      return res.json(favoritedFiles);
-    } catch (error) {
-      console.error('Error getting files by owner:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  },
-);
+//       return res.json(sortedFiles);
+//     } catch (error) {
+//       console.error('Error getting files by folder:', error);
+//       return res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//   },
+// );
 
 /**
  * POST /api/files/upload
@@ -142,9 +96,13 @@ fileRouter.post(
         return res.status(400).json({ message: 'No file uploaded' });
       }
 
-      const { originalname, buffer, mimetype } = req.file;
+      let { originalname, buffer, mimetype } = req.file;
       const { parentFolder = null, fileName } = req.body;
       const userId = (req as any).user.userId;
+      // If the MIME type is 'application/octet-stream', try to infer it
+      if (mimetype === 'application/octet-stream') {
+        mimetype = inferMimeType(originalname);
+      }
 
       // Generate a unique file ID and file pagth
       const fileId = uuidv4();
@@ -164,7 +122,12 @@ fileRouter.post(
         parentFolder: parentFolder || null, // Allow null for root files
         gcsKey: gcsFilePath,
         fileType: mimetype,
-        isFavorited: false,
+      });
+
+      await PermissionModel.createPermission({
+        fileId: fileMetadata.id,
+        userId: userId,
+        role: 'owner',
       });
 
       return res
@@ -195,26 +158,7 @@ fileRouter.get('/download/:fileId', authorize, async (req, res) => {
   }
 });
 
-// fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
-//   try {
-//     const { fileId } = req.params;
-//     const file = await FileModel.getById(fileId);
-
-//     if (!file) {
-//       return res.status(404).json({ message: 'File not found' });
-//     }
-//     // TODO: think about good way to soft/hard delete from gcsKey. Should we have async process to
-//     // hard delete files that have been soft deleted for a long time?
-//     // await StorageService.deleteFile(file.gcsKey);
-//     await FileModel.softDelete(fileId);
-//     return res.json({ message: 'File deleted successfully' });
-//   } catch (error) {
-//     console.error('Error deleting file:', error);
-//     return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
-
-fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
+fileRouter.delete('/:fileId/delete', authorize, async (req, res) => {
   try {
     const { fileId } = req.params;
     const file = await FileModel.getById(fileId);
@@ -237,33 +181,33 @@ fileRouter.delete('/delete/:fileId', authorize, async (req, res) => {
 });
 
 /**
- * PATCH /api/files/favorite/:fileId
+ * PATCH /api/files/:fileId/favorite
  * Route to favorite/unfavorite a file
  */
 
-fileRouter.patch('/favorite/:fileId', authorize, async (req, res) => {
+fileRouter.patch('/:fileId/favorite', authorize, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const { fileId } = req.params;
-    const file = await FileModel.getById(fileId);
+    const permission = await PermissionModel.getPermissionByFileAndUser(
+      fileId,
+      userId,
+    );
 
-    if (!file) {
+    if (!permission) {
       return res.status(404).json({ message: 'File not found' });
     }
 
-    if (userId != file.owner) {
-      return res.status(403).json({
-        message: 'Unauthorized: User cannot favorite files they do not own',
-      });
-    }
-
-    const fileMetadata = await FileModel.updateFileMetadata(fileId, {
-      isFavorited: !file.isFavorited,
-    });
+    const permissionMetadata = await PermissionModel.updatePermission(
+      permission.id,
+      {
+        isFavorited: !permission.isFavorited,
+      },
+    );
 
     return res.status(200).json({
       message: 'File favorited successfully',
-      file: fileMetadata,
+      file: permissionMetadata,
     });
   } catch (error) {
     console.error('File favorite error:', error);
@@ -272,13 +216,13 @@ fileRouter.patch('/favorite/:fileId', authorize, async (req, res) => {
 });
 
 /**
- * PATCH /api/files/rename/:fileId
+ * PATCH /api/files/:fileId/rename
  * Route to rename a file (also updates lastModifiedBy and lastModifiedAt)
  */
-fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
+fileRouter.patch('/:fileId/rename', authorize, async (req, res) => {
   try {
-    const { fileName } = req.body;
-    if (!fileName) {
+    const { resourceName } = req.body;
+    if (!resourceName) {
       return res.status(400).json({ message: 'No new file name provided' });
     }
 
@@ -291,7 +235,7 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
     }
 
     const fileMetadata = await FileModel.updateFileMetadata(fileId, {
-      name: fileName,
+      name: resourceName,
       lastModifiedBy: userId, //TODO: may need to get userName thru userId
       lastModifiedAt: new Date(),
     });
@@ -307,10 +251,10 @@ fileRouter.patch('/rename/:fileId', authorize, async (req, res) => {
 });
 
 /**
- * PATCH /api/files/move/:fileId
+ * PATCH /api/files/:fileId/move
  * Route to move a file (updates parentFolderId)
  */
-fileRouter.patch('/move/:fileId', authorize, async (req, res) => {
+fileRouter.patch('/:fileId/move', authorize, async (req, res) => {
   try {
     const { parentFolderId } = req.body;
     // if (!parentFolderId) {
@@ -327,7 +271,7 @@ fileRouter.patch('/move/:fileId', authorize, async (req, res) => {
       return res.status(404).json({ message: 'File not found' });
     }
 
-    if (file?.parentFolder == parentFolderId) {
+    if (file?.parentFolder === parentFolderId) {
       console.error('User attempted to move to existing location');
       return res
         .status(400)
@@ -366,6 +310,25 @@ fileRouter.get('/shared', authorize, async (req: AuthenticatedRequest, res) => {
     return res.json({ files, permissions });
   } catch (error) {
     console.error('Error getting shared files:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Bypass auth for shared page. Need to add security here, maybe check permissions table
+// Returns sorted files on a given parent folder. Therefore, we need to
+fileRouter.get('/parent/:folderId', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { folderId } = req.params;
+    // console.log('we are on shared page searching for folderId: ' + folderId);
+    const files = await FileModel.getFilesByFolder(folderId); // ||null was originally here
+
+    const sortedFiles = files.sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return res.json(sortedFiles);
+  } catch (error) {
+    console.error('Error getting files by folder:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -504,18 +467,7 @@ fileRouter.delete(
   },
 );
 
-fileRouter.get('/trash', authorize, async (req: AuthenticatedRequest, res) => {
-  try {
-    const userId = (req as any).user.userId;
-    const deletdFiles = await FileModel.getAllByOwnerAndDeleted(userId);
-    return res.json(deletdFiles);
-  } catch (error) {
-    console.error('Error getting deleted files:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-fileRouter.patch('/restore/:fileId', authorize, async (req, res) => {
+fileRouter.patch('/:fileId/restore', authorize, async (req, res) => {
   try {
     const { fileId } = req.params;
     const file = await FileModel.getByIdAll(fileId);
@@ -532,7 +484,7 @@ fileRouter.patch('/restore/:fileId', authorize, async (req, res) => {
   }
 });
 
-fileRouter.post('/view', async (req, res) => {
+fileRouter.post('/:fileId/view', async (req, res) => {
   try {
     const { gcsKey, fileType } = req.body;
 

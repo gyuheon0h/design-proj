@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, CircularProgress, Box } from '@mui/material';
 import {
   isSupportedFileTypeText,
   isSupportedFileTypeVideo,
-} from '../utils/clientHelpers';
+} from '../utils/fileTypeHelpers';
+import TextPreview from './TextPreview';
 
 interface FileViewerDialogProps {
   open: boolean;
@@ -19,8 +20,6 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
   fileType,
 }) => {
   const [loading, setLoading] = useState(true);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
 
   const isImage = fileType.startsWith('image/');
@@ -30,18 +29,31 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
   const isAudio = fileType.startsWith('audio/');
 
   useEffect(() => {
-    if (open) {
+    if (open && src && !src.startsWith('about:blank')) {
       setLoading(true);
       setTextContent(null);
 
       if (isSupportedFileTypeText(fileType) && !isPDF) {
         fetch(src)
-          .then((response) => response.text())
+          .then((response) => {
+            if (
+              !response.ok ||
+              (response.headers.get('content-type')?.includes('text/html') &&
+                !(fileType === 'text/html'))
+            ) {
+              throw new Error('Invalid file source');
+            }
+            return response.text();
+          })
           .then((text) => {
             setTextContent(text);
             setLoading(false);
           })
-          .catch(() => setLoading(false));
+          .catch((error) => {
+            console.error('Error fetching text file:', error);
+            setTextContent(null);
+            setLoading(false);
+          });
       }
     }
   }, [open, src, fileType, isPDF]);
@@ -91,7 +103,6 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
         {isVideo && (
           <video
             key={src}
-            ref={videoRef}
             controls
             autoPlay
             style={{
@@ -123,28 +134,12 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
         )}
 
         {isText && textContent && (
-          <pre
-            style={{
-              width: '100%',
-              height: '80vh',
-              overflow: 'auto',
-              whiteSpace: 'pre-wrap',
-              wordWrap: 'break-word',
-              backgroundColor: '#f4f4f4',
-              padding: '10px',
-              borderRadius: '5px',
-              textAlign: 'left',
-              fontFamily: 'monospace',
-            }}
-          >
-            {textContent}
-          </pre>
+          <TextPreview content={textContent} fileType={fileType} />
         )}
 
         {isAudio && (
           <audio
             key={src}
-            ref={audioRef}
             controls
             autoPlay
             style={{

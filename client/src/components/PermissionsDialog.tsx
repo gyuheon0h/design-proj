@@ -13,12 +13,131 @@ import {
   Box,
   IconButton,
   CircularProgress,
+  TextField,
+  InputAdornment,
+  Paper,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import SearchIcon from '@mui/icons-material/Search';
 import axios from 'axios';
 import { User } from '../interfaces/User';
 import { Permission } from '../interfaces/Permission';
+import { useUser } from '../context/UserContext';
+import { colors } from '../Styles';
 
+// Searchable Select Component
+interface SearchableSelectProps {
+  label: string;
+  options: { id: string; username: string; email: string }[];
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}
+
+const SearchableSelect: React.FC<SearchableSelectProps> = ({
+  label,
+  options,
+  value,
+  onChange,
+  placeholder = 'Search...',
+}) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const filteredOptions =
+    searchQuery.trim() === '' ? options : options.filter((option) =>
+      option.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      option.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+  return (
+    <Box sx={{ position: 'relative', width: '100%' }}>
+      {/* Styled Search Input */}
+      <TextField
+        fullWidth
+        variant="outlined"
+        placeholder={placeholder}
+        value={searchQuery}
+        onChange={(e) => {
+          setSearchQuery(e.target.value);
+          setShowDropdown(true);
+        }}
+        onFocus={() => setShowDropdown(true)} // Ensure dropdown shows when input is clicked
+        onBlur={() => setTimeout(() => setShowDropdown(false), 200)} // Hide dropdown on blur with delay
+        sx={{
+          backgroundColor: colors.white,
+          borderRadius: '8px',
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '8px',
+            paddingLeft: 1,
+          },
+          '& .MuiOutlinedInput-notchedOutline': {
+            border: `1px solid ${colors.darkBlue}`,
+          },
+          '& .MuiInputBase-input::placeholder': {
+            color: colors.darkGrey,
+            opacity: 1,
+          },
+        }}
+        InputProps={{
+          startAdornment: ( 
+            <InputAdornment position="start">
+              <SearchIcon sx={{ color: colors.darkGrey }} />
+            </InputAdornment>
+          ),
+        }}
+      />
+
+      {/* Dynamic User List (Styled Dropdown) */}
+      {showDropdown && (
+        <Paper
+          elevation={3}
+          sx={{
+            position: 'absolute',
+            width: '100%',
+            backgroundColor: colors.white,
+            borderRadius: '8px',
+            mt: '5px',
+            maxHeight: '200px',
+            overflowY: 'auto',
+            zIndex: 10,
+            border: `1px solid ${colors.darkBlue}`,
+          }}
+        >
+          <List>
+            {filteredOptions.length === 0 ? (
+              <ListItem>
+                <Typography color={colors.darkGrey}>No users found</Typography>
+              </ListItem>
+            ) : (
+              filteredOptions.map((option) => (
+                <ListItemButton
+                  key={option.id}
+                  onClick={() => {
+                    onChange(option.id);
+                    setSearchQuery(option.username);
+                    setShowDropdown(false);
+                  }}
+                  sx={{
+                    '&:hover': { backgroundColor: colors.lightBlue },
+                  }}
+                >
+                  <ListItemText primary={`${option.username} (${option.email})`} />
+                </ListItemButton>
+              ))
+            )}
+          </List>
+        </Paper>
+      )}
+    </Box>
+  );
+};
+
+// Main Permissions Dialog Interface
 interface PermissionDialogProps {
   open: boolean;
   onClose: () => void;
@@ -26,11 +145,13 @@ interface PermissionDialogProps {
   folderId: string | null;
 }
 
+// Get All Users Function
 const getAllUsers = async (): Promise<User[]> => {
   try {
-    const response = await axios.get('http://localhost:5001/api/user/all', {
-      withCredentials: true,
-    });
+    const response = await axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/api/user/all`,
+      { withCredentials: true }
+    );
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error('Error getting all users:', error);
@@ -44,26 +165,26 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
   fileId,
   folderId,
 }) => {
+  const { userId } = useUser();
   const [users, setUsers] = useState<User[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   // For adding new permission
   const [newUserId, setNewUserId] = useState('');
-  const [newRole, setNewRole] = useState<'owner' | 'editor' | 'viewer'>(
-    'viewer',
-  );
+  const [newRole, setNewRole] = useState<'owner' | 'editor' | 'viewer'>('viewer');
 
-  // We’ll figure out which endpoint base to use
+  // Determine resource type and ID
   const resourceType = fileId ? 'file' : 'folder';
   const resourceId = fileId || folderId;
 
+  // Fetch Permissions
   const fetchPermissions = async () => {
     if (!resourceId) return;
     try {
       const response = await axios.get(
-        `http://localhost:5001/api/${resourceType}/${resourceId}/permissions`,
-        { withCredentials: true },
+        `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/permissions`,
+        { withCredentials: true }
       );
       setPermissions(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
@@ -71,6 +192,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
     }
   };
 
+  // Fetch Data
   const fetchData = async () => {
     setIsDataLoaded(false);
     const [fetchedUsers] = await Promise.all([getAllUsers()]);
@@ -79,20 +201,21 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
     setIsDataLoaded(true);
   };
 
+  // Effect for data loading
   useEffect(() => {
     if (open) {
       fetchData();
     } else {
-      // clear state when closing
+      // Clear state when closing
       setUsers([]);
       setPermissions([]);
       setIsDataLoaded(false);
       setNewUserId('');
       setNewRole('viewer');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, fileId, folderId]);
 
+  // Handle Role Change
   const handleRoleChange = async (
     permissionId: string,
     userId: string,
@@ -101,21 +224,22 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
     if (!resourceId) return;
     try {
       await axios.put(
-        `http://localhost:5001/api/${resourceType}/${resourceId}/permissions/${userId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/permissions/${userId}`,
         { role: newRoleValue },
-        { withCredentials: true },
+        { withCredentials: true }
       );
       // Optimistically update state
       setPermissions((prevPermissions) =>
         prevPermissions.map((perm) =>
-          perm.id === permissionId ? { ...perm, role: newRoleValue } : perm,
-        ),
+          perm.id === permissionId ? { ...perm, role: newRoleValue } : perm
+        )
       );
     } catch (error) {
       console.error('Error updating permission role:', error);
     }
   };
 
+  // Handle Remove Permission
   const handleRemovePermission = async (
     permissionId: string,
     userId: string,
@@ -123,27 +247,26 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
     if (!resourceId) return;
     try {
       await axios.delete(
-        `http://localhost:5001/api/${resourceType}/${resourceId}/permissions/${userId}`,
-        { withCredentials: true },
+        `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/permissions/${userId}`,
+        { withCredentials: true }
       );
       // Remove from state
       setPermissions((prevPermissions) =>
-        prevPermissions.filter((perm) => perm.id !== permissionId),
+        prevPermissions.filter((perm) => perm.id !== permissionId)
       );
     } catch (error) {
       console.error('Error removing permission:', error);
     }
   };
 
+  // Handle Add Permission
   const handleAddPermission = async () => {
     if (!resourceId || !newUserId) return;
     try {
       const response = await axios.put(
-        `http://localhost:5001/api/${resourceType}/${resourceId}/permissions/${newUserId}`,
-        {
-          role: newRole,
-        },
-        { withCredentials: true },
+        `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/permissions/${newUserId}`,
+        { role: newRole },
+        { withCredentials: true }
       );
       const newPermission: Permission = response.data;
       // Add new permission to state
@@ -157,9 +280,9 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
     }
   };
 
-  // Get users who do NOT yet have permission
+  // Users without existing permissions
   const usersWithoutPermission = users.filter(
-    (u) => !permissions.some((p) => p.userId === u.id && !p.deletedAt),
+    (u) => !permissions.some((p) => p.userId === u.id && !p.deletedAt)
   );
 
   return (
@@ -184,13 +307,13 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
           </Box>
         ) : (
           <>
-            {/* Existing Permissions */}
+            {/* Current Permissions */}
             <Typography variant="h6" gutterBottom>
               Current Permissions
             </Typography>
             {permissions.length > 0 ? (
               permissions
-                .filter((perm) => !perm.deletedAt) // skip any that might be "deleted"
+                .filter((perm) => !perm.deletedAt && perm.userId !== userId)
                 .map((perm) => {
                   const user = users.find((u) => u.id === perm.userId);
                   return (
@@ -207,7 +330,6 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
                         </Typography>
                       </Box>
                       <Box display="flex" alignItems="center">
-                        {/* Role Select */}
                         <FormControl size="small" sx={{ mr: 2, minWidth: 120 }}>
                           <InputLabel>Role</InputLabel>
                           <Select
@@ -247,29 +369,22 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
             <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
               Add Permission
             </Typography>
-            {usersWithoutPermission.length === 0 ? (
-              <Typography variant="body2">
-                All users already have permissions, or no users are available.
-              </Typography>
-            ) : (
-              <Box display="flex" alignItems="center" mt={1}>
-                {/* User Select */}
-                <FormControl size="small" sx={{ mr: 2, minWidth: 200 }}>
-                  <InputLabel>User</InputLabel>
-                  <Select
-                    value={newUserId}
-                    label="User"
-                    onChange={(e) => setNewUserId(e.target.value)}
-                  >
-                    {usersWithoutPermission.map((user) => (
-                      <MenuItem key={user.id} value={user.id}>
-                        {user.username} ({user.email})
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+            
+            <Box mt={1} sx={{ position: 'relative', pb: 2 }}>
+              <SearchableSelect
+                label="User"
+                options={usersWithoutPermission.map(user => ({
+                  id: user.id,
+                  username: user.username,
+                  email: user.email
+                }))}
+                value={newUserId}
+                onChange={setNewUserId}
+                placeholder="Search users by name or email"
+              />
 
-                {/* Role Select */}
+              {/* Role Select and Add Button */}
+              <Box display="flex" alignItems="center" mt={4}>
                 <FormControl size="small" sx={{ mr: 2, minWidth: 120 }}>
                   <InputLabel>Role</InputLabel>
                   <Select
@@ -292,7 +407,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
                   Add
                 </Button>
               </Box>
-            )}
+            </Box>
           </>
         )}
       </DialogContent>

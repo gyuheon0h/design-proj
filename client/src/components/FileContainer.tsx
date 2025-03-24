@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import FileComponent from './File';
-import axios from 'axios';
-import { getUsernameById } from '../utils/helperRequests';
 import { File } from '../interfaces/File';
+import ErrorAlert from '../components/ErrorAlert';
+import { Grow } from '@mui/material';
 
 interface FileContainerProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
   files: File[];
-  currentFolderId: string | null;
-  username: string; // logged-in user
+  currentFolderId: string | null; // currentparentfolderid
   refreshFiles: (folderId: string | null) => void;
+  username: string; // logged-in user
   searchQuery: string; // New prop for search input
 }
 
@@ -22,6 +22,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
   searchQuery, // Receive search query
 }) => {
   const [filteredFiles, setFilteredFiles] = useState<File[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Filter files based on search query
@@ -31,75 +32,6 @@ const FileContainer: React.FC<FileContainerProps> = ({
 
     setFilteredFiles(updatedFilteredFiles);
   }, [files, searchQuery]);
-
-  const handleDeleteFile = async (fileId: string) => {
-    try {
-      await axios.delete(`http://localhost:5001/api/file/delete/${fileId}`, {
-        withCredentials: true,
-      });
-
-      refreshFiles(currentFolderId);
-    } catch (error) {
-      console.error('Error deleting file:', error);
-    }
-  };
-
-  const handleRenameFile = async (fileId: string, fileName: string) => {
-    try {
-      await axios.patch(
-        `http://localhost:5001/api/file/rename/${fileId}`,
-        { fileName },
-        { withCredentials: true },
-      );
-
-      refreshFiles(currentFolderId);
-    } catch (error) {
-      console.error('Error renaming file:', error);
-    }
-  };
-
-  const handleFavoriteFile = async (fileId: string, owner: string) => {
-    const ownerUsername = await getUsernameById(owner);
-
-    if (ownerUsername !== username) {
-      alert('You do not have permission to favorite this file.');
-      return;
-    }
-    if (page === 'trash') {
-      alert('You cannot favorite a file in the trash.');
-      return;
-    }
-    try {
-      await axios.patch(
-        `http://localhost:5001/api/file/favorite/${fileId}`,
-        {},
-        { withCredentials: true },
-      );
-
-      refreshFiles(currentFolderId);
-    } catch (error) {
-      console.error('Error favoriting file:', error);
-    }
-  };
-
-  const handleRestoreFile = async (fileId: string, owner: string) => {
-    const ownerUsername = await getUsernameById(owner);
-
-    if (ownerUsername !== username) {
-      alert('You do not have permission to restore this file.');
-      return;
-    }
-    try {
-      await axios.patch(
-        `http://localhost:5001/api/file/restore/${fileId}`,
-        {},
-        { withCredentials: true },
-      );
-      refreshFiles(currentFolderId);
-    } catch (error) {
-      console.error('Error restoring file:', error);
-    }
-  };
 
   return (
     <div>
@@ -117,25 +49,23 @@ const FileContainer: React.FC<FileContainerProps> = ({
 
       {/* File List */}
       {filteredFiles.map((file) => (
-        <FileComponent
-          page={page}
-          key={file.id}
-          id={file.id}
-          name={file.name}
-          owner={file.owner}
-          createdAt={file.createdAt}
-          lastModifiedBy={file.lastModifiedBy}
-          lastModifiedAt={file.lastModifiedAt}
-          parentFolder={file.parentFolder}
-          gcsKey={file.gcsKey}
-          isFavorited={file.isFavorited}
-          fileType={file.fileType}
-          handleDeleteFile={handleDeleteFile}
-          handleRenameFile={handleRenameFile}
-          handleRestoreFile={() => handleRestoreFile(file.id, file.owner)}
-          handleFavoriteFile={() => handleFavoriteFile(file.id, file.owner)}
-        />
+        <Grow in={true} timeout={500} key={`${file.id}-${searchQuery}`}>
+          <div>
+            <FileComponent
+              page={page}
+              file={file}
+              refreshFiles={refreshFiles}
+            />
+          </div>
+        </Grow>
       ))}
+      {error && (
+        <ErrorAlert
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
+      )}
     </div>
   );
 };
