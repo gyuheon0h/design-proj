@@ -2,6 +2,7 @@ import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { File } from '../interfaces/File';
+import { Permission } from '../interfaces/Permission';
 
 export async function getBlobGcskey(
   gcsKey: string,
@@ -48,6 +49,22 @@ export async function getIsFavoritedByFileId(fileId: string): Promise<boolean> {
   } catch (error) {
     console.error('Error fetching isFavorited status: ', error);
     return false;
+  }
+}
+
+export async function getPermissionByFileId(
+  fileId: string,
+): Promise<Permission | undefined> {
+  try {
+    const response = await axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/api/user/permissions/${fileId}`,
+      { withCredentials: true },
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching permissions');
+    return undefined;
   }
 }
 

@@ -28,6 +28,7 @@ import {
   downloadFile,
   getBlobGcskey,
   getIsFavoritedByFileId,
+  getPermissionByFileId,
 } from '../utils/helperRequests';
 import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -43,6 +44,8 @@ import ErrorAlert from '../components/ErrorAlert';
 import { File } from '../interfaces/File';
 import axios from 'axios';
 import TextEditor from './TextEditor';
+import { Permission } from '../interfaces/Permission';
+import { permission } from 'process';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -96,6 +99,23 @@ const FileComponent = (props: FileComponentProps) => {
   const [fileSrc, setFileSrc] = useState('');
 
   const [error, setError] = useState<string | null>(null);
+
+  const [currentPermission, setCurrentPermission] = useState<Permission | null>(
+    null,
+  );
+
+  useEffect(() => {
+    const fetchPermission = async () => {
+      if (props.page === 'shared') {
+        const permission = await getPermissionByFileId(props.file.id);
+        if (permission) {
+          setCurrentPermission(permission);
+        }
+      }
+    };
+
+    fetchPermission();
+  }, []);
 
   useEffect(() => {
     const fetchOwnerUserName = async () => {
@@ -433,10 +453,14 @@ const FileComponent = (props: FileComponentProps) => {
                 Download
               </MenuItem>,
               // TODO ONLY SHOW THIS WHEN THEY HAVE PERMISSION
-              <MenuItem onClick={handleEditClick}>
-                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
-                Edit
-              </MenuItem>,
+              currentPermission?.role === 'editor' ? (
+                <MenuItem onClick={handleEditClick}>
+                  <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
+                  Edit
+                </MenuItem>
+              ) : (
+                <></>
+              ),
             ]
           ) : (
             [
