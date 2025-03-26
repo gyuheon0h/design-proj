@@ -31,12 +31,13 @@ const PageComponent: React.FC<PageComponentProps> = ({
   const navigate = useNavigate();
   //   const userContext = useUser();
   const { folderPath, currentFolderId } = useFolderPath(`/${page}`);
-
   const [searchQuery, setSearchQuery] = useState('');
 
   const [files, setFiles] = useState<File[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
+
+  console.log(folderNames);
 
   const {
     filters,
@@ -188,8 +189,9 @@ const PageComponent: React.FC<PageComponentProps> = ({
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
             fontSize: '14px',
+            marginLeft: '6px',
+            paddingTop: '30px',
           }}
         >
           {[page, ...folderPath].map((crumb, index) => (
@@ -200,14 +202,13 @@ const PageComponent: React.FC<PageComponentProps> = ({
                 cursor: 'pointer',
                 color: '#161C94',
                 fontWeight: 'bold',
-                marginLeft: '10px',
-                paddingTop: '10px',
+                marginLeft: '4px',
               }}
             >
               {index === 0
                 ? page.charAt(0).toUpperCase() + page.substring(1)
                 : folderNames[crumb] || ''}
-              {index < folderPath.length ? ' / ' : ''}
+              {index < folderPath.length ? ' /     ' : ''}
             </span>
           ))}
         </Box>
