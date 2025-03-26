@@ -362,7 +362,6 @@ const FileComponent = (props: FileComponentProps) => {
             <Typography
               variant="subtitle1"
               sx={{
-                fontWeight: 'bold',
                 maxWidth: '200px',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
