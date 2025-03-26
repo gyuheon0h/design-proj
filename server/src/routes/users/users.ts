@@ -106,14 +106,24 @@ userRouter.get(
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      const permissions =
+      // Get all folder-permissions for this user
+      const allPermissions =
         await PermissionModel.getFoldersByUserId(currentUserId);
 
-      const folders = await Promise.all(
-        permissions.map((perm) => FolderModel.getById(perm.fileId)),
+      // Filter out permissions belonging to the current user
+      const filteredPermissions = allPermissions.filter(
+        (perm) => perm.role !== 'owner',
       );
 
-      return res.json({ permissions, folders }); // this used to be {permissions, folders}
+      // Fetch folders based on the filtered permissions
+      const folders = await Promise.all(
+        filteredPermissions.map((perm) => FolderModel.getById(perm.fileId)),
+      );
+
+      return res.json({
+        permissions: filteredPermissions,
+        folders,
+      });
     } catch (error) {
       console.error('Error getting shared folders:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
@@ -134,12 +144,22 @@ userRouter.get(
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      const permissions = await PermissionModel.getFilesByUserId(currentUserId);
+      const allPermissions =
+        await PermissionModel.getFilesByUserId(currentUserId);
+
+      // Filter out permissions belonging to the current user
+      const filteredPermissions = allPermissions.filter(
+        (perm) => perm.role !== 'owner',
+      );
 
       const files = await Promise.all(
-        permissions.map((perm) => FileModel.getById(perm.fileId)),
+        filteredPermissions.map((perm) => FileModel.getById(perm.fileId)),
       );
-      return res.json({ files, permissions });
+
+      return res.json({
+        files,
+        permissions: filteredPermissions,
+      });
     } catch (error) {
       console.error('Error getting shared files:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
