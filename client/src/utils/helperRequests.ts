@@ -74,7 +74,7 @@ export async function downloadFile(
 ): Promise<void> {
   try {
     const response = await axios.get(
-      `${process.env.REACT_APP_API_BASE_URL}/api/file/download/${fileId}`,
+      `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/download`,
       {
         responseType: 'blob',
         withCredentials: true,

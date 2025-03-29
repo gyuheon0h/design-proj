@@ -140,7 +140,7 @@ fileRouter.post(
   },
 );
 
-fileRouter.get('/download/:fileId', authorize, async (req, res) => {
+fileRouter.get('/:fileId/download', authorize, async (req, res) => {
   try {
     const { fileId } = req.params;
     const file = await FileModel.getById(fileId);
