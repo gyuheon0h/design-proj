@@ -105,6 +105,8 @@ const FileComponent = (props: FileComponentProps) => {
     null,
   );
 
+  const isEditSupported = isSupportedFileTypeText(props.file.fileType);
+
   useEffect(() => {
     const fetchPermission = async () => {
       if (props.page === 'shared') {
@@ -441,7 +443,7 @@ const FileComponent = (props: FileComponentProps) => {
             </MenuItem>
           ) : props.page === 'shared' ? (
             [
-              currentPermission?.role === 'editor' ? (
+              currentPermission?.role === 'editor' && isEditSupported ? (
                 <MenuItem onClick={handleEditClick}>
                   <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
                   Edit
@@ -463,10 +465,14 @@ const FileComponent = (props: FileComponentProps) => {
             ]
           ) : (
             [
-              <MenuItem onClick={handleEditClick}>
-                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
-                Edit
-              </MenuItem>,
+              isEditSupported ? (
+                <MenuItem onClick={handleEditClick}>
+                  <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
+                  Edit
+                </MenuItem>
+              ) : (
+                <></>
+              ),
 
               <Divider sx={{ my: 0.2 }} />,
 
