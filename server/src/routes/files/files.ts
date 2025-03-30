@@ -73,7 +73,7 @@ fileRouter.post(
 );
 
 fileRouter.get(
-  '/download/:fileId',
+  '/:fileId/download',
   authorizeUser,
   checkPermission('download'),
   async (req, res) => {

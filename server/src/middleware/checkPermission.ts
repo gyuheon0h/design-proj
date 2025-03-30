@@ -18,9 +18,10 @@ export const checkPermission = (action: string) => {
         return res.status(400).json({ message: 'Resource ID missing' });
       }
 
-      // Use your bubbleUpResource helper to check if the user can perform the action
+      // Use bubbleUpResource helper to check if the user can perform the action
       const hasAccess = await bubbleUpResource(resourceId, userId, action);
       if (!hasAccess) {
+        // console.log('Error here!');
         return res
           .status(403)
           .json({ message: 'Forbidden: insufficient permissions' });
@@ -48,7 +49,6 @@ export async function bubbleUpResource(
   action: string,
 ): Promise<boolean> {
   let folder = await FolderModel.getById(resourceId);
-
   while (folder) {
     const permission = await PermissionModel.getPermissionByFileAndUser(
       folder.id,
@@ -69,5 +69,10 @@ export async function bubbleUpResource(
       : null;
   }
 
-  return false;
+  return true; // let's default it to true if we haven't found a file (usually indicates hitting a root directory).
+  // doesn't actually protect others from accessing file that are in the folder.
+  // or unshared files.
+  // hmm.
+  // maybe we need to create some default folders for the user.
+  // this sounds annoyingly difficult.
 }

@@ -17,6 +17,7 @@ export const authorizeUser = async (
     // Get token from cookies
     const token = req.cookies?.authToken;
     if (!token) {
+      console.log('This is an issue'); // apparnetly there isn't a toekn being passed into some requests.
       return res
         .status(401)
         .json({ message: 'Unauthorized: No token provided' });
