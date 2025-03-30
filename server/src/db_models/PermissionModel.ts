@@ -1,6 +1,6 @@
 import BaseModel from './baseModel';
 
-interface Permission {
+export interface Permission {
   id: string;
   fileId: string; // includes folders
   userId: string;

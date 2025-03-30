@@ -186,6 +186,73 @@ const FolderComponent = (props: FolderProps) => {
     // props.refreshFolders(props.folder.parentFolder);
   };
 
+  const getMenuItems = () => {
+    if (props.page === 'trash') {
+      return (
+        <MenuItem onClick={handleRestoreClick}>
+          <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Restore
+        </MenuItem>
+      );
+    }
+
+    const menuItems = [];
+
+    // Share
+    menuItems.push(
+      <MenuItem key="share" onClick={handlePermissionsClick}>
+        <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
+      </MenuItem>,
+      <Divider key="divider-share" sx={{ my: 0.2 }} />,
+    );
+
+    // Rename
+    menuItems.push(
+      <MenuItem key="rename" onClick={handleRenameClick}>
+        <DriveFileRenameOutlineIcon
+          sx={{ fontSize: '20px', marginRight: '9px' }}
+        />{' '}
+        Rename
+      </MenuItem>,
+      <Divider key="divider-rename" sx={{ my: 0.2 }} />,
+    );
+
+    // Delete (only in home & favorites)
+    if (props.page === 'home' || props.page === 'favorites') {
+      menuItems.push(
+        <MenuItem key="delete" onClick={handleDeleteClick}>
+          <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Delete
+        </MenuItem>,
+        <Divider key="divider-delete" sx={{ my: 0.2 }} />,
+      );
+    }
+
+    // // Download
+    // menuItems.push(
+    //   <MenuItem
+    //     key="download"
+    //     onClick={() => {
+    //       downloadFile(props.file.id, props.file.name);
+    //       handleOptionsClose();
+    //     }}
+    //   >
+    //     <InsertDriveFileIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+    //     Download
+    //   </MenuItem>,
+    //   <Divider key="divider-download" sx={{ my: 0.2 }} />,
+    // );
+
+    // Move (shared, home)
+    if (props.page !== 'favorites') {
+      menuItems.push(
+        <MenuItem key="move" onClick={handleMoveClick}>
+          <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
+        </MenuItem>,
+      );
+    }
+
+    return menuItems;
+  };
+
   return (
     <Box
       className="folder"
@@ -276,44 +343,18 @@ const FolderComponent = (props: FolderProps) => {
         </IconButton>
 
         {/* Dropdown Menu */}
-        <Menu anchorEl={anchorEl} open={open} onClose={handleOptionsClose}>
-          {props.page === 'trash' ? (
-            <MenuItem onClick={handleRestoreClick}>
-              <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-              Restore
-            </MenuItem>
-          ) : props.page === 'shared' ? (
-            []
-          ) : (
-            [
-              <MenuItem onClick={handlePermissionsClick}>
-                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
-              </MenuItem>,
-              <Divider sx={{ my: 0.2 }} />,
-              <MenuItem onClick={handleRenameClick}>
-                <DriveFileRenameOutlineIcon
-                  sx={{ fontSize: '20px', marginRight: '9px' }}
-                />
-                Rename
-              </MenuItem>,
-              <Divider sx={{ my: 0.2 }} />,
-              <MenuItem onClick={handleDeleteClick}>
-                <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-                Delete
-              </MenuItem>,
-              <Divider sx={{ my: 0.2 }} />,
-              <MenuItem onClick={(e) => e.stopPropagation()}>
-                <UploadIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
-                Download
-              </MenuItem>,
-
-              <Divider sx={{ my: 0.2 }} />,
-
-              <MenuItem onClick={handleMoveClick}>
-                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
-              </MenuItem>,
-            ]
-          )}
+        <Menu
+          anchorEl={anchorEl}
+          open={open}
+          onClick={(event) => event.stopPropagation()}
+          onClose={handleOptionsClose}
+          PaperProps={{
+            sx: {
+              width: '150px',
+            },
+          }}
+        >
+          {getMenuItems()}
         </Menu>
       </Box>
       {/* Rename Folder Dialog */}

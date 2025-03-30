@@ -100,22 +100,25 @@ const FileComponent = (props: FileComponentProps) => {
 
   const [error, setError] = useState<string | null>(null);
 
-  const [currentPermission, setCurrentPermission] = useState<Permission | null>(
-    null,
-  );
+  // COMMENT OUT FOR NOW... unless we want to disable menu options on the frontend
+  // const [currentPermission, setCurrentPermission] = useState<Permission | null>(
+  //   null,
+  // );
 
-  useEffect(() => {
-    const fetchPermission = async () => {
-      if (props.page === 'shared') {
-        const permission = await getPermissionByFileId(props.file.id);
-        if (permission) {
-          setCurrentPermission(permission);
-        }
-      }
-    };
+  const isEditSupported = isSupportedFileTypeText(props.file.fileType);
 
-    fetchPermission();
-  }, []);
+  // useEffect(() => {
+  //   const fetchPermission = async () => {
+  //     if (props.page === 'shared') {
+  //       const permission = await getPermissionByFileId(props.file.id);
+  //       if (permission) {
+  //         setCurrentPermission(permission);
+  //       }
+  //     }
+  //   };
+
+  //   fetchPermission();
+  // }, []);
 
   useEffect(() => {
     const fetchOwnerUserName = async () => {
@@ -327,6 +330,82 @@ const FileComponent = (props: FileComponentProps) => {
     ? `Last Modified: ${formattedLastModifiedDate} by ${modifiedByName || ownerUserName}`
     : `Created: ${formattedCreatedDate} by ${ownerUserName}`;
 
+  const getMenuItems = () => {
+    if (props.page === 'trash') {
+      return (
+        <MenuItem onClick={handleRestoreClick}>
+          <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Restore
+        </MenuItem>
+      );
+    }
+
+    const menuItems = [];
+
+    if (isEditSupported) {
+      menuItems.push(
+        <MenuItem key="edit" onClick={handleEditClick}>
+          <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Edit
+        </MenuItem>,
+        <Divider key="divider-edit" sx={{ my: 0.2 }} />,
+      );
+    }
+
+    // Share
+    menuItems.push(
+      <MenuItem key="share" onClick={handlePermissionsClick}>
+        <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
+      </MenuItem>,
+      <Divider key="divider-share" sx={{ my: 0.2 }} />,
+    );
+
+    // Rename
+    menuItems.push(
+      <MenuItem key="rename" onClick={handleRenameClick}>
+        <DriveFileRenameOutlineIcon
+          sx={{ fontSize: '20px', marginRight: '9px' }}
+        />{' '}
+        Rename
+      </MenuItem>,
+      <Divider key="divider-rename" sx={{ my: 0.2 }} />,
+    );
+
+    // Delete (only in home & favorites)
+    if (props.page === 'home' || props.page === 'favorites') {
+      menuItems.push(
+        <MenuItem key="delete" onClick={handleDeleteClick}>
+          <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Delete
+        </MenuItem>,
+        <Divider key="divider-delete" sx={{ my: 0.2 }} />,
+      );
+    }
+
+    // Download
+    menuItems.push(
+      <MenuItem
+        key="download"
+        onClick={() => {
+          downloadFile(props.file.id, props.file.name);
+          handleOptionsClose();
+        }}
+      >
+        <InsertDriveFileIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+        Download
+      </MenuItem>,
+      <Divider key="divider-download" sx={{ my: 0.2 }} />,
+    );
+
+    // Move (shared, home)
+    if (props.page !== 'favorites') {
+      menuItems.push(
+        <MenuItem key="move" onClick={handleMoveClick}>
+          <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
+        </MenuItem>,
+      );
+    }
+
+    return menuItems;
+  };
+
   return (
     <div>
       <Card
@@ -433,84 +512,7 @@ const FileComponent = (props: FileComponentProps) => {
             },
           }}
         >
-          {props.page === 'trash' ? (
-            <MenuItem onClick={handleRestoreClick}>
-              <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-              Restore
-            </MenuItem>
-          ) : props.page === 'shared' ? (
-            [
-              <MenuItem
-                onClick={() => {
-                  downloadFile(props.file.id, props.file.name);
-                  handleOptionsClose();
-                }}
-              >
-                <InsertDriveFileIcon
-                  sx={{ fontSize: '20px', marginRight: '9px' }}
-                />{' '}
-                Download
-              </MenuItem>,
-              // TODO ONLY SHOW THIS WHEN THEY HAVE PERMISSION
-              currentPermission?.role === 'editor' ? (
-                <MenuItem onClick={handleEditClick}>
-                  <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
-                  Edit
-                </MenuItem>
-              ) : (
-                <></>
-              ),
-            ]
-          ) : (
-            [
-              <MenuItem onClick={handleEditClick}>
-                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
-                Edit
-              </MenuItem>,
-
-              <Divider sx={{ my: 0.2 }} />,
-
-              <MenuItem onClick={handlePermissionsClick}>
-                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
-              </MenuItem>,
-
-              <Divider sx={{ my: 0.2 }} />,
-
-              <MenuItem onClick={handleRenameClick}>
-                <DriveFileRenameOutlineIcon
-                  sx={{ fontSize: '20px', marginRight: '9px' }}
-                />{' '}
-                Rename
-              </MenuItem>,
-
-              <Divider sx={{ my: 0.2 }} />,
-
-              <MenuItem onClick={handleDeleteClick}>
-                <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-                Delete
-              </MenuItem>,
-
-              <Divider sx={{ my: 0.2 }} />,
-
-              <MenuItem
-                onClick={() => {
-                  downloadFile(props.file.id, props.file.name);
-                  handleOptionsClose();
-                }}
-              >
-                <InsertDriveFileIcon
-                  sx={{ fontSize: '20px', marginRight: '9px' }}
-                />{' '}
-                Download
-              </MenuItem>,
-
-              <Divider sx={{ my: 0.2 }} />,
-
-              <MenuItem onClick={handleMoveClick}>
-                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
-              </MenuItem>,
-            ]
-          )}
+          {getMenuItems()}
         </Menu>
       </Card>
 
