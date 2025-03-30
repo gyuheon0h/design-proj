@@ -10,6 +10,7 @@ interface File {
   parentFolder: string | null;
   gcsKey: string;
   fileType: string;
+  deletedAt: Date | null;
 }
 
 class FileModel extends BaseModel<File> {

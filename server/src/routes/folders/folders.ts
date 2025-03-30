@@ -69,7 +69,7 @@ folderRouter.post(
         owner,
         createdAt: new Date(),
         parentFolder: parentFolder || null,
-        deletedAt: new Date(),
+        deletedAt: null,
       });
 
       await PermissionModel.createPermission({
@@ -209,7 +209,7 @@ folderRouter.put(
 
       // check owner
       if (folder.owner !== currentUserId) {
-        return res.status(403).json({ error: 'Not allowed.' });
+        return res.status(403).json({ error: 'Not allowed (sharing error).' });
       }
 
       // try to find existing permission
