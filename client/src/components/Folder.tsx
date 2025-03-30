@@ -18,6 +18,7 @@ import ErrorAlert from '../components/ErrorAlert';
 import { Folder } from '../interfaces/Folder';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
+import { DriveFileMove } from '@mui/icons-material';
 
 export interface FolderProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -301,16 +302,17 @@ const FolderComponent = (props: FolderProps) => {
                 <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
                 Delete
               </MenuItem>,
-              <Divider sx={{ my: 0.2 }} />,
-              <MenuItem onClick={(e) => e.stopPropagation()}>
-                <UploadIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
-                Download
-              </MenuItem>,
+              // <Divider sx={{ my: 0.2 }} />,
+              // <MenuItem onClick={(e) => e.stopPropagation()}>
+              //   <UploadIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
+              //   Download
+              // </MenuItem>,
 
               <Divider sx={{ my: 0.2 }} />,
 
               <MenuItem onClick={handleMoveClick}>
-                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
+                <DriveFileMove sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+                Move
               </MenuItem>,
             ]
           )}

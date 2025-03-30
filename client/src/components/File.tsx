@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
+import DriveFileMove from '@mui/icons-material/DriveFileMove';
 import RestoreIcon from '@mui/icons-material/Restore';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import EditNoteIcon from '@mui/icons-material/EditNote';
@@ -440,6 +441,14 @@ const FileComponent = (props: FileComponentProps) => {
             </MenuItem>
           ) : props.page === 'shared' ? (
             [
+              currentPermission?.role === 'editor' ? (
+                <MenuItem onClick={handleEditClick}>
+                  <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
+                  Edit
+                </MenuItem>
+              ) : (
+                <></>
+              ),
               <MenuItem
                 onClick={() => {
                   downloadFile(props.file.id, props.file.name);
@@ -451,15 +460,6 @@ const FileComponent = (props: FileComponentProps) => {
                 />{' '}
                 Download
               </MenuItem>,
-              // TODO ONLY SHOW THIS WHEN THEY HAVE PERMISSION
-              currentPermission?.role === 'editor' ? (
-                <MenuItem onClick={handleEditClick}>
-                  <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
-                  Edit
-                </MenuItem>
-              ) : (
-                <></>
-              ),
             ]
           ) : (
             [
@@ -507,7 +507,8 @@ const FileComponent = (props: FileComponentProps) => {
               <Divider sx={{ my: 0.2 }} />,
 
               <MenuItem onClick={handleMoveClick}>
-                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
+                <DriveFileMove sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+                Move
               </MenuItem>,
             ]
           )}
