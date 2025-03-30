@@ -4,6 +4,7 @@ import FolderModel from '../../db_models/FolderModel';
 import { AuthenticatedRequest } from '../../middleware/authorizeUser';
 import PermissionModel from '../../db_models/PermissionModel';
 import { checkPermission } from '../../middleware/checkPermission';
+import { bubbleUpResource } from '../helper';
 
 const folderRouter = Router();
 
@@ -97,6 +98,28 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
     return res.json(folderName);
   } catch (error) {
     console.error('Error getting folder name:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+folderRouter.get('/bubbleUp/:resourceId', authorizeUser, async (req, res) => {
+  try {
+    const { resourceId } = req.params;
+
+    const userId = (req as any).user.userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const bubbledPermission = await bubbleUpResource(resourceId, userId);
+
+    if (!bubbledPermission) {
+      return res.status(404).json({ message: 'Bubbled folder not found' });
+    }
+
+    return res.json(bubbledPermission);
+  } catch (error) {
+    console.error('Error getting bubbled folder:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });

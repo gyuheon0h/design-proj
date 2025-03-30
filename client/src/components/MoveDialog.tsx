@@ -69,19 +69,31 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
     async (folderId: string | null) => {
       setLoading(true);
       try {
-        if (folderId === undefined || folderId === null) {
+        if (
+          (folderId === undefined || folderId === null) &&
+          page !== 'shared'
+        ) {
           const res = await axios.get(
             `${process.env.REACT_APP_API_BASE_URL}/api/user/${userContext.userId}/${page}/folder`,
             // { folderId: folderId ?? null }, // ensure null is passed for root
             { withCredentials: true },
           );
-          if (page === 'shared') {
-            // we merely need this check to deal with the permissions thing properly.
-            setFolders(res.data.folders);
-          } else {
-            setFolders(res.data);
-          }
+
+          setFolders(res.data);
         } else {
+          if (
+            page === 'shared' &&
+            (folderId === undefined || folderId === null)
+          ) {
+            const bubbleUpRes = await axios.get(
+              `${process.env.REACT_APP_API_BASE_URL}/api/folder/bubbleUp/${resourceId}`,
+              // { folderId: folderId ?? null }, // ensure null is passed for root
+              { withCredentials: true },
+            );
+
+            folderId = bubbleUpRes.data.fileId;
+          }
+
           const res = await axios.get(
             `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`,
             // { folderId: folderId ?? null }, // ensure null is passed for root
