@@ -5,6 +5,7 @@ interface Folder {
   name: string;
   owner: string;
   createdAt: Date;
+  deletedAt: Date;
   parentFolder: string | null;
 }
 

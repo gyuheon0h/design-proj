@@ -7,13 +7,15 @@ import { checkPermission } from '../../middleware/checkPermission';
 
 const folderRouter = Router();
 
+/**
+ * This is a route that works with recursively getting what folders are within another.
+ */
 folderRouter.get(
   '/parent/:folderId',
   authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       const { folderId } = req.params; // Get from request body
-
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
@@ -21,9 +23,9 @@ folderRouter.get(
 
       // Handle null case properly
       console.log('Folder router: ' + folderId);
-      const subfolders = await FolderModel.getSubfoldersByOwner(
-        userId,
-        folderId || null,
+      const subfolders = await FolderModel.getSubfolders(
+        folderId,
+        // folderId || null,
       );
 
       // sort in descending order
@@ -44,7 +46,6 @@ folderRouter.get(
 /**
  * POST /api/folders/create
  * Protected route to create a new folder.
- * TODO: make this authorized
  */
 folderRouter.post(
   '/create',
@@ -68,6 +69,7 @@ folderRouter.post(
         owner,
         createdAt: new Date(),
         parentFolder: parentFolder || null,
+        deletedAt: new Date(),
       });
 
       await PermissionModel.createPermission({

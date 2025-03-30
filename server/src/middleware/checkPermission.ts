@@ -43,7 +43,6 @@ export const checkPermission = (action: string) => {
         // Use bubbleUpResource helper to check if the user can perform the action
         const hasAccess = await bubbleUpResource(resourceId, userId, action);
         if (!hasAccess) {
-          // console.log('Error here!');
           return res
             .status(403)
             .json({ message: 'Forbidden: insufficient permissions' });
@@ -84,9 +83,4 @@ export async function bubbleUpResource(
   }
 
   return false; // let's default it to true if we haven't found a file (usually indicates hitting a root directory).
-  // doesn't actually protect others from accessing file that are in the folder.
-  // or unshared files.
-  // hmm.
-  // maybe we need to create some default folders for the user.
-  // this sounds annoyingly difficult.
 }
