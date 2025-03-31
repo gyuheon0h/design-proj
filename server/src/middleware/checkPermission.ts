@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
-import FolderModel from '../db_models/FolderModel';
 import PermissionModel, { Permission } from '../db_models/PermissionModel';
 import { bubbleUpResource } from '../routes/helper';
 
 type Role = 'viewer' | 'editor' | 'owner';
 
+// allowed actions for any accessor: download and view
+
 const blockedActions: Record<Role, string[]> = {
-  viewer: ['delete', 'restore', 'move', 'share', 'rename'],
+  viewer: ['delete', 'restore', 'move', 'share', 'rename', 'upload'],
   editor: ['delete', 'restore'],
   owner: [],
 };
