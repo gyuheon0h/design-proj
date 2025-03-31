@@ -48,7 +48,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   const [folderHistory, setFolderHistory] = useState<Folder[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
-  const [rootDirectoryName, setRootDirectoryName] = useState<String>();
+  const [rootDirectory, setRootDirectory] = useState<Folder | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchSubFolders = useCallback(
@@ -86,18 +86,28 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   useEffect(() => {
     if (open) {
       const init = async () => {
+        setLoading(true);
         if (page === 'shared') {
           try {
-            const bubbleUpRes = await axios.get(
-              `${process.env.REACT_APP_API_BASE_URL}/api/folder/bubbleUpFolder/${resourceId}`,
+            let bubbleUpRes = await axios.get(
+              `${process.env.REACT_APP_API_BASE_URL}/api/folder/bubbleUpPerms/${resourceId}`,
               { withCredentials: true },
             );
 
-            // Ensure bubbleUpRes.data returns a Folder object.
-            setCurrentParentFolder(null);
-            setSelectedFolder(bubbleUpRes.data);
-            setRootDirectoryName('Shared - ' + bubbleUpRes.data.name);
-            await fetchSubFolders(bubbleUpRes.data.id);
+            if (bubbleUpRes.data.id === resourceId) {
+              setError('Cannot move top-level shared resource');
+            } else {
+              bubbleUpRes = await axios.get(
+                `${process.env.REACT_APP_API_BASE_URL}/api/folder/bubbleUpFolder/${resourceId}`,
+                { withCredentials: true },
+              );
+
+              // Ensure bubbleUpRes.data returns a Folder object.
+              setCurrentParentFolder(null);
+              setSelectedFolder(bubbleUpRes.data);
+              setRootDirectory(bubbleUpRes.data);
+              await fetchSubFolders(bubbleUpRes.data.id);
+            }
           } catch (error) {
             console.error('Error fetching shared folder:', error);
             setError('Failed to load shared folder. Please try again.');
@@ -105,12 +115,11 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
         } else {
           setCurrentParentFolder(null); // set to root
           setSelectedFolder(null); // automatically select the root directory
-          setRootDirectoryName(
-            page.charAt(0).toUpperCase() + page.slice(1) + ' - Root Directory',
-          );
+          setRootDirectory(null);
           await fetchSubFolders(null); // load subfolders of root directory
         }
         setFolderHistory([]); // reset history
+        setLoading(false);
       };
 
       init();
@@ -119,12 +128,20 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
 
   useEffect(() => {
     fetchSubFolders(
-      currentParentFolder === null ? null : currentParentFolder.id,
+      currentParentFolder === null
+        ? rootDirectory === null
+          ? null
+          : rootDirectory.id
+        : currentParentFolder.id,
     );
     if (currentParentFolder === null) {
       setSelectedFolder(null);
     }
-  }, [currentParentFolder, fetchSubFolders]);
+
+    if (currentParentFolder === null && page === 'shared') {
+      setSelectedFolder(rootDirectory);
+    }
+  }, [currentParentFolder, fetchSubFolders, page, rootDirectory]);
 
   // Select folder without navigating into it
   const handleSelectFolder = (event: React.MouseEvent, folder: Folder) => {
@@ -174,6 +191,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
     setCurrentParentFolder(null);
     setSelectedFolder(null);
     setFolderHistory([]);
+    setError(null);
     onClose();
   };
 
@@ -192,7 +210,9 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
         <Typography>
           Current Folder:{' '}
           {currentParentFolder === null
-            ? rootDirectoryName
+            ? rootDirectory === null
+              ? 'Root Directory'
+              : rootDirectory.name
             : currentParentFolder.name}
         </Typography>
 
@@ -243,18 +263,24 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
         <Button onClick={handleClose} color="primary">
           Cancel
         </Button>
-        <Button
-          onClick={handleMove}
-          color="primary"
-          variant="contained"
-          disabled={
-            (selectedFolder === null && parentFolderId === null) ||
-            (selectedFolder !== null && selectedFolder.id === parentFolderId) ||
-            (selectedFolder !== null && selectedFolder.id === resourceId)
-          }
-        >
-          Move
-        </Button>
+        {error !== 'Cannot move top-level shared resource' ? (
+          <Button
+            onClick={handleMove}
+            color="primary"
+            variant="contained"
+            disabled={
+              loading ||
+              (selectedFolder === null && parentFolderId === null) ||
+              (selectedFolder !== null &&
+                selectedFolder.id === parentFolderId) ||
+              (selectedFolder !== null && selectedFolder.id === resourceId)
+            }
+          >
+            Move
+          </Button>
+        ) : (
+          <></>
+        )}
       </DialogActions>
       {error && (
         <ErrorAlert
