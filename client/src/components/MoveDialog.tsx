@@ -50,6 +50,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
   const [rootDirectory, setRootDirectory] = useState<Folder | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [disabled, setDisabled] = useState<boolean>(false);
 
   const fetchSubFolders = useCallback(
     async (folderId: string | null) => {
@@ -94,15 +95,19 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
               { withCredentials: true },
             );
 
-            if (bubbleUpRes.data.id === resourceId) {
+            console.log(bubbleUpRes);
+
+            // If the resource is a top-level shared folder, set the error.
+            if (bubbleUpRes.data.fileId === resourceId) {
+              console.log('resource is top-level!');
               setError('Cannot move top-level shared resource');
+              setDisabled(true);
             } else {
+              // Otherwise, fetch the folder details.
               bubbleUpRes = await axios.get(
-                `${process.env.REACT_APP_API_BASE_URL}/api/folder/bubbleUpFolder/${resourceId}`,
+                `${process.env.REACT_APP_API_BASE_URL}/api/folder/${resourceId}`,
                 { withCredentials: true },
               );
-
-              // Ensure bubbleUpRes.data returns a Folder object.
               setCurrentParentFolder(null);
               setSelectedFolder(bubbleUpRes.data);
               setRootDirectory(bubbleUpRes.data);
@@ -113,15 +118,16 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
             setError('Failed to load shared folder. Please try again.');
           }
         } else {
-          setCurrentParentFolder(null); // set to root
-          setSelectedFolder(null); // automatically select the root directory
+          setCurrentParentFolder(null);
+          setSelectedFolder(null);
           setRootDirectory(null);
-          await fetchSubFolders(null); // load subfolders of root directory
+          await fetchSubFolders(null);
         }
-        setFolderHistory([]); // reset history
+        setFolderHistory([]);
         setLoading(false);
       };
 
+      setDisabled(false);
       init();
     }
   }, [fetchSubFolders, open, page, resourceId]);
@@ -193,6 +199,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
     setFolderHistory([]);
     setError(null);
     onClose();
+    setDisabled(false);
   };
 
   return (
@@ -263,7 +270,8 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
         <Button onClick={handleClose} color="primary">
           Cancel
         </Button>
-        {error !== 'Cannot move top-level shared resource' ? (
+        {/* Only render the Move button if the error is not set to our specific message */}
+        {!disabled && (
           <Button
             onClick={handleMove}
             color="primary"
@@ -278,8 +286,6 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           >
             Move
           </Button>
-        ) : (
-          <></>
         )}
       </DialogActions>
       {error && (

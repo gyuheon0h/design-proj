@@ -103,37 +103,27 @@ folderRouter.get('/foldername/:folderId', async (req, res) => {
   }
 });
 
-folderRouter.get(
-  '/bubbleUpFolder/:resourceId',
-  authorizeUser,
-  async (req, res) => {
-    try {
-      const { resourceId } = req.params;
+folderRouter.get('/:resourceId', authorizeUser, async (req, res) => {
+  try {
+    const { resourceId } = req.params;
 
-      const userId = (req as any).user.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
-      const bubbledPermission = await bubbleUpResource(resourceId, userId);
-
-      if (!bubbledPermission) {
-        return res.status(404).json({ message: 'Bubbled perms not found' });
-      }
-
-      const bubbledFolder = await FolderModel.getById(bubbledPermission.fileId);
-
-      if (!bubbledFolder) {
-        return res.status(404).json({ message: 'Bubbled folder not found' });
-      }
-
-      return res.json(bubbledFolder);
-    } catch (error) {
-      console.error('Error getting bubbled folder:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
+    const userId = (req as any).user.userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
     }
-  },
-);
+
+    const folder = await FolderModel.getById(resourceId);
+
+    if (!folder) {
+      return res.status(404).json({ message: 'Folder not found' });
+    }
+
+    return res.json(folder);
+  } catch (error) {
+    console.error('Error getting bubbled folder:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 folderRouter.get(
   '/bubbleUpPerms/:resourceId',

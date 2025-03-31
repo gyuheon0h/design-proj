@@ -12,7 +12,9 @@ export async function bubbleUpResource(
   if (!folder) {
     let file = await FileModel.getById(resourceId);
 
-    if (!file || !file.parentFolder) {
+    console.log('fileId found', file);
+
+    if (!file) {
       return null;
     }
 
@@ -21,7 +23,13 @@ export async function bubbleUpResource(
       userId,
     );
 
+    console.log('permission:', permission);
+
     if (permission) return permission;
+
+    if (!file.parentFolder) {
+      return null;
+    }
 
     folder = await FolderModel.getById(file.parentFolder);
   }
