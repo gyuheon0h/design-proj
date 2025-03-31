@@ -14,6 +14,8 @@ import {
   Avatar,
   Fade,
 } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
 import PeopleIcon from '@mui/icons-material/People';
@@ -111,27 +113,49 @@ const AccountMenu = () => {
       />
 
       {isLoggingOut && (
-              <Fade in={true} timeout={500}>
-                <Navigate to="/home" />
-              </Fade>
-            )}
+        <Fade in={true} timeout={500}>
+          <Navigate to="/home" />
+        </Fade>
+      )}
     </React.Fragment>
   );
 };
 
 const NavigationDrawer = () => {
   const location = useLocation();
+  const [open, setOpen] = useState(true);
+  const toggleDrawer = () => setOpen(!open);
 
   return (
     <Drawer
       variant="permanent"
-      anchor="left"
+      open={open}
       sx={{
-        width: drawerStyles.width,
+        width: open ? drawerStyles.width : 64,
         flexShrink: 0,
-        '& .MuiDrawer-paper': drawerStyles.paper,
+        whiteSpace: 'nowrap',
+        transition: (theme) =>
+          theme.transitions.create('width', {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.enteringScreen,
+          }),
+        '& .MuiDrawer-paper': {
+          width: open ? drawerStyles.width : 64,
+          overflowX: 'hidden',
+          transition: (theme) =>
+            theme.transitions.create('width', {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
+        },
       }}
     >
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: 1 }}>
+        <IconButton onClick={toggleDrawer}>
+          {open ? <ChevronLeftIcon /> : <MenuIcon />}
+        </IconButton>
+      </Box>
+
       {/* Logo Section */}
       <Box
         sx={{
@@ -172,7 +196,7 @@ const NavigationDrawer = () => {
             <ListItemIcon>
               <HomeIcon sx={{ color: colors.darkBlue }} />
             </ListItemIcon>
-            <ListItemText primary="Home" />
+            <ListItemText primary="Home" sx={{ opacity: open ? 1 : 0 }} />
           </ListItemButton>
         </ListItem>
 
@@ -193,7 +217,7 @@ const NavigationDrawer = () => {
             <ListItemIcon>
               <StarIcon sx={{ color: colors.darkBlue }} />
             </ListItemIcon>
-            <ListItemText primary="Favorites" />
+            <ListItemText primary="Favorites" sx={{ opacity: open ? 1 : 0 }} />
           </ListItemButton>
         </ListItem>
 
@@ -214,7 +238,10 @@ const NavigationDrawer = () => {
             <ListItemIcon>
               <PeopleIcon sx={{ color: colors.darkBlue }} />
             </ListItemIcon>
-            <ListItemText primary="Shared With Me" />
+            <ListItemText
+              primary="Shared With Me"
+              sx={{ opacity: open ? 1 : 0 }}
+            />
           </ListItemButton>
         </ListItem>
 
@@ -235,7 +262,7 @@ const NavigationDrawer = () => {
             <ListItemIcon>
               <DeleteIcon sx={{ color: colors.darkBlue }} />
             </ListItemIcon>
-            <ListItemText primary="Trash" />
+            <ListItemText primary="Trash" sx={{ opacity: open ? 1 : 0 }} />
           </ListItemButton>
         </ListItem>
       </List>
