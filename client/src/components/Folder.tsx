@@ -82,7 +82,6 @@ const FolderComponent = (props: FolderProps) => {
       setIsFavorited(!isFavorited); // toggle state locally
     }
 
-    // console.log(props.page);
     if (
       (props.page === 'shared' &&
         (curr_loc.pathname === '/shared' ||
@@ -95,9 +94,6 @@ const FolderComponent = (props: FolderProps) => {
     } else {
       props.refreshFolders(props.folder.parentFolder);
     }
-    // console.log(
-    //   'The parent of the favorited folder is: ' + props.folder.parentFolder,
-    // );
   };
 
   const handleFavoriteFolder = async (folderId: string) => {

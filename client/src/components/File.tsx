@@ -448,9 +448,7 @@ const FileComponent = (props: FileComponentProps) => {
                   <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
                   Edit
                 </MenuItem>
-              ) : (
-                <></>
-              ),
+              ) : null,
               <MenuItem
                 onClick={() => {
                   downloadFile(props.file.id, props.file.name);
@@ -465,16 +463,17 @@ const FileComponent = (props: FileComponentProps) => {
             ]
           ) : (
             [
-              isEditSupported ? (
-                <MenuItem onClick={handleEditClick}>
-                  <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
-                  Edit
-                </MenuItem>
-              ) : (
-                <></>
-              ),
-
-              <Divider sx={{ my: 0.2 }} />,
+              isEditSupported
+                ? [
+                    <MenuItem onClick={handleEditClick}>
+                      <EditNoteIcon
+                        sx={{ fontSize: '20px', marginRight: '9px' }}
+                      />
+                      Edit
+                    </MenuItem>,
+                    <Divider sx={{ my: 0.2 }} />,
+                  ]
+                : null,
 
               <MenuItem onClick={handlePermissionsClick}>
                 <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
