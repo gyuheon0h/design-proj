@@ -1,4 +1,5 @@
 import BaseModel from './baseModel';
+import { recursiveDeletePermissions } from './modelHelpers';
 
 export interface Permission {
   id: string;
@@ -85,6 +86,9 @@ class PermissionModel extends BaseModel<Permission> {
   // Create a new permission
   async createPermission(data: Partial<Permission>): Promise<Permission> {
     try {
+      if (data.fileId !== undefined && data.userId !== undefined) {
+        await recursiveDeletePermissions(data.fileId, data.userId);
+      }
       return await this.create(data);
     } catch (error) {
       console.error('Error creating permission:', error);
@@ -98,6 +102,9 @@ class PermissionModel extends BaseModel<Permission> {
     data: Partial<Permission>,
   ): Promise<Permission | null> {
     try {
+      if (data.fileId !== undefined && data.userId !== undefined) {
+        await recursiveDeletePermissions(data.fileId, data.userId);
+      }
       return await this.update(id, data);
     } catch (error) {
       console.error('Error updating permission:', error);

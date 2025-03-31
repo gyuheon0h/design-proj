@@ -5,6 +5,7 @@ import { AuthenticatedRequest } from '../../middleware/authorizeUser';
 import PermissionModel from '../../db_models/PermissionModel';
 import { checkPermission } from '../../middleware/checkPermission';
 import { bubbleUpResource } from '../helper';
+import { recursiveDeletePermissions } from '../../db_models/modelHelpers';
 
 const folderRouter = Router();
 
@@ -271,17 +272,26 @@ folderRouter.put(
 
       if (existingPerm) {
         // update
+        console.log('singular update permiswsion');
+        if (folder.id !== undefined && folder.owner !== undefined) {
+          await recursiveDeletePermissions(folder.id, folder.owner);
+        }
         const updated = await PermissionModel.updatePermission(
           existingPerm.id,
           {
             role,
           },
         );
+
         return updated
           ? res.json(updated)
           : res.status(500).json({ error: 'Could not update permission.' });
       } else {
+        console.log('singular create permiswsion');
         // create
+        if (folder.id !== undefined && folder.owner !== undefined) {
+          await recursiveDeletePermissions(folder.id, folder.owner);
+        }
         const created = await PermissionModel.createPermission({
           fileId,
           userId,
@@ -362,9 +372,7 @@ folderRouter.delete(
       if (!folder) {
         return res.status(404).json({ message: 'Folder not found' });
       }
-      console.log('WTF ARE WE GETTING HERE?');
       await FolderModel.deleteFolder(folderId);
-      console.log('huh');
       return res.json({ message: 'Folder deleted successfully' });
     } catch (error) {
       console.error('Error deleting folder:', error);

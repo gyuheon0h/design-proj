@@ -111,8 +111,10 @@ fileRouter.delete(
         return res.status(404).json({ message: 'File not found' });
       }
 
-      // Delete file from GCS
-      await StorageService.deleteFile(file.gcsKey);
+      // // Delete file from GCS
+      // await StorageService.deleteFile(file.gcsKey);
+      // this is a little hazardous; this is a hard delete on the GCS;
+      // and should not occur
 
       // Delete from database
       await FileModel.deleteFile(fileId);
@@ -336,6 +338,7 @@ fileRouter.put(
       );
 
       if (existingPerm) {
+        console.log('updating perm ! ! ! ');
         // update
         const updated = await PermissionModel.updatePermission(
           existingPerm.id,
@@ -347,6 +350,7 @@ fileRouter.put(
           ? res.json(updated)
           : res.status(500).json({ error: 'Could not update permission.' });
       } else {
+        console.log('creating perm ! ! ! ');
         // create
         const created = await PermissionModel.createPermission({
           fileId,
