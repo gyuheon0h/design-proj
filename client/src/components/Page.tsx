@@ -37,7 +37,7 @@ const PageComponent: React.FC<PageComponentProps> = ({
   const [folders, setFolders] = useState<Folder[]>([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
 
-  console.log(folderNames);
+  // console.log(folderNames);
 
   const {
     filters,

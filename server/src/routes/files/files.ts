@@ -254,22 +254,29 @@ fileRouter.patch(
 
 // Bypass auth for shared page. Need to add security here, maybe check permissions table
 // Returns sorted files on a given parent folder. Therefore, we need to
-fileRouter.get('/parent/:folderId', async (req: AuthenticatedRequest, res) => {
-  try {
-    const { folderId } = req.params;
-    // console.log('we are on shared page searching for folderId: ' + folderId);
-    const files = await FileModel.getFilesByFolder(folderId); // ||null was originally here
+fileRouter.get(
+  '/parent/:folderId',
+  authorizeUser,
+  checkPermission('view'),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { folderId } = req.params;
+      // console.log('we are on shared page searching for folderId: ' + folderId);
+      const files = await FileModel.getFilesByFolder(folderId); // ||null was originally here
 
-    const sortedFiles = files.sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+      const sortedFiles = files.sort((a, b) => {
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      });
 
-    return res.json(sortedFiles);
-  } catch (error) {
-    console.error('Error getting files by folder:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+      return res.json(sortedFiles);
+    } catch (error) {
+      console.error('Error getting files by folder:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
 
 /**
  * GETS all permissions pertaining to the fileId
@@ -277,6 +284,7 @@ fileRouter.get('/parent/:folderId', async (req: AuthenticatedRequest, res) => {
 fileRouter.get(
   '/:fileId/permissions',
   authorizeUser,
+  checkPermission('share'),
   async (req: AuthenticatedRequest, res) => {
     try {
       const currentUserId = (req as any).user.userId;

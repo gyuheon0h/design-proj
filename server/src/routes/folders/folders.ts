@@ -14,6 +14,7 @@ const folderRouter = Router();
 folderRouter.get(
   '/parent/:folderId',
   authorizeUser,
+  checkPermission('view'),
   async (req: AuthenticatedRequest, res) => {
     try {
       const { folderId } = req.params; // Get from request body
@@ -226,6 +227,7 @@ folderRouter.patch(
 folderRouter.get(
   '/:folderId/permissions',
   authorizeUser,
+  checkPermission('share'),
   async (req: AuthenticatedRequest, res) => {
     try {
       const currentUserId = (req as any).user.userId;
@@ -370,8 +372,9 @@ folderRouter.delete(
       if (!folder) {
         return res.status(404).json({ message: 'Folder not found' });
       }
-
-      await FolderModel.softDelete(folderId);
+      console.log('WTF ARE WE GETTING HERE?');
+      await FolderModel.deleteFolder(folderId);
+      console.log('huh');
       return res.json({ message: 'Folder deleted successfully' });
     } catch (error) {
       console.error('Error deleting folder:', error);

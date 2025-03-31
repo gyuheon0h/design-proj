@@ -28,7 +28,6 @@ import {
   downloadFile,
   getBlobGcskey,
   getIsFavoritedByFileId,
-  getPermissionByFileId,
 } from '../utils/helperRequests';
 import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -44,8 +43,6 @@ import ErrorAlert from '../components/ErrorAlert';
 import { File } from '../interfaces/File';
 import axios from 'axios';
 import TextEditor from './TextEditor';
-import { Permission } from '../interfaces/Permission';
-import { permission } from 'process';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -133,7 +130,6 @@ const FileComponent = (props: FileComponentProps) => {
         }
       }
     };
-
     fetchOwnerUserName();
   }, [props.file.owner]);
 
