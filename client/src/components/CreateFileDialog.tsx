@@ -16,7 +16,7 @@ interface UploadDialogProps {
   onFileUpload: (file: Blob | File, fileName: string) => Promise<void>;
 }
 
-const UploadDialog: React.FC<UploadDialogProps> = ({
+const UploadDialog: React.FC<UploadDialogProps> = ({ 
   open,
   onClose,
   onFileUpload,
@@ -35,8 +35,8 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
   const handleUploadClick = async () => {
     if (file) {
       try {
-        await onFileUpload(file, newFileName);
-        setFile(null);
+        onFileUpload(file, newFileName); // NOTE: got rid of the await so it exits the upload dialog
+        setFile(null); // TODO: what happens in the failure scenarios? if the thing isn't uploaded correctly?
         setNewFileName('');
         onClose();
       } catch (error) {
