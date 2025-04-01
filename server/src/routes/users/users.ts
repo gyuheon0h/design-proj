@@ -422,11 +422,9 @@ userRouter.get(
 
       // calculate total storage used
       const totalStorageUsed = userFiles.reduce(
-        (sum, file) => sum + file.fileSize,
+        (sum, file) => sum + Number(file.fileSize),
         0,
       );
-
-      console.log(totalStorageUsed);
 
       return res.json({ totalStorageUsed });
     } catch (error) {
