@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import FileComponent from './File';
 import { File } from '../interfaces/File';
 import ErrorAlert from '../components/ErrorAlert';
-import { Grow } from '@mui/material';
+import { Table, TableHead, TableRow, TableCell, TableBody, Box, Typography } from '@mui/material';
+import { colors } from '../Styles';
 
 interface FileContainerProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -26,7 +27,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
 
   useEffect(() => {
     // Filter files based on search query
-    const updatedFilteredFiles = files.filter((file) =>
+    const updatedFilteredFiles = files.filter((file: File) =>
       file.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
@@ -34,31 +35,48 @@ const FileContainer: React.FC<FileContainerProps> = ({
   }, [files, searchQuery]);
 
   return (
-    <div>
+    <div style={{ userSelect: 'none' }}>
       {/* Header section with title */}
-      <div
-        style={{
+      <Box
+        sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           marginBottom: '15px',
         }}
       >
-        <h2>Files</h2>
-      </div>
+        <Typography variant="h2">Files</Typography>
+      </Box>
 
-      {/* File List */}
-      {filteredFiles.map((file) => (
-        <Grow in={true} timeout={500} key={`${file.id}-${searchQuery}`}>
-          <div>
+      <Table sx={{ tableLayout: 'fixed' }}>
+        <TableHead>
+          <TableRow>
+            <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Name</TableCell>
+            <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>Tag</TableCell>
+            <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>Created</TableCell>
+            <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Owner</TableCell>
+            <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>Last Modified</TableCell>
+            <TableCell sx={{ width: '5%' }}></TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {filteredFiles.map((file) => (
             <FileComponent
+              key={`${file.id}-${searchQuery}`}
               page={page}
               file={file}
               refreshFiles={refreshFiles}
             />
-          </div>
-        </Grow>
-      ))}
+          ))}
+        </TableBody>
+      </Table>
+      
+      {filteredFiles.length === 0 && (
+        <Box sx={{ textAlign: 'center', padding: '30px' }}>
+          <Typography variant="body1">No files found</Typography>
+        </Box>
+      )}
+      
       {error && (
         <ErrorAlert
           open={!!error}

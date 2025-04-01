@@ -6,6 +6,7 @@ import RestoreIcon from '@mui/icons-material/Restore';
 import Divider from '@mui/material/Divider';
 import { Box, Typography, IconButton, Menu, MenuItem, Paper } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import FolderIcon from '@mui/icons-material/Folder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { colors, folderStyles } from '../Styles';
@@ -173,60 +174,90 @@ const FolderComponent = (props: FolderProps) => {
 
   return (
     <Box 
-      sx={{ ...folderStyles.container }}
+      sx={{ 
+        ...folderStyles.container,
+        width: '140px',
+        height: 'auto',
+        margin: '8px',
+        position: 'relative',
+        cursor: 'pointer'
+      }}
       onClick={handleFolderClick}
     >
-      {/* Folder */}
-      <Paper 
-        elevation={0}
-      >
-        {/* More Options Button */}
-        <IconButton
-          size="small"
-          onClick={handleOptionsClick}
+      {/* Container for folder with overlaid elements */}
+      <Box sx={{ position: 'relative' }}>
+        {/* Folder Icon as background */}
+        <FolderIcon 
+          sx={{ 
+            fontSize: 100, 
+            color: '#64B5F6',
+            width: '100%', 
+            height: 'auto',
+            display: 'block'
+          }} 
+        />
+        
+        {/* Folder Name - positioned on the folder */}
+        <Typography 
           sx={{
             position: 'absolute',
-            top: 5,
-            right: 5,
-            color: 'rgba(255, 255, 255, 0.8)',
-            backgroundColor: 'rgba(0, 0, 0, 0.1)',
-            '&:hover': {
-              backgroundColor: 'rgba(0, 0, 0, 0.2)',
-            },
-            zIndex: 2,
-            padding: '4px',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            color: 'white',
+            fontWeight: 'medium',
+            fontSize: '14px',
+            textAlign: 'center',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            width: '70%',
+            textShadow: '0 1px 2px rgba(0,0,0,0.3)'
           }}
         >
-          <MoreHorizIcon fontSize="small" />
-        </IconButton>
-
-        {/* Favorite Button */}
+          {props.folder.name}
+        </Typography>
+        
+        {/* Favorite Button - On top-left of folder */}
         <IconButton
           onClick={handleFavoriteFolderClick}
           size="small"
           sx={{
             position: 'absolute',
-            bottom: 5,
-            left: 5,
+            bottom: 25,
+            left: 15,
             color: isFavorited ? '#FF6347' : 'rgba(255, 255, 255, 0.8)',
             backgroundColor: 'rgba(0, 0, 0, 0.1)',
+            padding: '2px',
             '&:hover': {
               backgroundColor: 'rgba(0, 0, 0, 0.2)',
             },
-            zIndex: 2,
-            padding: '4px',
           }}
         >
           {isFavorited ? <FavoriteIcon fontSize="small" /> : <FavoriteBorderIcon fontSize="small" />}
         </IconButton>
-      </Paper>
-      
-      {/* Folder Name */}
-      <Typography sx={folderStyles.folderName}>
-        {props.folder.name}
-      </Typography>
-
-      {/* Dropdown Menu */}
+        
+        {/* More Options Button - On top-right of folder */}
+        <IconButton
+          size="small"
+          onClick={handleOptionsClick}
+          sx={{
+            position: 'absolute',
+            bottom: 25,
+            right: 15,
+            color: 'rgba(255, 255, 255, 0.8)',
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+            padding: '2px',
+            '&:hover': {
+              backgroundColor: 'rgba(0, 0, 0, 0.2)',
+            },
+          }}
+        >
+          <MoreHorizIcon fontSize="small" />
+        </IconButton>
+      </Box>
+  
+      {/* Menu and dialogs remain unchanged */}
       <Menu 
         anchorEl={anchorEl} 
         open={open} 
@@ -266,7 +297,7 @@ const FolderComponent = (props: FolderProps) => {
           ]
         )}
       </Menu>
-
+  
       {/* Dialogs */}
       <RenameDialog
         open={isRenameDialogOpen}
@@ -276,14 +307,14 @@ const FolderComponent = (props: FolderProps) => {
         onClose={() => setIsRenameDialogOpen(false)}
         onSuccess={() => props.refreshFolders(props.folder.parentFolder)}
       />
-
+  
       <PermissionDialog
         open={isPermissionsDialogOpen}
         onClose={() => setIsPermissionsDialogOpen(false)}
         fileId={null}
         folderId={props.folder.id}
       />
-
+  
       <MoveDialog
         open={isMoveDialogOpen}
         onClose={() => setIsMoveDialogOpen(false)}

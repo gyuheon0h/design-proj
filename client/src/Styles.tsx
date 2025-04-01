@@ -61,6 +61,7 @@ export const drawerStyles = {
     backgroundColor: colors.sidebarBackground,
     padding: '0px',
     borderRight: 'none',
+    borderRadius: 0,
     color: colors.sidebarText,
   },
 };
