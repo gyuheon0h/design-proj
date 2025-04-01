@@ -97,6 +97,8 @@ fileRouter.post(
       }
 
       let { originalname, buffer, mimetype, size } = req.file;
+      console.log('req.file.size bytes:', size);
+
       const { parentFolder = null, fileName } = req.body;
       const userId = (req as any).user.userId;
 
@@ -110,6 +112,8 @@ fileRouter.post(
       const STORAGE_LIMIT = 15 * 1024 * 1024 * 1024; // 15GB
 
       if (totalStorageUsed + size > STORAGE_LIMIT) {
+        console.log('total used: ', totalStorageUsed);
+
         return res
           .status(400)
           .json({ error: 'Storage limit exceeded. Cannot upload file.' });
