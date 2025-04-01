@@ -1,8 +1,10 @@
-import { Dialog, DialogContent } from '@mui/material';
+import { Box, Chip, Dialog, DialogContent, Typography } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
 import TextViewer from './TextViewer';
 import { diff_match_patch } from 'diff-match-patch';
 import { debounce } from 'lodash';
+import { useUser } from '../context/UserContext';
+import { getUsernameById } from '../utils/helperRequests';
 
 interface TextEditorProps {
   open: boolean;
@@ -86,12 +88,20 @@ const TextEditor: React.FC<TextEditorProps> = ({
   const lastAcknowledgedBatchIdRef = useRef(0);
   const localContentRef = useRef('');
   const clientIdRef = useRef<string>('');
+  const [connectedClientIds, setConnectedClientIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [connectedClientUsernames, setConnectedClientUsernames] = useState<
+    string[]
+  >([]);
+
+  const { userId } = useUser();
+
   // client revision tracking
   const clientRevisionRef = useRef(0);
 
   const serverUrl = process.env.REACT_APP_API_BASE_URL;
   let wsUrl: string;
-
   if (!serverUrl) {
     wsUrl = 'ws://localhost:5001';
   } else {
@@ -104,6 +114,27 @@ const TextEditor: React.FC<TextEditorProps> = ({
       wsUrl = 'ws://' + serverUrl;
     }
   }
+
+  useEffect(() => {
+    const fetchUsernames = async () => {
+      const idsArray = Array.from(connectedClientIds);
+      try {
+        // Map each ID to a getUsernameById Promise
+        const usernamePromises = idsArray.map((id) => getUsernameById(id));
+        const usernames = await Promise.all(usernamePromises);
+        setConnectedClientUsernames(usernames);
+      } catch (err) {
+        console.error('Failed to fetch some usernames:', err);
+      }
+    };
+
+    if (connectedClientIds.size > 0) {
+      fetchUsernames();
+    } else {
+      // If no IDs connected, clear out usernames
+      setConnectedClientUsernames([]);
+    }
+  }, [connectedClientIds]);
 
   useEffect(() => {
     // Single WebSocket connection
@@ -119,6 +150,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
           fileId,
           gcsKey,
           requestClientId: true, // Request a client ID
+          userId,
         }),
       );
     };
@@ -237,6 +269,22 @@ const TextEditor: React.FC<TextEditorProps> = ({
             processBatchQueue();
           }
         }
+      } else if (message.type === 'user-joined') {
+        setConnectedClientIds((prevSet) => {
+          const updated = new Set(prevSet);
+          updated.add(message.clientId);
+          return updated;
+        });
+      } else if (message.type === 'user-left') {
+        setConnectedClientIds((prevSet) => {
+          const updated = new Set(prevSet);
+          updated.delete(message.clientId);
+          return updated;
+        });
+      } else if (message.type === 'user-list') {
+        const allClients: string[] = message.clients;
+        const updated = new Set(allClients);
+        setConnectedClientIds(updated);
       }
     };
 
@@ -370,6 +418,21 @@ const TextEditor: React.FC<TextEditorProps> = ({
           height: '80vh',
         }}
       >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 1,
+          }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+            Connected Clients:
+          </Typography>
+          {connectedClientUsernames.map((username) => (
+            <Chip key={username} label={username} color="primary" />
+          ))}
+        </Box>
         <div style={{ flexGrow: 1 }}>
           <TextViewer
             fileType={mimeType}

@@ -31,7 +31,6 @@ const PageComponent: React.FC<PageComponentProps> = ({
   const navigate = useNavigate();
   //   const userContext = useUser();
   const { folderPath, currentFolderId } = useFolderPath(`/${page}`);
-
   const [searchQuery, setSearchQuery] = useState('');
 
   const [files, setFiles] = useState<File[]>([]);
@@ -103,13 +102,15 @@ const PageComponent: React.FC<PageComponentProps> = ({
       let filesRes;
       if (!folderId) {
         filesRes = await axios.get(
-          `http://localhost:5001/api/user/${userId}/${page}/file`,
+          // `http://localhost:5001/api/user/${userId}/${page}/file`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/${page}/file`,
           { withCredentials: true },
         );
       } else {
         filesRes = await axios.get(
           // 'http://localhost:5001/api/folder/parent',
-          `http://localhost:5001/api/file/parent/${folderId}`,
+          // `http://localhost:5001/api/file/parent/${folderId}`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/file/parent/${folderId}`,
           { withCredentials: true },
         );
       }
@@ -125,12 +126,12 @@ const PageComponent: React.FC<PageComponentProps> = ({
       let folderRes;
       if (!folderId) {
         folderRes = await axios.get(
-          `http://localhost:5001/api/user/${userId}/${page}/folder`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/${page}/folder`,
           { withCredentials: true },
         );
       } else {
         folderRes = await axios.get(
-          `http://localhost:5001/api/folder/parent/${folderId}`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/folder/parent/${folderId}`,
           { withCredentials: true },
         );
       }
@@ -186,8 +187,9 @@ const PageComponent: React.FC<PageComponentProps> = ({
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
             fontSize: '14px',
+            marginLeft: '6px',
+            paddingTop: '30px',
           }}
         >
           {[page, ...folderPath].map((crumb, index) => (
@@ -198,14 +200,13 @@ const PageComponent: React.FC<PageComponentProps> = ({
                 cursor: 'pointer',
                 color: '#161C94',
                 fontWeight: 'bold',
-                marginLeft: '10px',
-                paddingTop: '10px',
+                marginLeft: '4px',
               }}
             >
               {index === 0
                 ? page.charAt(0).toUpperCase() + page.substring(1)
                 : folderNames[crumb] || ''}
-              {index < folderPath.length ? ' / ' : ''}
+              {index < folderPath.length ? ' /     ' : ''}
             </span>
           ))}
         </Box>

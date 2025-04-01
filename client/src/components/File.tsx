@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
+import DriveFileMove from '@mui/icons-material/DriveFileMove';
 import RestoreIcon from '@mui/icons-material/Restore';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import EditNoteIcon from '@mui/icons-material/EditNote';
@@ -28,6 +29,7 @@ import {
   downloadFile,
   getBlobGcskey,
   getIsFavoritedByFileId,
+  getPermissionByFileId,
 } from '../utils/helperRequests';
 import PermissionDialog from './PermissionsDialog';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -43,6 +45,8 @@ import ErrorAlert from '../components/ErrorAlert';
 import { File } from '../interfaces/File';
 import axios from 'axios';
 import TextEditor from './TextEditor';
+import { Permission } from '../interfaces/Permission';
+import { permission } from 'process';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -96,6 +100,25 @@ const FileComponent = (props: FileComponentProps) => {
   const [fileSrc, setFileSrc] = useState('');
 
   const [error, setError] = useState<string | null>(null);
+
+  const [currentPermission, setCurrentPermission] = useState<Permission | null>(
+    null,
+  );
+
+  const isEditSupported = isSupportedFileTypeText(props.file.fileType);
+
+  useEffect(() => {
+    const fetchPermission = async () => {
+      if (props.page === 'shared') {
+        const permission = await getPermissionByFileId(props.file.id);
+        if (permission) {
+          setCurrentPermission(permission);
+        }
+      }
+    };
+
+    fetchPermission();
+  }, []);
 
   useEffect(() => {
     const fetchOwnerUserName = async () => {
@@ -269,7 +292,6 @@ const FileComponent = (props: FileComponentProps) => {
     }
   };
 
-  //DIALOG CLICK TRIGGERS (Rename, Permissions/Share, Move)
   const handleRenameClick = (event: React.MouseEvent) => {
     event.stopPropagation();
     setIsRenameDialogOpen(true);
@@ -343,7 +365,6 @@ const FileComponent = (props: FileComponentProps) => {
             <Typography
               variant="subtitle1"
               sx={{
-                fontWeight: 'bold',
                 maxWidth: '200px',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -422,6 +443,12 @@ const FileComponent = (props: FileComponentProps) => {
             </MenuItem>
           ) : props.page === 'shared' ? (
             [
+              currentPermission?.role === 'editor' && isEditSupported ? (
+                <MenuItem onClick={handleEditClick}>
+                  <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
+                  Edit
+                </MenuItem>
+              ) : null,
               <MenuItem
                 onClick={() => {
                   downloadFile(props.file.id, props.file.name);
@@ -433,20 +460,20 @@ const FileComponent = (props: FileComponentProps) => {
                 />{' '}
                 Download
               </MenuItem>,
-              // TODO ONLY SHOW THIS WHEN THEY HAVE PERMISSION
-              <MenuItem onClick={handleEditClick}>
-                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
-                Edit
-              </MenuItem>,
             ]
           ) : (
             [
-              <MenuItem onClick={handleEditClick}>
-                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
-                Edit
-              </MenuItem>,
-
-              <Divider sx={{ my: 0.2 }} />,
+              isEditSupported
+                ? [
+                    <MenuItem onClick={handleEditClick}>
+                      <EditNoteIcon
+                        sx={{ fontSize: '20px', marginRight: '9px' }}
+                      />
+                      Edit
+                    </MenuItem>,
+                    <Divider sx={{ my: 0.2 }} />,
+                  ]
+                : null,
 
               <MenuItem onClick={handlePermissionsClick}>
                 <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
@@ -485,7 +512,8 @@ const FileComponent = (props: FileComponentProps) => {
               <Divider sx={{ my: 0.2 }} />,
 
               <MenuItem onClick={handleMoveClick}>
-                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
+                <DriveFileMove sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+                Move
               </MenuItem>,
             ]
           )}
