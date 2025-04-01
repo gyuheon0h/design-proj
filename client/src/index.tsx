@@ -5,6 +5,8 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { theme } from './Styles';
 import App from './App';
 import { UserProvider } from './context/UserContext';
+import { StorageProvider } from './context/StorageContext';
+
 import './index.css';
 import './index.css';
 
@@ -16,13 +18,15 @@ root.render(
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <BrowserRouter>
-        <UserProvider>
-          <App />
-        </UserProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+        <CssBaseline />
+        <BrowserRouter>
+          <UserProvider>
+            <StorageProvider>
+              <App />
+            </StorageProvider>
+          </UserProvider>
+        </BrowserRouter>
+      </ThemeProvider>
     </ThemeProvider>
   </React.StrictMode>,
 );

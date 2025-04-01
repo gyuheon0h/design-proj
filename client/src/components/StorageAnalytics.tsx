@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { CircularProgress } from '@mui/material';
 import { useUser } from '../context/UserContext';
 import axios from 'axios';
+import { useStorage } from '../context/StorageContext';
 
 interface StorageData {
   totalStorageUsed: number;
@@ -13,26 +14,17 @@ const StorageAnalytics = () => {
   const userContext = useUser();
   const userId = userContext.userId;
 
-  const [storageUsed, setStorageUsed] = useState<number | null>(null);
+  const { storageUsed, fetchStorageUsed } = useStorage();
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchStorageUsed = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/storage-used`,
-          { withCredentials: true },
-        );
-
-        setStorageUsed(response.data.totalStorageUsed);
-      } catch (error) {
-        console.error('Error fetching storage data:', error);
-      } finally {
-        setLoading(false);
-      }
+    const load = async () => {
+      setLoading(true);
+      await fetchStorageUsed();
+      setLoading(false);
     };
-    fetchStorageUsed();
-  }, [userId]);
+    load();
+  }, [fetchStorageUsed]);
 
   if (loading) {
     return <CircularProgress size={24} />;
@@ -42,8 +34,13 @@ const StorageAnalytics = () => {
     return <p>Error loading storage data.</p>;
   }
 
-  const percentageUsed = (storageUsed / STORAGE_LIMIT) * 100;
-  const storageUsedGB = (storageUsed / (1024 * 1024 * 1024)).toFixed(2);
+  const normalizedStorageUsed = Number(storageUsed); // make sure it's a clean number
+  const percentageUsed = (normalizedStorageUsed / STORAGE_LIMIT) * 100;
+  const storageUsedGB = (normalizedStorageUsed / 1024 / 1024 / 1024).toFixed(2);
+  console.log('normalizedStorageUsed', normalizedStorageUsed);
+  console.log('storageUsedGB', storageUsedGB);
+
+  console.log('storageUsed:', normalizedStorageUsed); // for debugging
 
   return (
     <div style={styles.container}>

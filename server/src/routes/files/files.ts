@@ -103,8 +103,12 @@ fileRouter.post(
       const userId = (req as any).user.userId;
 
       const userFiles = await FileModel.getFilesByOwner(userId);
+      userFiles.forEach((file) => {
+        console.log(`[STORAGE DEBUG] ${file.name}: ${file.fileSize} bytes`);
+      });
+
       const totalStorageUsed = userFiles.reduce(
-        (sum, file) => sum + file.fileSize,
+        (sum, file) => sum + Number(file.fileSize),
         0,
       );
 
