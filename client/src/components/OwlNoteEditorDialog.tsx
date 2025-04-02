@@ -12,6 +12,7 @@ import '@blocknote/mantine/style.css';
 
 import { useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/mantine';
+import axios from 'axios';
 
 interface OwlNoteEditorDialogProps {
   open: boolean;
@@ -31,8 +32,19 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
         <BlockNoteView editor={editor} />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Close</Button>
-        {/* Add save functionality if needed */}
+        {/* SAVE FUNCTIONALITY */}
+        <Button
+          onClick={async () => {
+            const json = JSON.stringify(await editor.document);
+            await axios.put(
+              `${process.env.REACT_APP_API_BASE_URL}/api/file/upload/owltext`,
+              { content: json },
+            );
+            onClose();
+          }}
+        >
+          Save
+        </Button>
       </DialogActions>
     </Dialog>
   );
