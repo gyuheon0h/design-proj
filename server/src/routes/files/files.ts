@@ -140,14 +140,14 @@ fileRouter.post(
   },
 );
 
-fileRouter.put('/upload/owltext', authorize, async (req, res) => {
+fileRouter.put('/upload/owltxt', authorize, async (req, res) => {
   try {
     const {
-      type = 'owltext',
+      type = 'owltxt',
       content,
       createdAt = null,
       parentFolder = null,
-      fileName,
+      fileName = 'file1',
     } = req.body;
 
     // Validate required fields
@@ -163,12 +163,12 @@ fileRouter.put('/upload/owltext', authorize, async (req, res) => {
 
     // Ensure the file name ends with '.owltext'
     let finalFileName = fileName;
-    if (!finalFileName.endsWith('.owltext')) {
-      finalFileName += '.owltext';
+    if (!finalFileName.endsWith('.owltxt')) {
+      finalFileName += '.owltxt';
     }
 
     const buffer = Buffer.from(content, 'utf-8');
-    const mimeType = 'text/owltext'; // Define a custom MIME type for BlockNote files
+    const mimeType = 'text/owltxt'; // Define a custom MIME type for BlockNote files
 
     const gcsFilePath = `uploads/${userId}/${parentFolder || 'root'}/${fileId}-${finalFileName}`;
 

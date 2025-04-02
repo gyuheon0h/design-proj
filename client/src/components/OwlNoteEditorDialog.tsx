@@ -37,8 +37,9 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
           onClick={async () => {
             const json = JSON.stringify(await editor.document);
             await axios.put(
-              `${process.env.REACT_APP_API_BASE_URL}/api/file/upload/owltext`,
+              `${process.env.REACT_APP_API_BASE_URL}/api/file/upload/owltxt`,
               { content: json },
+              { withCredentials: true },
             );
             onClose();
           }}
