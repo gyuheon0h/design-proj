@@ -140,6 +140,68 @@ fileRouter.post(
   },
 );
 
+fileRouter.put('/upload/owltext', authorize, async (req, res) => {
+  try {
+    const {
+      type = 'owltext',
+      content,
+      createdAt = null,
+      parentFolder = null,
+      fileName,
+    } = req.body;
+
+    // Validate required fields
+    if (!content) {
+      return res.status(400).json({ error: 'Content is required' });
+    }
+    if (!fileName) {
+      return res.status(400).json({ error: 'File name is required' });
+    }
+
+    const userId = (req as any).user.userId;
+    let fileId = req.body.fileId || uuidv4();
+
+    // Ensure the file name ends with '.owltext'
+    let finalFileName = fileName;
+    if (!finalFileName.endsWith('.owltext')) {
+      finalFileName += '.owltext';
+    }
+
+    const buffer = Buffer.from(content, 'utf-8');
+    const mimeType = 'text/owltext'; // Define a custom MIME type for BlockNote files
+
+    const gcsFilePath = `uploads/${userId}/${parentFolder || 'root'}/${fileId}-${finalFileName}`;
+
+    await StorageService.uploadFile(gcsFilePath, buffer, mimeType);
+
+    const fileMetadata = await FileModel.create({
+      id: fileId,
+      name: finalFileName,
+      owner: userId,
+      createdAt: createdAt ? new Date(createdAt) : new Date(),
+      lastModifiedBy: null,
+      lastModifiedAt: new Date(),
+      parentFolder: parentFolder || null, // Allow null for root files
+      gcsKey: gcsFilePath,
+      fileType: type, // this should be 'owltext'
+    });
+
+    await PermissionModel.createPermission({
+      fileId: fileMetadata.id,
+      userId: userId,
+      role: 'owner',
+    });
+
+    return res.status(201).json({
+      message: 'BlockNote file saved successfully',
+      file: fileMetadata,
+    });
+  } catch (error) {
+    console.error('BlockNote file upload error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 fileRouter.get('/download/:fileId', authorize, async (req, res) => {
   try {
     const { fileId } = req.params;
