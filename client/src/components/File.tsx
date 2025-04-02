@@ -47,6 +47,7 @@ import axios from 'axios';
 import TextEditor from './TextEditor';
 import { Permission } from '../interfaces/Permission';
 import { permission } from 'process';
+import { useStorage } from '../context/StorageContext';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -94,6 +95,7 @@ const FileComponent = (props: FileComponentProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const fileCache = useRef(new Map<string, string>());
   const [isFavorited, setIsFavorited] = useState(false);
+  const { fetchStorageUsed } = useStorage();
 
   // For the image viewer
   const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
@@ -235,6 +237,7 @@ const FileComponent = (props: FileComponentProps) => {
           withCredentials: true,
         },
       );
+      await fetchStorageUsed();
     } catch (error) {
       console.error('Error deleting file:', error);
     }

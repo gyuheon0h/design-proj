@@ -25,6 +25,7 @@ import { useUser } from '../context/UserContext';
 import { Settings as SettingsIcon } from '@mui/icons-material';
 import { colors, drawerStyles, activePageStyles, typography } from '../Styles';
 import SettingsDialog from './SettingsDialog';
+import StorageAnalytics from './StorageAnalytics';
 
 const AccountMenu = () => {
   const { username } = useUser();
@@ -111,10 +112,10 @@ const AccountMenu = () => {
       />
 
       {isLoggingOut && (
-              <Fade in={true} timeout={500}>
-                <Navigate to="/home" />
-              </Fade>
-            )}
+        <Fade in={true} timeout={500}>
+          <Navigate to="/home" />
+        </Fade>
+      )}
     </React.Fragment>
   );
 };
@@ -239,6 +240,10 @@ const NavigationDrawer = () => {
           </ListItemButton>
         </ListItem>
       </List>
+
+      <Box>
+        <StorageAnalytics></StorageAnalytics>
+      </Box>
 
       {/* Avatar with logout functionality */}
       <Box sx={{ mt: 'auto', padding: '10px' }}>
