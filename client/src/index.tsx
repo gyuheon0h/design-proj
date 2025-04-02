@@ -16,13 +16,13 @@ root.render(
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <BrowserRouter>
-        <UserProvider>
-          <App />
-        </UserProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+        <CssBaseline />
+        <BrowserRouter>
+          <UserProvider>
+            <App />
+          </UserProvider>
+        </BrowserRouter>
+      </ThemeProvider>
     </ThemeProvider>
   </React.StrictMode>,
 );
