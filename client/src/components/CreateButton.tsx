@@ -5,6 +5,7 @@ import UploadDialog from './CreateFileDialog';
 import FolderDialog from './CreateFolderDialog';
 import AddIcon from '@mui/icons-material/Add';
 import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
+import OwlNoteEditorDialog from './OwlNoteEditorDialog';
 
 interface CreateButtonProps {
   currentFolderId: string | null;
@@ -24,6 +25,8 @@ const CreateButton: React.FC<CreateButtonProps> = ({
 
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+
+  const [blockNoteOpen, setBlockNoteOpen] = useState(false);
 
   // Drag detection
   const [didDrag, setDidDrag] = useState(false);
@@ -146,6 +149,14 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         >
           Upload a File
         </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            setBlockNoteOpen(true);
+          }}
+        >
+          Create BlockNote File
+        </MenuItem>
       </Menu>
 
       <FolderDialog
@@ -159,6 +170,10 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         open={uploadDialogOpen}
         onClose={closeUploadDialog}
         onFileUpload={handleUploadFile}
+      />
+      <OwlNoteEditorDialog
+        open={blockNoteOpen}
+        onClose={() => setBlockNoteOpen(false)}
       />
     </>
   );
