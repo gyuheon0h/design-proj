@@ -288,9 +288,7 @@ export default function setupWebSocketServer(server: Server) {
   const wss = new WebSocketServer({ server });
 
   wss.on('connection', (ws: WebSocket) => {
-    const clientId = generateClientId();
-    console.log(`Client connected: ${clientId}`);
-
+    let clientId: string;
     ws.on('message', async (message: string) => {
       try {
         const data = JSON.parse(message.toString());
@@ -299,6 +297,10 @@ export default function setupWebSocketServer(server: Server) {
         switch (type) {
           case 'join-document': {
             // Create or retrieve document
+            const { userId } = data;
+            clientId = userId;
+            console.log(`Client connected: ${clientId}`);
+
             if (!documents.has(fileId)) {
               console.log(`Creating new document: ${fileId}`);
               try {
@@ -322,14 +324,14 @@ export default function setupWebSocketServer(server: Server) {
             }
 
             const doc = documents.get(fileId)!;
-            const clientId = generateClientId();
-
             // add client to the document with current revision
-            doc.clients.set(ws, {
+            const newClient: ClientInfo = {
               id: clientId,
               revision: doc.revision,
               operationQueue: [],
-            });
+            };
+
+            doc.clients.set(ws, newClient);
 
             ws.send(
               JSON.stringify({
@@ -351,6 +353,27 @@ export default function setupWebSocketServer(server: Server) {
             console.log(
               `Client ${clientId} joined document ${fileId} at revision ${doc.revision}`,
             );
+
+            const clientIds = Array.from(doc.clients.values()).map(
+              (docState) => docState.id,
+            );
+
+            ws.send(
+              JSON.stringify({
+                type: 'user-list',
+                clients: clientIds,
+              }),
+            );
+
+            doc.clients.forEach((info, client) => {
+              client.send(
+                JSON.stringify({
+                  type: 'user-joined',
+                  clientId,
+                }),
+              );
+            });
+
             break;
           }
 
@@ -416,7 +439,17 @@ export default function setupWebSocketServer(server: Server) {
 
           case 'leave-document': {
             const doc = documents.get(fileId);
+
             if (doc) {
+              doc.clients.forEach((info, client) => {
+                client.send(
+                  JSON.stringify({
+                    type: 'user-left',
+                    clientId,
+                  }),
+                );
+              });
+
               doc.clients.delete(ws);
               console.log(`Client ${clientId} left document ${fileId}`);
 
@@ -478,6 +511,14 @@ export default function setupWebSocketServer(server: Server) {
 
       // remove client from all documents
       documents.forEach((doc, fileId) => {
+        doc.clients.forEach((info, client) => {
+          client.send(
+            JSON.stringify({
+              type: 'user-left',
+              clientId,
+            }),
+          );
+        });
         if (doc.clients.has(ws)) {
           doc.clients.delete(ws);
           console.log(`Client ${clientId} removed from document ${fileId}`);

@@ -20,6 +20,7 @@ import {
   ListItem,
   ListItemButton,
   ListItemText,
+  Avatar,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
@@ -27,7 +28,7 @@ import axios from 'axios';
 import { User } from '../interfaces/User';
 import { Permission } from '../interfaces/Permission';
 import { useUser } from '../context/UserContext';
-import { colors } from '../Styles';
+import { colors, avatarStyles } from '../Styles';
 
 // Searchable Select Component
 interface SearchableSelectProps {
@@ -69,24 +70,24 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
         onFocus={() => setShowDropdown(true)} // Ensure dropdown shows when input is clicked
         onBlur={() => setTimeout(() => setShowDropdown(false), 200)} // Hide dropdown on blur with delay
         sx={{
-          backgroundColor: colors.white,
+          backgroundColor: '#FFFFFF',
           borderRadius: '8px',
           '& .MuiOutlinedInput-root': {
             borderRadius: '8px',
             paddingLeft: 1,
           },
           '& .MuiOutlinedInput-notchedOutline': {
-            border: `1px solid ${colors.darkBlue}`,
+            border: '1px solid #E0E0E0',
           },
           '& .MuiInputBase-input::placeholder': {
-            color: colors.darkGrey,
+            color: colors.textSecondary,
             opacity: 1,
           },
         }}
         InputProps={{
           startAdornment: ( 
             <InputAdornment position="start">
-              <SearchIcon sx={{ color: colors.darkGrey }} />
+              <SearchIcon sx={{ color: colors.textSecondary }} />
             </InputAdornment>
           ),
         }}
@@ -99,19 +100,19 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
           sx={{
             position: 'absolute',
             width: '100%',
-            backgroundColor: colors.white,
+            backgroundColor: '#FFFFFF',
             borderRadius: '8px',
             mt: '5px',
             maxHeight: '200px',
             overflowY: 'auto',
             zIndex: 10,
-            border: `1px solid ${colors.darkBlue}`,
+            border: '1px solid #E0E0E0',
           }}
         >
           <List>
             {filteredOptions.length === 0 ? (
               <ListItem>
-                <Typography color={colors.darkGrey}>No users found</Typography>
+                <Typography color={colors.textSecondary}>No users found</Typography>
               </ListItem>
             ) : (
               filteredOptions.map((option) => (
@@ -123,7 +124,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     setShowDropdown(false);
                   }}
                   sx={{
-                    '&:hover': { backgroundColor: colors.lightBlue },
+                    '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
                   }}
                 >
                   <ListItemText primary={`${option.username} (${option.email})`} />
@@ -285,92 +286,152 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
     (u) => !permissions.some((p) => p.userId === u.id && !p.deletedAt)
   );
 
+  // Get a color for user avatars
+  const getUserColor = (username: string) => {
+    const colors = ['#F44336', '#3F51B5', '#4CAF50', '#FF9800', '#9C27B0', '#607D8B'];
+    const charCode = username.charCodeAt(0) % colors.length;
+    return colors[charCode];
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      fullWidth 
+      maxWidth="sm"
+      PaperProps={{
+        sx: {
+          borderRadius: '12px',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+        }
+      }}
+    >
       <DialogTitle
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          padding: '20px 24px',
+          borderBottom: '1px solid #E0E0E0',
         }}
       >
-        Manage Permissions
-        <IconButton onClick={onClose}>
+        <Typography variant="h6" fontWeight={600}>
+          Manage Permissions
+        </Typography>
+        <IconButton onClick={onClose} size="small" sx={{ color: colors.textSecondary }}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers>
+      <DialogContent sx={{ padding: '24px' }}>
         {!isDataLoaded ? (
-          <Box display="flex" justifyContent="center" alignItems="center">
-            <CircularProgress />
+          <Box display="flex" justifyContent="center" alignItems="center" py={4}>
+            <CircularProgress size={40} sx={{ color: colors.accentBlue }} />
           </Box>
         ) : (
           <>
             {/* Current Permissions */}
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" fontWeight={500} sx={{ mb: 2 }}>
               Current Permissions
             </Typography>
             {permissions.length > 0 ? (
-              permissions
-                .filter((perm) => !perm.deletedAt && perm.userId !== userId)
-                .map((perm) => {
-                  const user = users.find((u) => u.id === perm.userId);
-                  return (
-                    <Box
-                      key={perm.id}
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="space-between"
-                      mb={2}
-                    >
-                      <Box>
-                        <Typography variant="body1">
-                          {user?.username} ({user?.email})
-                        </Typography>
-                      </Box>
-                      <Box display="flex" alignItems="center">
-                        <FormControl size="small" sx={{ mr: 2, minWidth: 120 }}>
-                          <InputLabel>Role</InputLabel>
-                          <Select
-                            value={perm.role}
-                            label="Role"
-                            onChange={(e) =>
-                              handleRoleChange(
-                                perm.id,
-                                perm.userId,
-                                e.target.value as 'editor' | 'viewer',
-                              )
-                            }
+              <Box sx={{ mb: 4 }}>
+                {permissions
+                  .filter((perm) => !perm.deletedAt && perm.userId !== userId)
+                  .map((perm) => {
+                    const user = users.find((u) => u.id === perm.userId);
+                    return (
+                      <Paper
+                        key={perm.id}
+                        elevation={0}
+                        sx={{ 
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          mb: 2,
+                          p: 2,
+                          borderRadius: '8px',
+                          border: '1px solid #E0E0E0',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Avatar 
+                            sx={{ 
+                              bgcolor: getUserColor(user?.username || '?'),
+                              color: '#FFFFFF',
+                              width: 32,
+                              height: 32,
+                              fontSize: 14,
+                              mr: 2,
+                            }}
                           >
-                            <MenuItem value="editor">Editor</MenuItem>
-                            <MenuItem value="viewer">Viewer</MenuItem>
-                          </Select>
-                        </FormControl>
+                            {user?.username?.charAt(0).toUpperCase() || '?'}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body1" fontWeight={500}>
+                              {user?.username || 'Unknown User'}
+                            </Typography>
+                            <Typography variant="body2" color={colors.textSecondary}>
+                              {user?.email || 'No email available'}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Box display="flex" alignItems="center">
+                          <FormControl size="small" sx={{ mr: 2, minWidth: 120 }}>
+                            <InputLabel>Role</InputLabel>
+                            <Select
+                              value={perm.role}
+                              label="Role"
+                              onChange={(e) =>
+                                handleRoleChange(
+                                  perm.id,
+                                  perm.userId,
+                                  e.target.value as 'editor' | 'viewer',
+                                )
+                              }
+                            >
+                              <MenuItem value="editor">Editor</MenuItem>
+                              <MenuItem value="viewer">Viewer</MenuItem>
+                            </Select>
+                          </FormControl>
 
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          onClick={() =>
-                            handleRemovePermission(perm.id, perm.userId)
-                          }
-                        >
-                          Remove
-                        </Button>
-                      </Box>
-                    </Box>
-                  );
-                })
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            size="small"
+                            onClick={() =>
+                              handleRemovePermission(perm.id, perm.userId)
+                            }
+                            sx={{ borderRadius: '8px' }}
+                          >
+                            Remove
+                          </Button>
+                        </Box>
+                      </Paper>
+                    );
+                  })}
+              </Box>
             ) : (
-              <Typography>No permissions found.</Typography>
+              <Paper
+                elevation={0}
+                sx={{ 
+                  p: 3, 
+                  textAlign: 'center', 
+                  backgroundColor: 'rgba(0,0,0,0.03)',
+                  borderRadius: '8px',
+                  mb: 4,
+                }}
+              >
+                <Typography color={colors.textSecondary}>No permissions found</Typography>
+              </Paper>
             )}
 
             {/* Add Permission Section */}
-            <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+            <Typography variant="h6" fontWeight={500} sx={{ mb: 2 }}>
               Add Permission
             </Typography>
             
-            <Box mt={1} sx={{ position: 'relative', pb: 2 }}>
+            <Box sx={{ position: 'relative', mb: 3 }}>
               <SearchableSelect
                 label="User"
                 options={usersWithoutPermission.map(user => ({
@@ -384,7 +445,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
               />
 
               {/* Role Select and Add Button */}
-              <Box display="flex" alignItems="center" mt={4}>
+              <Box display="flex" alignItems="center" mt={3}>
                 <FormControl size="small" sx={{ mr: 2, minWidth: 120 }}>
                   <InputLabel>Role</InputLabel>
                   <Select
@@ -403,8 +464,18 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
                   variant="contained"
                   onClick={handleAddPermission}
                   disabled={!newUserId}
+                  sx={{ 
+                    borderRadius: '8px', 
+                    textTransform: 'none',
+                    boxShadow: 'none',
+                    backgroundColor: colors.accentBlue,
+                    '&:hover': {
+                      backgroundColor: '#2a70e2',
+                      boxShadow: 'none',
+                    },
+                  }}
                 >
-                  Add
+                  Add User
                 </Button>
               </Box>
             </Box>
@@ -412,8 +483,21 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
         )}
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose} color="primary" variant="outlined">
+      <DialogActions sx={{ padding: '16px 24px', borderTop: '1px solid #E0E0E0' }}>
+        <Button 
+          onClick={onClose} 
+          variant="outlined" 
+          sx={{ 
+            borderRadius: '8px', 
+            textTransform: 'none',
+            borderColor: '#E0E0E0',
+            color: colors.textPrimary,
+            '&:hover': {
+              borderColor: '#BDBDBD',
+              backgroundColor: 'rgba(0,0,0,0.03)',
+            },
+          }}
+        >
           Close
         </Button>
       </DialogActions>
