@@ -1,15 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Card,
+  Box,
   Typography,
   IconButton,
   Menu,
   MenuItem,
   Divider,
-  Box,
   Tooltip,
   Modal,
   Fade,
+  Avatar,
+  TableRow,
+  TableCell,
 } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
@@ -23,6 +25,10 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import ImageIcon from '@mui/icons-material/Image';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import MovieIcon from '@mui/icons-material/Movie';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import RenameDialog from './RenameDialog';
 import {
   getUsernameById,
@@ -32,10 +38,8 @@ import {
   getPermissionByFileId,
 } from '../utils/helperRequests';
 import PermissionDialog from './PermissionsDialog';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FileViewerDialog from './FileViewerDialog';
-import { colors } from '../Styles';
+import { colors, avatarStyles } from '../Styles';
 import MoveDialog from './MoveDialog';
 import {
   isSupportedFileTypeText,
@@ -58,30 +62,93 @@ export interface FileComponentProps {
 const getFileIcon = (fileType: string) => {
   const lowerCaseType = fileType.trim().toLowerCase();
   const mimeType = lowerCaseType.split('/')[0];
+  const extension = lowerCaseType.split('/')[1];
+
+  // Define background colors based on file type
+  let iconColor = colors.fileGray;
+  if (mimeType === 'image') iconColor = colors.fileImage;
+  else if (mimeType === 'video') iconColor = colors.fileVideo;
+  else if (mimeType === 'application' && extension === 'pdf') iconColor = '#F44336';
+  else if (mimeType === 'application' && extension.includes('sheet')) iconColor = colors.fileSpreadsheet;
+  else if (mimeType === 'application' && extension.includes('document')) iconColor = colors.fileDocument;
+  else if (mimeType === 'text') iconColor = colors.fileDocument;
+
+  const iconStyle = { 
+    fontSize: 24, 
+    color: '#FFF',
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  };
+
+  const iconContainerStyle = {
+    width: 36,
+    height: 36,
+    borderRadius: '8px',
+    backgroundColor: iconColor,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: '10px'
+  };
 
   switch (mimeType) {
     case 'text':
-      return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+      return (
+        <Box sx={iconContainerStyle}>
+          <DescriptionIcon sx={iconStyle} />
+        </Box>
+      );
     case 'application':
-      if (lowerCaseType === 'application/json')
+      if (extension === 'pdf')
         return (
-          <EditNoteIcon
-            sx={{ fontSize: 30, marginRight: '10px', color: 'blue' }}
-          />
+          <Box sx={iconContainerStyle}>
+            <PictureAsPdfIcon sx={iconStyle} />
+          </Box>
+        );
+      else if (extension.includes('sheet') || extension === 'csv')
+        return (
+          <Box sx={iconContainerStyle}>
+            <TableChartIcon sx={iconStyle} />
+          </Box>
+        );
+      else if (extension.includes('document') || extension === 'docx' || extension === 'doc')
+        return (
+          <Box sx={iconContainerStyle}>
+            <DescriptionIcon sx={iconStyle} />
+          </Box>
         );
       return (
-        <InsertDriveFileIcon
-          sx={{ fontSize: 30, marginRight: '10px', color: 'red' }}
-        />
+        <Box sx={iconContainerStyle}>
+          <InsertDriveFileIcon sx={iconStyle} />
+        </Box>
       );
     case 'image':
-      return <ImageIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+      return (
+        <Box sx={iconContainerStyle}>
+          <ImageIcon sx={iconStyle} />
+        </Box>
+      );
     case 'audio':
-      return <MusicNoteIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+      return (
+        <Box sx={iconContainerStyle}>
+          <MusicNoteIcon sx={iconStyle} />
+        </Box>
+      );
     case 'video':
-      return <MovieIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+      return (
+        <Box sx={iconContainerStyle}>
+          <MovieIcon sx={iconStyle} />
+        </Box>
+      );
     default:
-      return <InsertDriveFileIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+      return (
+        <Box sx={iconContainerStyle}>
+          <InsertDriveFileIcon sx={iconStyle} />
+        </Box>
+      );
   }
 };
 
@@ -120,7 +187,7 @@ const FileComponent = (props: FileComponentProps) => {
     };
 
     fetchPermission();
-  }, []);
+  }, [props.page, props.file.id]);
 
   useEffect(() => {
     const fetchOwnerUserName = async () => {
@@ -214,6 +281,7 @@ const FileComponent = (props: FileComponentProps) => {
   };
 
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
 
@@ -225,7 +293,7 @@ const FileComponent = (props: FileComponentProps) => {
   const handleDeleteClick = async (event: React.MouseEvent) => {
     event.stopPropagation();
     await handleDeleteFile(props.file.id);
-    setAnchorEl(null); //TODO: figure out whether to use this or handleOptionsClose()
+    setAnchorEl(null);
     props.refreshFiles(props.file.parentFolder);
   };
 
@@ -256,7 +324,6 @@ const FileComponent = (props: FileComponentProps) => {
   };
 
   const handleFavoriteFile = async (fileId: string) => {
-    // Note: still calling the patch through the file endpoint, but it's using the permission model
     try {
       await axios.patch(
         `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/favorite`,
@@ -277,13 +344,6 @@ const FileComponent = (props: FileComponentProps) => {
   };
 
   const handleRestoreFile = async (fileId: string, owner: string) => {
-    // const ownerUsername = await getUsernameById(owner);
-
-    // TODO: see comment in FolderComponent
-    // if (ownerUsername !== username) {
-    //   alert('You do not have permission to restore this file.');
-    //   return;
-    // }
     try {
       await axios.patch(
         `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/restore`,
@@ -299,13 +359,11 @@ const FileComponent = (props: FileComponentProps) => {
     event.stopPropagation();
     setIsRenameDialogOpen(true);
     handleOptionsClose();
-    props.refreshFiles(props.file.parentFolder);
   };
 
   const handlePermissionsClick = () => {
     setIsPermissionsDialogOpen(true);
     handleOptionsClose();
-    // props.refreshFiles(props.file.parentFolder);
   };
 
   const handleEditClick = () => {
@@ -316,59 +374,74 @@ const FileComponent = (props: FileComponentProps) => {
   const handleMoveClick = () => {
     setIsMoveDialogOpen(true);
     handleOptionsClose();
-    props.refreshFiles(props.file.parentFolder);
   };
 
-  const lastModifiedDate = new Date(props.file.lastModifiedAt);
-  const formattedLastModifiedDate = !isNaN(lastModifiedDate.getTime())
-    ? lastModifiedDate.toLocaleDateString()
-    : 'Unknown';
+  const formatDate = (dateString: string | Date) => {
+    const date = new Date(dateString);
+    
+    if (isNaN(date.getTime())) {
+      return 'Unknown';
+    }
+    
+    const now = new Date();
+    const diffTime = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return 'Today';
+    } else if (diffDays === 1) {
+      return '1 day ago';
+    } else if (diffDays < 31) {
+      return `${diffDays} days ago`;
+    } else if (diffDays < 60) {
+      return '1 month ago';
+    } else {
+      return `${Math.floor(diffDays/30)} months ago`;
+    }
+  };
 
-  const createdDate = new Date(props.file.createdAt);
-  const formattedCreatedDate = !isNaN(createdDate.getTime())
-    ? lastModifiedDate.toLocaleDateString()
-    : 'Unknown';
+  const getTagFromName = (fileName: string): string => {
+    // Extract tag from filename and return it with # prefix
+    const nameParts = fileName.split('.');
+    const baseName = nameParts[0].toLowerCase();
+    
+    // Prefix with # and limit to 10 characters
+    return '#' + baseName.replace(/[^a-z0-9]/g, '').substring(0, 10);
+  };
 
-  const dateText = props.file.lastModifiedBy
-    ? `Last Modified: ${formattedLastModifiedDate} by ${modifiedByName || ownerUserName}`
-    : `Created: ${formattedCreatedDate} by ${ownerUserName}`;
+  const lastModifiedDate = formatDate(props.file.lastModifiedAt);
+  const createdDate = formatDate(props.file.createdAt);
 
   return (
-    <div>
-      <Card
+    <>
+      <TableRow
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: '10px',
-          margin: '10px 0',
-          boxShadow: '2px 2px 5px rgba(0,0,0,0.2)',
-          backgroundColor: '#f5f5f5',
-          transition: 'background-color 0.3s',
+          cursor: 'pointer',
           '&:hover': {
-            backgroundColor: '#e0e0e0',
+            backgroundColor: 'rgba(0, 0, 0, 0.04)',
           },
+          borderBottom: `1px solid ${colors.divider}`,
         }}
         onClick={() => {
           if (props.page !== 'trash') handleFileClick();
         }}
       >
-        {getFileIcon(props.file.fileType)}
-
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: '3fr 2fr 2fr',
+        {/* File Icon and Name */}
+        <TableCell
+          sx={{ 
+            padding: '12px 16px', 
+            display: 'flex', 
             alignItems: 'center',
-            flexGrow: 1,
-            overflow: 'hidden',
-            gap: '20px',
+            borderBottom: 'none',
           }}
         >
+          {getFileIcon(props.file.fileType)}
           <Tooltip title={props.file.name} arrow>
             <Typography
-              variant="subtitle1"
+              variant="body1"
               sx={{
-                maxWidth: '200px',
+                fontWeight: 500,
+                maxWidth: '250px',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -377,151 +450,157 @@ const FileComponent = (props: FileComponentProps) => {
               {props.file.name}
             </Typography>
           </Tooltip>
+        </TableCell>
 
-          <Tooltip title={ownerUserName} arrow>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                maxWidth: '150px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+        {/* Tag */}
+        <TableCell sx={{ borderBottom: 'none' }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: colors.textSecondary,
+              backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              display: 'inline-block',
+            }}
+          >
+            {getTagFromName(props.file.name)}
+          </Typography>
+        </TableCell>
+
+        {/* Created Date */}
+        <TableCell sx={{ borderBottom: 'none' }}>
+          <Typography variant="body2" color="text.secondary">
+            {createdDate}
+          </Typography>
+        </TableCell>
+
+        {/* Owner */}
+        <TableCell sx={{ borderBottom: 'none' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Avatar
+              sx={{ 
+                ...avatarStyles.small,
+                bgcolor: ownerUserName === 'Sarah Luan' ? '#F44336' : 
+                         ownerUserName === 'Emily Yang' ? '#673AB7' :
+                         ownerUserName === 'Jake Lehrman' ? '#FF9800' :
+                         ownerUserName === 'Ethan Hsu' ? '#607D8B' :
+                         ownerUserName === 'Henry Pu' ? '#FF9800' : 
+                         colors.avatar,
+                marginRight: 1,
               }}
             >
-              Owner: {ownerUserName}
+              {ownerUserName.charAt(0).toUpperCase()}
+            </Avatar>
+            <Typography variant="body2" color="text.secondary">
+              {ownerUserName}
             </Typography>
-          </Tooltip>
+          </Box>
+        </TableCell>
 
-          <Tooltip title={dateText} arrow>
-            <Typography
-              variant="body2"
-              color="text.secondary"
+        {/* Last Modified */}
+        <TableCell sx={{ borderBottom: 'none' }}>
+          <Typography variant="body2" color="text.secondary">
+            {lastModifiedDate}
+          </Typography>
+        </TableCell>
+
+        {/* Actions */}
+        <TableCell align="right" sx={{ borderBottom: 'none' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <IconButton
+              onClick={handleFavoriteFileClick}
+              size="small"
               sx={{
-                maxWidth: '200px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                color: isFavorited ? '#FF6347' : colors.textSecondary,
               }}
             >
-              {dateText}
-            </Typography>
-          </Tooltip>
-        </Box>
+              {isFavorited ? <FavoriteIcon fontSize="small" /> : <FavoriteBorderIcon fontSize="small" />}
+            </IconButton>
 
-        {/* Favorites Toggle Button */}
-        <IconButton
-          onClick={handleFavoriteFileClick}
-          sx={{
-            color: isFavorited ? '#FF6347' : colors.darkBlue,
-          }}
-        >
-          {isFavorited ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-        </IconButton>
+            <IconButton
+              onClick={handleOptionsClick}
+              size="small"
+              sx={{ color: colors.textSecondary }}
+            >
+              <MoreHorizIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </TableCell>
+      </TableRow>
 
-        <IconButton
-          onClick={(e) => {
-            handleOptionsClick(e);
-            e.stopPropagation();
-          }}
-        >
-          <MoreHorizIcon />
-        </IconButton>
-
-        <Menu
-          anchorEl={anchorEl}
-          open={open}
-          onClick={(event) => event.stopPropagation()}
-          onClose={handleOptionsClose}
-          PaperProps={{
-            sx: {
-              width: '150px',
-            },
-          }}
-        >
-          {props.page === 'trash' ? (
-            <MenuItem onClick={handleRestoreClick}>
-              <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-              Restore
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClick={(event) => event.stopPropagation()}
+        onClose={handleOptionsClose}
+        PaperProps={{
+          sx: {
+            width: '180px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            borderRadius: '8px',
+          },
+        }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        {props.page === 'trash' ? (
+          <MenuItem onClick={handleRestoreClick}>
+            <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Restore
+          </MenuItem>
+        ) : props.page === 'shared' ? (
+          <>
+            {currentPermission?.role === 'editor' && isEditSupported && (
+              <MenuItem onClick={handleEditClick}>
+                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Edit
+              </MenuItem>
+            )}
+            <MenuItem
+              onClick={() => {
+                downloadFile(props.file.id, props.file.name);
+                handleOptionsClose();
+              }}
+            >
+              <InsertDriveFileIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Download
             </MenuItem>
-          ) : props.page === 'shared' ? (
-            [
-              currentPermission?.role === 'editor' && isEditSupported ? (
-                <MenuItem onClick={handleEditClick}>
-                  <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
-                  Edit
-                </MenuItem>
-              ) : null,
-              <MenuItem
-                onClick={() => {
-                  downloadFile(props.file.id, props.file.name);
-                  handleOptionsClose();
-                }}
-              >
-                <InsertDriveFileIcon
-                  sx={{ fontSize: '20px', marginRight: '9px' }}
-                />{' '}
-                Download
-              </MenuItem>,
-            ]
-          ) : (
-            [
-              isEditSupported
-                ? [
-                    <MenuItem onClick={handleEditClick}>
-                      <EditNoteIcon
-                        sx={{ fontSize: '20px', marginRight: '9px' }}
-                      />
-                      Edit
-                    </MenuItem>,
-                    <Divider sx={{ my: 0.2 }} />,
-                  ]
-                : null,
+          </>
+        ) : (
+          <>
+            {isEditSupported && (
+              <MenuItem onClick={handleEditClick}>
+                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Edit
+              </MenuItem>
+            )}
 
-              <MenuItem onClick={handlePermissionsClick}>
-                <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
-              </MenuItem>,
+            <MenuItem onClick={handlePermissionsClick}>
+              <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
+            </MenuItem>
 
-              <Divider sx={{ my: 0.2 }} />,
+            <MenuItem onClick={handleRenameClick}>
+              <DriveFileRenameOutlineIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Rename
+            </MenuItem>
 
-              <MenuItem onClick={handleRenameClick}>
-                <DriveFileRenameOutlineIcon
-                  sx={{ fontSize: '20px', marginRight: '9px' }}
-                />{' '}
-                Rename
-              </MenuItem>,
+            <MenuItem onClick={handleMoveClick}>
+              <DriveFileMove sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
+            </MenuItem>
 
-              <Divider sx={{ my: 0.2 }} />,
+            <MenuItem
+              onClick={() => {
+                downloadFile(props.file.id, props.file.name);
+                handleOptionsClose();
+              }}
+            >
+              <InsertDriveFileIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Download
+            </MenuItem>
 
-              <MenuItem onClick={handleDeleteClick}>
-                <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-                Delete
-              </MenuItem>,
+            <Divider />
 
-              <Divider sx={{ my: 0.2 }} />,
-
-              <MenuItem
-                onClick={() => {
-                  downloadFile(props.file.id, props.file.name);
-                  handleOptionsClose();
-                }}
-              >
-                <InsertDriveFileIcon
-                  sx={{ fontSize: '20px', marginRight: '9px' }}
-                />{' '}
-                Download
-              </MenuItem>,
-
-              <Divider sx={{ my: 0.2 }} />,
-
-              <MenuItem onClick={handleMoveClick}>
-                <DriveFileMove sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-                Move
-              </MenuItem>,
-            ]
-          )}
-        </Menu>
-      </Card>
+            <MenuItem onClick={handleDeleteClick} sx={{ color: '#FF6347' }}>
+              <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px', color: '#FF6347' }} /> Delete
+            </MenuItem>
+          </>
+        )}
+      </Menu>
 
       <RenameDialog
         open={isRenameDialogOpen}
@@ -539,7 +618,6 @@ const FileComponent = (props: FileComponentProps) => {
         folderId={null}
       />
 
-      {/* necessary to only open one websocket at a time */}
       {isEditDialogOpen && (
         <TextEditor
           fileId={props.file.id}
@@ -569,6 +647,7 @@ const FileComponent = (props: FileComponentProps) => {
           </Box>
         </Fade>
       </Modal>
+
       <MoveDialog
         open={isMoveDialogOpen}
         onClose={() => setIsMoveDialogOpen(false)}
@@ -579,7 +658,7 @@ const FileComponent = (props: FileComponentProps) => {
         parentFolderId={props.file.parentFolder}
         onSuccess={() => props.refreshFiles(props.file.parentFolder)}
       />
-    </div>
+    </>
   );
 };
 
