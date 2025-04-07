@@ -10,12 +10,14 @@ interface CreateButtonProps {
   currentFolderId: string | null;
   refreshFiles: (folderId: string | null) => void;
   refreshFolders: (folderId: string | null) => void;
+  refreshStorage: () => Promise<void>;
 }
 
 const CreateButton: React.FC<CreateButtonProps> = ({
   currentFolderId,
   refreshFiles,
   refreshFolders,
+  refreshStorage,
 }) => {
   const nodeRef = useRef<HTMLDivElement>(null);
 
@@ -74,6 +76,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         { withCredentials: true },
       );
       refreshFiles(currentFolderId);
+      await refreshStorage();
       return response.data;
     } catch (error) {
       console.error('Upload failed:', error);
