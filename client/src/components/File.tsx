@@ -46,7 +46,7 @@ import { File } from '../interfaces/File';
 import axios from 'axios';
 import TextEditor from './TextEditor';
 import { Permission } from '../interfaces/Permission';
-import { permission } from 'process';
+import OwlNoteEditorDialog from './OwlNoteEditorDialog';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -118,7 +118,7 @@ const FileComponent = (props: FileComponentProps) => {
     };
 
     fetchPermission();
-  }, []);
+  }, [props.file.id, props.page]);
 
   useEffect(() => {
     const fetchOwnerUserName = async () => {
@@ -538,13 +538,25 @@ const FileComponent = (props: FileComponentProps) => {
 
       {/* necessary to only open one websocket at a time */}
       {isEditDialogOpen && (
-        <TextEditor
-          fileId={props.file.id}
-          gcsKey={props.file.gcsKey}
-          mimeType={props.file.fileType}
-          open={isEditDialogOpen}
-          onClose={handleCloseEditor}
-        />
+        <>
+          {props.file.fileType === 'text/owltxt' ? (
+            <OwlNoteEditorDialog
+              open={isEditDialogOpen}
+              onClose={handleCloseEditor}
+              fileId={props.file.id}
+              gcsKey={props.file.gcsKey}
+              fileType={props.file.fileType}
+            />
+          ) : (
+            <TextEditor
+              fileId={props.file.id}
+              gcsKey={props.file.gcsKey}
+              mimeType={props.file.fileType}
+              open={isEditDialogOpen}
+              onClose={handleCloseEditor}
+            />
+          )}
+        </>
       )}
 
       <Modal open={isFileViewerOpen} onClose={handleCloseFileViewer}>
