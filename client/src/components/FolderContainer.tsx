@@ -143,42 +143,61 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     const canScroll = updatedFilteredFolders.length > visibleItems;
     setShouldScroll(canScroll);
 
+    // Immediately cancel any ongoing animations
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = undefined;
+    }
+    velocityRef.current = 0;
+
     const getExtendedFolders = (folders: Folder[]) => {
       if (folders.length === 0) return [];
       if (!canScroll) return folders;
 
-      // Create initial set of clones - use a larger number for smoother infinite scrolling
-      const baseCloneCount = Math.max(
-        cloneCount * 2,
-        Math.ceil(folders.length),
+      // Reduce clone count to just what's needed for smooth scrolling
+      const baseCloneCount = Math.min(
+        Math.max(visibleItems, 2), // Minimum 2 sets of clones
+        Math.ceil(folders.length / 2), // Maximum half the folder count
       );
-      const preClone = [];
-      const postClone = [];
 
-      // Create multiple sets of clones for smoother infinite scrolling
-      for (let i = 0; i < baseCloneCount; i++) {
-        preClone.unshift(...folders);
-        postClone.push(...folders);
-      }
+      // Create clones more efficiently
+      const preClone = Array(baseCloneCount)
+        .fill(null)
+        .flatMap(() => [...folders]);
+      const postClone = Array(baseCloneCount)
+        .fill(null)
+        .flatMap(() => [...folders]);
 
-      const extended = [...preClone, ...folders, ...postClone];
-      setExtendedFolders(extended);
-      return extended;
+      return [...preClone, ...folders, ...postClone];
     };
 
-    const extendedFolders = getExtendedFolders(updatedFilteredFolders);
-    setFilteredFolders(extendedFolders);
+    // Create new extended folders
+    const newExtendedFolders = getExtendedFolders(updatedFilteredFolders);
 
-    // Set initial position
-    if (canScroll) {
-      const initialPosition =
-        -slideWidth * (updatedFilteredFolders.length * Math.floor(cloneCount));
-      setTranslateX(initialPosition);
-      setCurrentTranslateX(initialPosition);
-    } else {
-      setTranslateX(0);
-      setCurrentTranslateX(0);
-    }
+    // Calculate new position
+    const newPosition = canScroll
+      ? -slideWidth * (updatedFilteredFolders.length * Math.floor(cloneCount))
+      : 0;
+
+    // Batch all state updates together
+    requestAnimationFrame(() => {
+      setExtendedFolders(newExtendedFolders);
+      setFilteredFolders(newExtendedFolders);
+      setTranslateX(newPosition);
+      setCurrentTranslateX(newPosition);
+
+      // Update DOM in a single frame
+      if (transformRef.current) {
+        transformRef.current.style.transition = 'none';
+        transformRef.current.style.transform = `translate3d(${newPosition}px, 0, 0)`;
+        // Force reflow more efficiently
+        void transformRef.current.offsetHeight;
+        transformRef.current.style.transition = 'transform 0.2s ease-out';
+      }
+
+      // Reset transition state
+      isTransitioningRef.current = false;
+    });
   }, [folders, searchQuery, slideWidth, cloneCount, visibleItems]);
 
   const animate = useCallback(() => {
@@ -273,23 +292,28 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const handleDragEnd = useCallback(() => {
     if (!isDragging || !shouldScroll) return;
     setIsDragging(false);
-    setWasDragging(true);
+
+    // Calculate total movement
+    const totalMovement = Math.abs(translateX - currentTranslateX);
+    // Only set wasDragging if moved more than 5px to allow for clicks
+    setWasDragging(totalMovement > 5);
+
     setCurrentTranslateX(translateX);
 
     // Start deceleration animation
     animationRef.current = requestAnimationFrame(animate);
 
-    // Reset wasDragging after a short delay
+    // Reset wasDragging after a shorter delay
     setTimeout(() => {
       setWasDragging(false);
-    }, 100);
-  }, [isDragging, shouldScroll, translateX, animate]);
+    }, 50);
+  }, [isDragging, shouldScroll, translateX, animate, currentTranslateX]);
 
   const swipeHandlers = useSwipeable({
     onSwiping: (e) => {
       if (!shouldScroll) return;
       const diff = e.deltaX;
-      setTranslateX((prev) => prev + diff);
+      setTranslateX((prev) => prev + diff * 0.8); // Added multiplier to match other scroll speeds
     },
     onSwipedLeft: () => checkBounds(),
     onSwipedRight: () => checkBounds(),
@@ -298,6 +322,12 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     delta: 10,
     swipeDuration: 500,
   });
+
+  // Add effect to handle folder updates
+  useEffect(() => {
+    // Reset wasDragging when folders change to ensure clicks work
+    setWasDragging(false);
+  }, [folders]);
 
   return (
     <Box className="folder-container" sx={{ width: '100%' }}>
@@ -337,7 +367,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
             flex: 1,
             overflow: 'hidden',
             position: 'relative',
-            willChange: 'transform', // Hint to browser to optimize
+            willChange: 'transform',
           }}
         >
           <Box
@@ -367,13 +397,14 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
                   flexShrink: 0,
                   marginRight:
                     index < filteredFolders.length - 1 ? `${gap}px` : 0,
+                  pointerEvents: 'auto',
                 }}
               >
                 <FolderComponent
                   page={page}
                   folder={folder}
                   onClick={() => {
-                    if (!wasDragging) {
+                    if (!isDragging && !wasDragging) {
                       onFolderClick(folder);
                     }
                   }}
