@@ -190,6 +190,7 @@ const NavigationDrawer = () => {
         sx={{
           display: 'flex',
           alignItems: 'center',
+          justifyContent: drawerOpen ? 'flex-start' : 'center',
           padding: '24px 16px',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
         }}
@@ -200,18 +201,19 @@ const NavigationDrawer = () => {
           alt="Owl Logo"
           sx={{ width: 32, height: 32 }}
         />
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 600,
-            color: colors.sidebarText,
-            marginLeft: drawerOpen ? '12px' : 0,
-            opacity: drawerOpen ? 1 : 0,
-            transition: 'opacity 0.3s',
-          }}
-        >
-          Owl Share
-        </Typography>
+        {drawerOpen && (
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 600,
+              color: colors.sidebarText,
+              marginLeft: '12px',
+              transition: 'opacity 0.3s',
+            }}
+          >
+            Owl Share
+          </Typography>
+        )}
       </Box>
 
       {/* Navigation List */}
@@ -223,21 +225,30 @@ const NavigationDrawer = () => {
             to="/home"
             sx={{
               borderRadius: '8px',
-              padding: '10px 16px',
+              padding: drawerOpen ? '10px 16px' : '10px 0',
               color: colors.sidebarText,
+              justifyContent: drawerOpen ? 'flex-start' : 'center',
               ...(location.pathname === '/home' ? activePageStyles : {}),
               '&:hover': {
                 backgroundColor: colors.sidebarHover,
               },
             }}
           >
-            <ListItemIcon sx={{ minWidth: 40 }}>
+            <ListItemIcon
+              sx={{
+                minWidth: drawerOpen ? 40 : 'auto',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
               <StorageIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText
-              primary="Storage"
-              sx={{ opacity: drawerOpen ? 1 : 0 }}
-            />
+            {drawerOpen && (
+              <ListItemText
+                primary="Storage"
+                sx={{ transition: 'opacity 0.3s' }}
+              />
+            )}
           </ListItemButton>
         </ListItem>
 
@@ -248,21 +259,30 @@ const NavigationDrawer = () => {
             to="/favorites"
             sx={{
               borderRadius: '8px',
-              padding: '10px 16px',
+              padding: drawerOpen ? '10px 16px' : '10px 0',
               color: colors.sidebarText,
+              justifyContent: drawerOpen ? 'flex-start' : 'center',
               ...(location.pathname === '/favorites' ? activePageStyles : {}),
               '&:hover': {
                 backgroundColor: colors.sidebarHover,
               },
             }}
           >
-            <ListItemIcon sx={{ minWidth: 40 }}>
+            <ListItemIcon
+              sx={{
+                minWidth: drawerOpen ? 40 : 'auto',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
               <StarIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText
-              primary="Favorites"
-              sx={{ opacity: drawerOpen ? 1 : 0 }}
-            />
+            {drawerOpen && (
+              <ListItemText
+                primary="Favorites"
+                sx={{ transition: 'opacity 0.3s' }}
+              />
+            )}
           </ListItemButton>
         </ListItem>
 
@@ -273,21 +293,30 @@ const NavigationDrawer = () => {
             to="/shared"
             sx={{
               borderRadius: '8px',
-              padding: '10px 16px',
+              padding: drawerOpen ? '10px 16px' : '10px 0',
               color: colors.sidebarText,
+              justifyContent: drawerOpen ? 'flex-start' : 'center',
               ...(location.pathname === '/shared' ? activePageStyles : {}),
               '&:hover': {
                 backgroundColor: colors.sidebarHover,
               },
             }}
           >
-            <ListItemIcon sx={{ minWidth: 40 }}>
+            <ListItemIcon
+              sx={{
+                minWidth: drawerOpen ? 40 : 'auto',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
               <PeopleIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText
-              primary="Shared With Me"
-              sx={{ opacity: drawerOpen ? 1 : 0 }}
-            />
+            {drawerOpen && (
+              <ListItemText
+                primary="Shared With Me"
+                sx={{ transition: 'opacity 0.3s' }}
+              />
+            )}
           </ListItemButton>
         </ListItem>
 
@@ -298,77 +327,87 @@ const NavigationDrawer = () => {
             to="/trash"
             sx={{
               borderRadius: '8px',
-              padding: '10px 16px',
+              padding: drawerOpen ? '10px 16px' : '10px 0',
               color: colors.sidebarText,
+              justifyContent: drawerOpen ? 'flex-start' : 'center',
               ...(location.pathname === '/trash' ? activePageStyles : {}),
               '&:hover': {
                 backgroundColor: colors.sidebarHover,
               },
             }}
           >
-            <ListItemIcon sx={{ minWidth: 40 }}>
+            <ListItemIcon
+              sx={{
+                minWidth: drawerOpen ? 40 : 'auto',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
               <DeleteIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText
-              primary="Trash"
-              sx={{ opacity: drawerOpen ? 1 : 0 }}
-            />
+            {drawerOpen && (
+              <ListItemText
+                primary="Trash"
+                sx={{ transition: 'opacity 0.3s' }}
+              />
+            )}
           </ListItemButton>
         </ListItem>
       </List>
 
       {/* Storage Info */}
       <Box sx={{ mt: 'auto', padding: '16px' }}>
-        <Box
-          sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '10px',
-            padding: '16px',
-            marginBottom: '16px',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            <CloudIcon
-              sx={{ color: colors.sidebarText, mr: 1, fontSize: 20 }}
-            />
-            <Typography
-              variant="body2"
-              sx={{ color: colors.sidebarText, fontWeight: 500 }}
-            >
-              My Storage
-            </Typography>
-          </Box>
-
+        {drawerOpen && (
           <Box
             sx={{
-              width: '100%',
-              bgcolor: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: 5,
-              height: 4,
-              mb: 1,
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '10px',
+              padding: '16px',
+              marginBottom: '16px',
             }}
           >
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <CloudIcon
+                sx={{ color: colors.sidebarText, mr: 1, fontSize: 20 }}
+              />
+              <Typography
+                variant="body2"
+                sx={{ color: colors.sidebarText, fontWeight: 500 }}
+              >
+                My Storage
+              </Typography>
+            </Box>
+
             <Box
               sx={{
-                width: `${storagePercentage}%`,
-                bgcolor: '#3B82F6',
+                width: '100%',
+                bgcolor: 'rgba(255, 255, 255, 0.1)',
                 borderRadius: 5,
-                height: '100%',
+                height: 4,
+                mb: 1,
               }}
-            />
+            >
+              <Box
+                sx={{
+                  width: `${storagePercentage}%`,
+                  bgcolor: '#3B82F6',
+                  borderRadius: 5,
+                  height: '100%',
+                }}
+              />
+            </Box>
+
+            <Typography
+              variant="caption"
+              sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+            >
+              You have used {storageUsed} GB out of {totalStorage} GB.
+            </Typography>
           </Box>
-
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
-          >
-            You have used {storageUsed} GB out of {totalStorage} GB.
-          </Typography>
-        </Box>
-
-        {/* Account Section */}
-        <AccountMenu />
+        )}
       </Box>
+      {/* Account Section */}
+      <AccountMenu />
     </Drawer>
   );
 };
