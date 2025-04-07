@@ -58,7 +58,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     ) as HTMLElement;
     if (container) {
       container.style.transition = 'none';
-      container.style.transform = `translateX(${position}px)`;
+      container.style.transform = `translate3d(${position}px, 0, 0)`;
       // Force reflow
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const _ = container.offsetHeight;
@@ -68,10 +68,10 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     setTranslateX(position);
     setCurrentTranslateX(position);
 
-    // Use a longer delay to ensure the transition is complete
+    // Use a shorter delay for better responsiveness
     setTimeout(() => {
       isTransitioningRef.current = false;
-    }, 250);
+    }, 200);
   }, []);
 
   const checkBounds = useCallback(() => {
@@ -188,23 +188,26 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     }
 
     const now = Date.now();
-    const dt = now - lastTimeRef.current;
+    const dt = Math.min(now - lastTimeRef.current, 32); // Cap at ~30fps to prevent large jumps
     lastTimeRef.current = now;
 
-    velocityRef.current *= Math.pow(0.95, dt / 16);
+    // Increase friction slightly for slower deceleration
+    velocityRef.current *= Math.pow(0.92, dt / 16);
 
-    const maxVelocity = 25;
+    // Reduce max velocity for slower scrolling
+    const maxVelocity = 20;
     velocityRef.current = Math.min(
       Math.max(velocityRef.current, -maxVelocity),
       maxVelocity,
     );
 
     if (Math.abs(velocityRef.current) > 0.1) {
-      const next = translateX + (velocityRef.current * dt) / 16;
+      // Reduce velocity multiplier for slower movement
+      const next = translateX + (velocityRef.current * dt) / 20;
       if (transformRef.current) {
-        transformRef.current.style.transform = `translateX(${next}px)`;
+        transformRef.current.style.transform = `translate3d(${next}px, 0, 0)`;
+        setTranslateX(next);
       }
-      setTranslateX(next);
       checkBounds();
       animationRef.current = requestAnimationFrame(animate);
     } else {
@@ -240,23 +243,29 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 
       const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
       const diff = clientX - dragStartX;
-      const next = currentTranslateX + diff;
+      // Reduce drag sensitivity
+      const next = currentTranslateX + diff * 0.8;
 
       // Update transform directly for smoother dragging
       if (transformRef.current) {
-        transformRef.current.style.transform = `translateX(${next}px)`;
+        transformRef.current.style.transform = `translate3d(${next}px, 0, 0)`;
       }
 
-      // Calculate velocity
+      // Throttle state updates during drag
       const now = Date.now();
+      if (now - lastTimeRef.current > 16) {
+        // ~60fps
+        lastTimeRef.current = now;
+        setTranslateX(next);
+      }
+
+      // Calculate velocity with reduced sensitivity
       const dt = now - lastTimeRef.current;
       if (dt > 0) {
-        velocityRef.current = ((clientX - lastMouseXRef.current) / dt) * 16;
+        velocityRef.current = ((clientX - lastMouseXRef.current) / dt) * 12;
       }
 
       lastMouseXRef.current = clientX;
-      lastTimeRef.current = now;
-      setTranslateX(next);
     },
     [isDragging, shouldScroll, dragStartX, currentTranslateX],
   );
@@ -328,6 +337,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
             flex: 1,
             overflow: 'hidden',
             position: 'relative',
+            willChange: 'transform', // Hint to browser to optimize
           }}
         >
           <Box
@@ -338,13 +348,15 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
               position: 'relative',
               gap: 2,
               transform: shouldScroll
-                ? `translateX(${translateX}px)`
+                ? `translate3d(${translateX}px, 0, 0)`
                 : undefined,
               transition: isDragging ? 'none' : 'transform 0.2s ease-out',
               userSelect: 'none',
               width: 'fit-content',
               px: 1,
               justifyContent: !shouldScroll ? 'flex-start' : undefined,
+              willChange: 'transform',
+              backfaceVisibility: 'hidden',
             }}
           >
             {filteredFolders.map((folder, index) => (
