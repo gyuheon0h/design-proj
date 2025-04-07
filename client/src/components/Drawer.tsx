@@ -10,6 +10,7 @@ import {
   MenuItem,
   Box,
   Avatar,
+  IconButton,
 } from '@mui/material';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import StorageIcon from '@mui/icons-material/Storage';
@@ -21,8 +22,15 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import CloudIcon from '@mui/icons-material/Cloud';
 import React, { useState } from 'react';
 import { useUser } from '../context/UserContext';
-import { colors, drawerStyles, activePageStyles, avatarStyles } from '../Styles';
+import {
+  colors,
+  drawerStyles,
+  activePageStyles,
+  avatarStyles,
+} from '../Styles';
 import SettingsDialog from './SettingsDialog';
+import MenuIcon from '@mui/icons-material/Menu';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
 const AccountMenu = () => {
   const { username } = useUser();
@@ -60,33 +68,39 @@ const AccountMenu = () => {
 
   return (
     <React.Fragment>
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
           padding: '12px 16px',
-          cursor: 'pointer', 
+          cursor: 'pointer',
           borderRadius: '8px',
           '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' },
-        }} 
+        }}
         onClick={handleClick}
       >
-        <Avatar 
-          sx={{ 
+        <Avatar
+          sx={{
             ...avatarStyles.standard,
             bgcolor: colors.avatar,
             color: colors.avatarText,
-            marginRight: 2
+            marginRight: 2,
           }}
         >
           {getInitials(username)}
         </Avatar>
         <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="body1" sx={{ color: colors.sidebarText, fontWeight: 500 }}>
+          <Typography
+            variant="body1"
+            sx={{ color: colors.sidebarText, fontWeight: 500 }}
+          >
             {username || 'Guest'}
           </Typography>
         </Box>
-        <SettingsIcon fontSize="small" sx={{ color: 'rgba(255, 255, 255, 0.7)' }} />
+        <SettingsIcon
+          fontSize="small"
+          sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+        />
       </Box>
 
       <Menu
@@ -137,17 +151,40 @@ const NavigationDrawer = () => {
   const [storageUsed] = useState(5); // In GB
   const [totalStorage] = useState(15); // In GB
   const storagePercentage = (storageUsed / totalStorage) * 100;
+  const [drawerOpen, setDrawerOpen] = useState(true);
+  const toggleDrawer = () => setDrawerOpen(!drawerOpen);
 
   return (
     <Drawer
       variant="permanent"
-      anchor="left"
+      open={drawerOpen}
       sx={{
-        width: drawerStyles.width,
+        width: drawerOpen ? drawerStyles.width : 60,
         flexShrink: 0,
-        '& .MuiDrawer-paper': drawerStyles.paper,
+        '& .MuiDrawer-paper': {
+          ...drawerStyles.paper,
+          width: drawerOpen ? drawerStyles.width : 60,
+          transition: 'width 0.3s',
+          overflowX: 'hidden',
+        },
       }}
     >
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: drawerOpen ? 'flex-end' : 'center',
+          p: 1,
+        }}
+      >
+        <IconButton onClick={toggleDrawer}>
+          {drawerOpen ? (
+            <ChevronLeftIcon sx={{ color: 'white' }} />
+          ) : (
+            <MenuIcon sx={{ color: 'white' }} />
+          )}
+        </IconButton>
+      </Box>
+
       {/* Logo Section */}
       <Box
         sx={{
@@ -163,11 +200,16 @@ const NavigationDrawer = () => {
           alt="Owl Logo"
           sx={{ width: 32, height: 32 }}
         />
-        <Typography variant="h6" sx={{ 
-          fontWeight: 600, 
-          color: colors.sidebarText,
-          marginLeft: '12px'
-        }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 600,
+            color: colors.sidebarText,
+            marginLeft: drawerOpen ? '12px' : 0,
+            opacity: drawerOpen ? 1 : 0,
+            transition: 'opacity 0.3s',
+          }}
+        >
           Owl Share
         </Typography>
       </Box>
@@ -192,7 +234,10 @@ const NavigationDrawer = () => {
             <ListItemIcon sx={{ minWidth: 40 }}>
               <StorageIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText primary="Storage" />
+            <ListItemText
+              primary="Storage"
+              sx={{ opacity: drawerOpen ? 1 : 0 }}
+            />
           </ListItemButton>
         </ListItem>
 
@@ -214,7 +259,10 @@ const NavigationDrawer = () => {
             <ListItemIcon sx={{ minWidth: 40 }}>
               <StarIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText primary="Favorites" />
+            <ListItemText
+              primary="Favorites"
+              sx={{ opacity: drawerOpen ? 1 : 0 }}
+            />
           </ListItemButton>
         </ListItem>
 
@@ -236,7 +284,10 @@ const NavigationDrawer = () => {
             <ListItemIcon sx={{ minWidth: 40 }}>
               <PeopleIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText primary="Shared with me" />
+            <ListItemText
+              primary="Shared With Me"
+              sx={{ opacity: drawerOpen ? 1 : 0 }}
+            />
           </ListItemButton>
         </ListItem>
 
@@ -258,27 +309,45 @@ const NavigationDrawer = () => {
             <ListItemIcon sx={{ minWidth: 40 }}>
               <DeleteIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText primary="Trash" />
+            <ListItemText
+              primary="Trash"
+              sx={{ opacity: drawerOpen ? 1 : 0 }}
+            />
           </ListItemButton>
         </ListItem>
       </List>
 
       {/* Storage Info */}
       <Box sx={{ mt: 'auto', padding: '16px' }}>
-        <Box sx={{ 
-          backgroundColor: 'rgba(255, 255, 255, 0.1)', 
-          borderRadius: '10px',
-          padding: '16px',
-          marginBottom: '16px'
-        }}>
+        <Box
+          sx={{
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '10px',
+            padding: '16px',
+            marginBottom: '16px',
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            <CloudIcon sx={{ color: colors.sidebarText, mr: 1, fontSize: 20 }} />
-            <Typography variant="body2" sx={{ color: colors.sidebarText, fontWeight: 500 }}>
+            <CloudIcon
+              sx={{ color: colors.sidebarText, mr: 1, fontSize: 20 }}
+            />
+            <Typography
+              variant="body2"
+              sx={{ color: colors.sidebarText, fontWeight: 500 }}
+            >
               My Storage
             </Typography>
           </Box>
-          
-          <Box sx={{ width: '100%', bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 5, height: 4, mb: 1 }}>
+
+          <Box
+            sx={{
+              width: '100%',
+              bgcolor: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: 5,
+              height: 4,
+              mb: 1,
+            }}
+          >
             <Box
               sx={{
                 width: `${storagePercentage}%`,
@@ -288,12 +357,15 @@ const NavigationDrawer = () => {
               }}
             />
           </Box>
-          
-          <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+
+          <Typography
+            variant="caption"
+            sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+          >
             You have used {storageUsed} GB out of {totalStorage} GB.
           </Typography>
         </Box>
-        
+
         {/* Account Section */}
         <AccountMenu />
       </Box>
