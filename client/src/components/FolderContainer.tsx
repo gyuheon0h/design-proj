@@ -29,7 +29,8 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const gap = 16; // Gap between folders
   const containerRef = useRef<HTMLDivElement>(null);
   const slideWidth = folderWidth + gap; // Width of one slide movement
-  const cloneCount = Math.max(visibleItems, 3); // Base clone count
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const cloneCount = 1; // Number of sets to clone on each side
   const animationRef = useRef<number | undefined>(undefined);
   const velocityRef = useRef(0);
   const lastMouseXRef = useRef(0);
@@ -39,80 +40,84 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 
   const [filteredFolders, setFilteredFolders] = useState<Folder[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [translateX, setTranslateX] = useState(-slideWidth * cloneCount * 2);
+  const [translateX, setTranslateX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
-  const [currentTranslateX, setCurrentTranslateX] = useState(
-    -slideWidth * cloneCount * 2,
-  );
-  const [extendedFolders, setExtendedFolders] = useState<Folder[]>([]);
+  const [currentTranslateX, setCurrentTranslateX] = useState(0);
   const [shouldScroll, setShouldScroll] = useState(false);
   const transformRef = useRef<HTMLDivElement>(null);
+  const [displayFolders, setDisplayFolders] = useState<Folder[]>([]);
 
-  const resetPosition = useCallback((position: number) => {
-    if (isTransitioningRef.current) return;
-    isTransitioningRef.current = true;
+  const resetPosition = useCallback(
+    (position: number, instant = true) => {
+      if (isTransitioningRef.current) return;
+      isTransitioningRef.current = true;
 
-    const container = containerRef.current?.querySelector(
-      '.sliding-container',
-    ) as HTMLElement;
-    if (container) {
-      container.style.transition = 'none';
-      container.style.transform = `translate3d(${position}px, 0, 0)`;
-      // Force reflow
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const _ = container.offsetHeight;
-      container.style.transition = 'transform 0.2s ease-out';
-    }
+      console.log('Resetting position', {
+        from: translateX,
+        to: position,
+        instant,
+      });
 
-    setTranslateX(position);
-    setCurrentTranslateX(position);
+      // Then update DOM
+      if (transformRef.current) {
+        if (instant) {
+          // Instant jump (no animation)
+          transformRef.current.style.transition = 'none';
+          transformRef.current.style.transform = `translate3d(${position}px, 0, 0)`;
 
-    // Use a shorter delay for better responsiveness
-    setTimeout(() => {
-      isTransitioningRef.current = false;
-    }, 200);
-  }, []);
+          // Force reflow
+          void transformRef.current.offsetHeight;
+
+          // Update state after DOM change
+          setTranslateX(position);
+          setCurrentTranslateX(position);
+
+          // Reset transition
+          transformRef.current.style.transition = 'transform 0.2s ease-out';
+          isTransitioningRef.current = false;
+        } else {
+          // Animated transition
+          transformRef.current.style.transition = 'transform 0.2s ease-out';
+          transformRef.current.style.transform = `translate3d(${position}px, 0, 0)`;
+
+          // Update state
+          setTranslateX(position);
+          setCurrentTranslateX(position);
+
+          // Wait for transition to complete
+          setTimeout(() => {
+            isTransitioningRef.current = false;
+          }, 200);
+        }
+      }
+    },
+    [translateX],
+  );
 
   const checkBounds = useCallback(() => {
     if (isTransitioningRef.current || !shouldScroll) return;
+    if (filteredFolders.length <= visibleItems) return;
 
-    const originalLength = Math.ceil(filteredFolders.length / 3);
-    const currentIndex = Math.round(Math.abs(translateX / slideWidth));
-    const totalSets = Math.floor(filteredFolders.length / originalLength);
+    // Calculate the width of the original folders (without clones)
+    const originalFoldersWidth = filteredFolders.length * slideWidth;
 
-    // Calculate the current set we're in
-    const currentSet = Math.floor(currentIndex / originalLength);
-
-    // If we're approaching the edges, add more clones
-    if (currentSet <= 1 || currentSet >= totalSets - 2) {
-      const newPreClone = [...extendedFolders.slice(0, originalLength)];
-      const newPostClone = [...extendedFolders.slice(-originalLength)];
-
-      const newFolders = [...newPreClone, ...extendedFolders, ...newPostClone];
-      setFilteredFolders(newFolders);
-
-      // Adjust position to account for new clones
-      const positionAdjustment =
-        currentSet <= 1 ? originalLength * slideWidth : 0;
-      const newPosition = translateX + positionAdjustment;
-
+    // If we've scrolled into the left clone section
+    if (translateX > 0) {
+      // Jump to the equivalent position at the end of the original items
+      const newPosition = translateX - originalFoldersWidth;
       resetPosition(newPosition);
       return;
     }
 
-    // Normal position reset when not adding new clones
-    if (currentIndex < originalLength) {
-      const newPosition = translateX - originalLength * slideWidth;
+    // If we've scrolled into the right clone section
+    if (translateX < -originalFoldersWidth) {
+      // Jump to the equivalent position at the start of the original items
+      const newPosition = translateX + originalFoldersWidth;
       resetPosition(newPosition);
-      velocityRef.current = 0;
-    } else if (currentIndex >= filteredFolders.length - originalLength) {
-      const newPosition = translateX + originalLength * slideWidth;
-      resetPosition(newPosition);
-      velocityRef.current = 0;
+      return;
     }
   }, [
-    extendedFolders,
     filteredFolders.length,
     resetPosition,
     shouldScroll,
@@ -150,55 +155,55 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     }
     velocityRef.current = 0;
 
-    const getExtendedFolders = (folders: Folder[]) => {
-      if (folders.length === 0) return [];
-      if (!canScroll) return folders;
+    // Set filtered folders
+    setFilteredFolders(updatedFilteredFolders);
 
-      // Reduce clone count to just what's needed for smooth scrolling
-      const baseCloneCount = Math.min(
-        Math.max(visibleItems, 2), // Minimum 2 sets of clones
-        Math.ceil(folders.length / 2), // Maximum half the folder count
-      );
+    // Create a seamless carousel by cloning folders at both ends
+    if (canScroll && updatedFilteredFolders.length > 0) {
+      // Create a set with original folders + clones at both ends
+      const display = [
+        ...updatedFilteredFolders, // Add first set for looping
+        ...updatedFilteredFolders, // Add original set in the middle
+        ...updatedFilteredFolders, // Add last set for looping
+      ];
+      setDisplayFolders(display);
 
-      // Create clones more efficiently
-      const preClone = Array(baseCloneCount)
-        .fill(null)
-        .flatMap(() => [...folders]);
-      const postClone = Array(baseCloneCount)
-        .fill(null)
-        .flatMap(() => [...folders]);
+      // Position to show the middle set (original folders)
+      const newPosition = -updatedFilteredFolders.length * slideWidth;
 
-      return [...preClone, ...folders, ...postClone];
-    };
+      console.log('Initializing infinite carousel', {
+        count: updatedFilteredFolders.length,
+        displayCount: display.length,
+        position: newPosition,
+      });
 
-    // Create new extended folders
-    const newExtendedFolders = getExtendedFolders(updatedFilteredFolders);
-
-    // Calculate new position
-    const newPosition = canScroll
-      ? -slideWidth * (updatedFilteredFolders.length * Math.floor(cloneCount))
-      : 0;
-
-    // Batch all state updates together
-    requestAnimationFrame(() => {
-      setExtendedFolders(newExtendedFolders);
-      setFilteredFolders(newExtendedFolders);
+      // Update state and transform
       setTranslateX(newPosition);
       setCurrentTranslateX(newPosition);
 
-      // Update DOM in a single frame
+      // Force immediate DOM update
       if (transformRef.current) {
         transformRef.current.style.transition = 'none';
         transformRef.current.style.transform = `translate3d(${newPosition}px, 0, 0)`;
-        // Force reflow more efficiently
         void transformRef.current.offsetHeight;
         transformRef.current.style.transition = 'transform 0.2s ease-out';
       }
+    } else {
+      // Not enough folders to scroll, just show them normally
+      setDisplayFolders(updatedFilteredFolders);
+      setTranslateX(0);
+      setCurrentTranslateX(0);
 
-      // Reset transition state
-      isTransitioningRef.current = false;
-    });
-  }, [folders, searchQuery, slideWidth, cloneCount, visibleItems]);
+      if (transformRef.current) {
+        transformRef.current.style.transition = 'none';
+        transformRef.current.style.transform = 'translate3d(0px, 0, 0)';
+        void transformRef.current.offsetHeight;
+        transformRef.current.style.transition = 'transform 0.2s ease-out';
+      }
+    }
+
+    isTransitioningRef.current = false;
+  }, [folders, searchQuery, slideWidth, visibleItems]);
 
   const animate = useCallback(() => {
     if (isDragging) {
@@ -227,7 +232,10 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         transformRef.current.style.transform = `translate3d(${next}px, 0, 0)`;
         setTranslateX(next);
       }
+
+      // Check bounds on every animation frame for smoother looping
       checkBounds();
+
       animationRef.current = requestAnimationFrame(animate);
     } else {
       velocityRef.current = 0;
@@ -270,23 +278,22 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         transformRef.current.style.transform = `translate3d(${next}px, 0, 0)`;
       }
 
-      // Throttle state updates during drag
-      const now = Date.now();
-      if (now - lastTimeRef.current > 16) {
-        // ~60fps
-        lastTimeRef.current = now;
-        setTranslateX(next);
-      }
+      // Update state
+      setTranslateX(next);
+
+      // Check bounds on every move for immediate looping
+      checkBounds();
 
       // Calculate velocity with reduced sensitivity
-      const dt = now - lastTimeRef.current;
+      const dt = Date.now() - lastTimeRef.current;
       if (dt > 0) {
         velocityRef.current = ((clientX - lastMouseXRef.current) / dt) * 12;
       }
 
       lastMouseXRef.current = clientX;
+      lastTimeRef.current = Date.now();
     },
-    [isDragging, shouldScroll, dragStartX, currentTranslateX],
+    [isDragging, shouldScroll, dragStartX, currentTranslateX, checkBounds],
   );
 
   const handleDragEnd = useCallback(() => {
@@ -315,8 +322,8 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
       const diff = e.deltaX;
       setTranslateX((prev) => prev + diff * 0.8); // Added multiplier to match other scroll speeds
     },
-    onSwipedLeft: () => checkBounds(),
-    onSwipedRight: () => checkBounds(),
+    onSwipedLeft: checkBounds,
+    onSwipedRight: checkBounds,
     trackMouse: true,
     preventScrollOnSwipe: true,
     delta: 10,
@@ -389,14 +396,14 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
               backfaceVisibility: 'hidden',
             }}
           >
-            {filteredFolders.map((folder, index) => (
+            {displayFolders.map((folder, index) => (
               <Box
                 key={`${folder.id}-${searchQuery}-${index}`}
                 sx={{
                   width: folderWidth,
                   flexShrink: 0,
                   marginRight:
-                    index < filteredFolders.length - 1 ? `${gap}px` : 0,
+                    index < displayFolders.length - 1 ? `${gap}px` : 0,
                   pointerEvents: 'auto',
                 }}
               >
