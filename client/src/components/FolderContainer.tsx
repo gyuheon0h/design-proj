@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Box, Button } from '@mui/material';
-import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Box } from '@mui/material';
 import ErrorAlert from '../components/ErrorAlert';
 import { useSwipeable } from 'react-swipeable';
-// import Folder, { FolderProps } from './Folder';
 import { Folder } from '../interfaces/Folder';
 import FolderComponent from './Folder';
 
@@ -31,20 +29,97 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const gap = 16; // Gap between folders
   const containerRef = useRef<HTMLDivElement>(null);
   const slideWidth = folderWidth + gap; // Width of one slide movement
-  const cloneCount = visibleItems; // Increase clone count to handle more edge cases
+  const cloneCount = Math.max(visibleItems, 3); // Base clone count
+  const animationRef = useRef<number | undefined>(undefined);
+  const velocityRef = useRef(0);
+  const lastMouseXRef = useRef(0);
+  const lastTimeRef = useRef(Date.now());
+  const isTransitioningRef = useRef(false);
+  const [wasDragging, setWasDragging] = useState(false);
 
   const [filteredFolders, setFilteredFolders] = useState<Folder[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [translateX, setTranslateX] = useState(-slideWidth * cloneCount);
+  const [translateX, setTranslateX] = useState(-slideWidth * cloneCount * 2);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
   const [currentTranslateX, setCurrentTranslateX] = useState(
-    -slideWidth * cloneCount,
+    -slideWidth * cloneCount * 2,
   );
-  const [skipTransition, setSkipTransition] = useState(false);
+  const [extendedFolders, setExtendedFolders] = useState<Folder[]>([]);
+  const [shouldScroll, setShouldScroll] = useState(false);
+  const transformRef = useRef<HTMLDivElement>(null);
 
-  // Move getExtendedFolders inside useEffect to avoid dependency issues
+  const resetPosition = useCallback((position: number) => {
+    if (isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+
+    const container = containerRef.current?.querySelector(
+      '.sliding-container',
+    ) as HTMLElement;
+    if (container) {
+      container.style.transition = 'none';
+      container.style.transform = `translateX(${position}px)`;
+      // Force reflow
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _ = container.offsetHeight;
+      container.style.transition = 'transform 0.2s ease-out';
+    }
+
+    setTranslateX(position);
+    setCurrentTranslateX(position);
+
+    // Use a longer delay to ensure the transition is complete
+    setTimeout(() => {
+      isTransitioningRef.current = false;
+    }, 250);
+  }, []);
+
+  const checkBounds = useCallback(() => {
+    if (isTransitioningRef.current || !shouldScroll) return;
+
+    const originalLength = Math.ceil(filteredFolders.length / 3);
+    const currentIndex = Math.round(Math.abs(translateX / slideWidth));
+    const totalSets = Math.floor(filteredFolders.length / originalLength);
+
+    // Calculate the current set we're in
+    const currentSet = Math.floor(currentIndex / originalLength);
+
+    // If we're approaching the edges, add more clones
+    if (currentSet <= 1 || currentSet >= totalSets - 2) {
+      const newPreClone = [...extendedFolders.slice(0, originalLength)];
+      const newPostClone = [...extendedFolders.slice(-originalLength)];
+
+      const newFolders = [...newPreClone, ...extendedFolders, ...newPostClone];
+      setFilteredFolders(newFolders);
+
+      // Adjust position to account for new clones
+      const positionAdjustment =
+        currentSet <= 1 ? originalLength * slideWidth : 0;
+      const newPosition = translateX + positionAdjustment;
+
+      resetPosition(newPosition);
+      return;
+    }
+
+    // Normal position reset when not adding new clones
+    if (currentIndex < originalLength) {
+      const newPosition = translateX - originalLength * slideWidth;
+      resetPosition(newPosition);
+      velocityRef.current = 0;
+    } else if (currentIndex >= filteredFolders.length - originalLength) {
+      const newPosition = translateX + originalLength * slideWidth;
+      resetPosition(newPosition);
+      velocityRef.current = 0;
+    }
+  }, [
+    extendedFolders,
+    filteredFolders.length,
+    resetPosition,
+    shouldScroll,
+    slideWidth,
+    translateX,
+  ]);
+
   useEffect(() => {
     let foldersArray: Folder[] = [];
 
@@ -64,100 +139,151 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
       folder.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
-    // Create extended folders array with clones
+    // Only enable scrolling if we have more folders than visible items
+    const canScroll = updatedFilteredFolders.length > visibleItems;
+    setShouldScroll(canScroll);
+
     const getExtendedFolders = (folders: Folder[]) => {
       if (folders.length === 0) return [];
-      const preClone = [...folders.slice(-cloneCount)];
-      const postClone = [...folders.slice(0, cloneCount)];
-      return [...preClone, ...folders, ...postClone];
+      if (!canScroll) return folders;
+
+      // Create initial set of clones - use a larger number for smoother infinite scrolling
+      const baseCloneCount = Math.max(
+        cloneCount * 2,
+        Math.ceil(folders.length),
+      );
+      const preClone = [];
+      const postClone = [];
+
+      // Create multiple sets of clones for smoother infinite scrolling
+      for (let i = 0; i < baseCloneCount; i++) {
+        preClone.unshift(...folders);
+        postClone.push(...folders);
+      }
+
+      const extended = [...preClone, ...folders, ...postClone];
+      setExtendedFolders(extended);
+      return extended;
     };
 
-    setFilteredFolders(getExtendedFolders(updatedFilteredFolders));
-    setTranslateX(-slideWidth * cloneCount);
-    setCurrentTranslateX(-slideWidth * cloneCount);
-  }, [folders, searchQuery, slideWidth, cloneCount]);
+    const extendedFolders = getExtendedFolders(updatedFilteredFolders);
+    setFilteredFolders(extendedFolders);
 
-  const handleTransitionEnd = () => {
-    if (!isTransitioning) return;
+    // Set initial position
+    if (canScroll) {
+      const initialPosition =
+        -slideWidth * (updatedFilteredFolders.length * Math.floor(cloneCount));
+      setTranslateX(initialPosition);
+      setCurrentTranslateX(initialPosition);
+    } else {
+      setTranslateX(0);
+      setCurrentTranslateX(0);
+    }
+  }, [folders, searchQuery, slideWidth, cloneCount, visibleItems]);
 
-    const totalFolders = filteredFolders.length - 2 * cloneCount;
-    const currentIndex = Math.round(Math.abs(translateX / slideWidth));
-
-    if (currentIndex < cloneCount) {
-      // Going backwards past the start
-      setSkipTransition(true);
-      const newTranslate = -slideWidth * (totalFolders + currentIndex);
-      setTranslateX(newTranslate);
-      setCurrentTranslateX(newTranslate);
-    } else if (currentIndex >= totalFolders + cloneCount) {
-      // Going forwards past the end
-      setSkipTransition(true);
-      const newTranslate = -slideWidth * (currentIndex - totalFolders);
-      setTranslateX(newTranslate);
-      setCurrentTranslateX(newTranslate);
+  const animate = useCallback(() => {
+    if (isDragging) {
+      animationRef.current = requestAnimationFrame(animate);
+      return;
     }
 
-    setIsTransitioning(false);
-  };
+    const now = Date.now();
+    const dt = now - lastTimeRef.current;
+    lastTimeRef.current = now;
 
-  const handleNext = () => {
-    if (!isTransitioning) {
-      setSkipTransition(false);
-      setIsTransitioning(true);
-      const nextTranslate = translateX - slideWidth;
-      setTranslateX(nextTranslate);
-      setCurrentTranslateX(nextTranslate);
+    velocityRef.current *= Math.pow(0.95, dt / 16);
+
+    const maxVelocity = 25;
+    velocityRef.current = Math.min(
+      Math.max(velocityRef.current, -maxVelocity),
+      maxVelocity,
+    );
+
+    if (Math.abs(velocityRef.current) > 0.1) {
+      const next = translateX + (velocityRef.current * dt) / 16;
+      if (transformRef.current) {
+        transformRef.current.style.transform = `translateX(${next}px)`;
+      }
+      setTranslateX(next);
+      checkBounds();
+      animationRef.current = requestAnimationFrame(animate);
+    } else {
+      velocityRef.current = 0;
+      checkBounds();
     }
-  };
+  }, [isDragging, translateX, checkBounds]);
 
-  const handleBack = () => {
-    if (!isTransitioning) {
-      setSkipTransition(false);
-      setIsTransitioning(true);
-      const nextTranslate = translateX + slideWidth;
-      setTranslateX(nextTranslate);
-      setCurrentTranslateX(nextTranslate);
-    }
-  };
+  const handleDragStart = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if (!shouldScroll) return;
 
-  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
-    setIsDragging(true);
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    setDragStartX(clientX);
-    setCurrentTranslateX(translateX);
-  };
+      setIsDragging(true);
+      setWasDragging(false);
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      setDragStartX(clientX);
+      setCurrentTranslateX(translateX);
+      lastMouseXRef.current = clientX;
+      lastTimeRef.current = Date.now();
+      velocityRef.current = 0;
 
-  const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDragging) return;
-    e.preventDefault();
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    },
+    [shouldScroll, translateX],
+  );
 
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const diff = clientX - dragStartX;
-    setTranslateX(currentTranslateX + diff);
-  };
+  const handleDragMove = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if (!isDragging || !shouldScroll) return;
+      e.preventDefault();
 
-  const handleDragEnd = () => {
-    if (!isDragging) return;
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const diff = clientX - dragStartX;
+      const next = currentTranslateX + diff;
+
+      // Update transform directly for smoother dragging
+      if (transformRef.current) {
+        transformRef.current.style.transform = `translateX(${next}px)`;
+      }
+
+      // Calculate velocity
+      const now = Date.now();
+      const dt = now - lastTimeRef.current;
+      if (dt > 0) {
+        velocityRef.current = ((clientX - lastMouseXRef.current) / dt) * 16;
+      }
+
+      lastMouseXRef.current = clientX;
+      lastTimeRef.current = now;
+      setTranslateX(next);
+    },
+    [isDragging, shouldScroll, dragStartX, currentTranslateX],
+  );
+
+  const handleDragEnd = useCallback(() => {
+    if (!isDragging || !shouldScroll) return;
     setIsDragging(false);
+    setWasDragging(true);
+    setCurrentTranslateX(translateX);
 
-    const snapPoint = Math.round(translateX / slideWidth) * slideWidth;
-    setIsTransitioning(true);
-    setTranslateX(snapPoint);
-    setCurrentTranslateX(snapPoint);
-  };
+    // Start deceleration animation
+    animationRef.current = requestAnimationFrame(animate);
+
+    // Reset wasDragging after a short delay
+    setTimeout(() => {
+      setWasDragging(false);
+    }, 100);
+  }, [isDragging, shouldScroll, translateX, animate]);
 
   const swipeHandlers = useSwipeable({
     onSwiping: (e) => {
-      if (isTransitioning) return;
+      if (!shouldScroll) return;
       const diff = e.deltaX;
-      setTranslateX(translateX + diff);
+      setTranslateX((prev) => prev + diff);
     },
-    onSwipedLeft: () => {
-      if (!isTransitioning) handleNext();
-    },
-    onSwipedRight: () => {
-      if (!isTransitioning) handleBack();
-    },
+    onSwipedLeft: () => checkBounds(),
+    onSwipedRight: () => checkBounds(),
     trackMouse: true,
     preventScrollOnSwipe: true,
     delta: 10,
@@ -178,62 +304,48 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
       </Box>
 
       <Box
-        {...swipeHandlers}
+        {...(shouldScroll ? swipeHandlers : {})}
         ref={containerRef}
-        onMouseDown={handleDragStart}
-        onMouseMove={handleDragMove}
-        onMouseUp={handleDragEnd}
-        onMouseLeave={handleDragEnd}
-        onTouchStart={handleDragStart}
-        onTouchMove={handleDragMove}
-        onTouchEnd={handleDragEnd}
+        onMouseDown={shouldScroll ? handleDragStart : undefined}
+        onMouseMove={shouldScroll ? handleDragMove : undefined}
+        onMouseUp={shouldScroll ? handleDragEnd : undefined}
+        onMouseLeave={shouldScroll ? handleDragEnd : undefined}
+        onTouchStart={shouldScroll ? handleDragStart : undefined}
+        onTouchMove={shouldScroll ? handleDragMove : undefined}
+        onTouchEnd={shouldScroll ? handleDragEnd : undefined}
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           width: '100%',
           position: 'relative',
-          cursor: isDragging ? 'grabbing' : 'grab',
+          cursor: shouldScroll ? (isDragging ? 'grabbing' : 'grab') : 'default',
         }}
       >
-        <Button
-          className="left-button"
-          onClick={handleBack}
-          disabled={isTransitioning}
-          sx={{
-            zIndex: 2,
-            position: 'absolute',
-            left: 0,
-          }}
-        >
-          <KeyboardArrowLeft />
-        </Button>
-
         <Box
           className="visible-folders"
           sx={{
             flex: 1,
             overflow: 'hidden',
             position: 'relative',
-            mx: 6,
           }}
         >
           <Box
             className="sliding-container"
+            ref={transformRef}
             sx={{
               display: 'flex',
               position: 'relative',
               gap: 2,
-              transform: `translateX(${translateX}px)`,
-              transition:
-                isDragging || skipTransition
-                  ? 'none'
-                  : 'transform 0.3s ease-out',
+              transform: shouldScroll
+                ? `translateX(${translateX}px)`
+                : undefined,
+              transition: isDragging ? 'none' : 'transform 0.2s ease-out',
               userSelect: 'none',
               width: 'fit-content',
               px: 1,
+              justifyContent: !shouldScroll ? 'flex-start' : undefined,
             }}
-            onTransitionEnd={handleTransitionEnd}
           >
             {filteredFolders.map((folder, index) => (
               <Box
@@ -241,31 +353,24 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
                 sx={{
                   width: folderWidth,
                   flexShrink: 0,
+                  marginRight:
+                    index < filteredFolders.length - 1 ? `${gap}px` : 0,
                 }}
               >
                 <FolderComponent
                   page={page}
                   folder={folder}
-                  onClick={() => onFolderClick(folder)}
+                  onClick={() => {
+                    if (!wasDragging) {
+                      onFolderClick(folder);
+                    }
+                  }}
                   refreshFolders={refreshFolders}
                 />
               </Box>
             ))}
           </Box>
         </Box>
-
-        <Button
-          className="right-button"
-          onClick={handleNext}
-          disabled={isTransitioning}
-          sx={{
-            zIndex: 2,
-            position: 'absolute',
-            right: 0,
-          }}
-        >
-          <KeyboardArrowRight />
-        </Button>
       </Box>
 
       {error && (
