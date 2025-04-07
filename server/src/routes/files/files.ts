@@ -143,7 +143,6 @@ fileRouter.post(
 fileRouter.put('/upload/owltxt', authorize, async (req, res) => {
   try {
     const {
-      type = 'owltxt',
       content,
       createdAt = null,
       parentFolder = null,
@@ -183,7 +182,7 @@ fileRouter.put('/upload/owltxt', authorize, async (req, res) => {
       lastModifiedAt: new Date(),
       parentFolder: parentFolder || null, // Allow null for root files
       gcsKey: gcsFilePath,
-      fileType: type, // this should be 'owltext'
+      fileType: mimeType, // this should be 'text/owltext'
     });
 
     await PermissionModel.createPermission({
