@@ -10,6 +10,7 @@ import {
   MenuItem,
   Box,
   Avatar,
+  IconButton,
 } from '@mui/material';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import StorageIcon from '@mui/icons-material/Storage';
@@ -28,6 +29,8 @@ import {
   avatarStyles,
 } from '../Styles';
 import SettingsDialog from './SettingsDialog';
+import MenuIcon from '@mui/icons-material/Menu';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
 const AccountMenu = () => {
   const { username } = useUser();
@@ -148,17 +151,40 @@ const NavigationDrawer = () => {
   const [storageUsed] = useState(5); // In GB
   const [totalStorage] = useState(15); // In GB
   const storagePercentage = (storageUsed / totalStorage) * 100;
+  const [drawerOpen, setDrawerOpen] = useState(true);
+  const toggleDrawer = () => setDrawerOpen(!drawerOpen);
 
   return (
     <Drawer
       variant="permanent"
-      anchor="left"
+      open={drawerOpen}
       sx={{
-        width: drawerStyles.width,
+        width: drawerOpen ? drawerStyles.width : 60,
         flexShrink: 0,
-        '& .MuiDrawer-paper': drawerStyles.paper,
+        '& .MuiDrawer-paper': {
+          ...drawerStyles.paper,
+          width: drawerOpen ? drawerStyles.width : 60,
+          transition: 'width 0.3s',
+          overflowX: 'hidden',
+        },
       }}
     >
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: drawerOpen ? 'flex-end' : 'center',
+          p: 1,
+        }}
+      >
+        <IconButton onClick={toggleDrawer}>
+          {drawerOpen ? (
+            <ChevronLeftIcon sx={{ color: 'white' }} />
+          ) : (
+            <MenuIcon sx={{ color: 'white' }} />
+          )}
+        </IconButton>
+      </Box>
+
       {/* Logo Section */}
       <Box
         sx={{
@@ -179,7 +205,9 @@ const NavigationDrawer = () => {
           sx={{
             fontWeight: 600,
             color: colors.sidebarText,
-            marginLeft: '12px',
+            marginLeft: drawerOpen ? '12px' : 0,
+            opacity: drawerOpen ? 1 : 0,
+            transition: 'opacity 0.3s',
           }}
         >
           Owl Share
@@ -206,7 +234,10 @@ const NavigationDrawer = () => {
             <ListItemIcon sx={{ minWidth: 40 }}>
               <StorageIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText primary="Storage" />
+            <ListItemText
+              primary="Storage"
+              sx={{ opacity: drawerOpen ? 1 : 0 }}
+            />
           </ListItemButton>
         </ListItem>
 
@@ -228,7 +259,10 @@ const NavigationDrawer = () => {
             <ListItemIcon sx={{ minWidth: 40 }}>
               <StarIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText primary="Favorites" />
+            <ListItemText
+              primary="Favorites"
+              sx={{ opacity: drawerOpen ? 1 : 0 }}
+            />
           </ListItemButton>
         </ListItem>
 
@@ -250,7 +284,10 @@ const NavigationDrawer = () => {
             <ListItemIcon sx={{ minWidth: 40 }}>
               <PeopleIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText primary="Shared with me" />
+            <ListItemText
+              primary="Shared With Me"
+              sx={{ opacity: drawerOpen ? 1 : 0 }}
+            />
           </ListItemButton>
         </ListItem>
 
@@ -272,7 +309,10 @@ const NavigationDrawer = () => {
             <ListItemIcon sx={{ minWidth: 40 }}>
               <DeleteIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText primary="Trash" />
+            <ListItemText
+              primary="Trash"
+              sx={{ opacity: drawerOpen ? 1 : 0 }}
+            />
           </ListItemButton>
         </ListItem>
       </List>
