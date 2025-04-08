@@ -19,9 +19,16 @@ import { Block } from '@blocknote/core';
 interface OwlNoteEditorDialogProps {
   open: boolean;
   onClose: () => void;
+  onOwlNoteCreate?: (
+    fileName: string,
+    content: string,
+    parentFolder: string | null,
+  ) => Promise<void>;
   fileId?: string;
   gcsKey?: string;
   fileType?: string;
+  fileName: string;
+  parentFolder: string | null;
 }
 
 const defaultContent: Block[] = [
@@ -41,9 +48,12 @@ const defaultContent: Block[] = [
 const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
   open,
   onClose,
+  onOwlNoteCreate,
   fileId,
   gcsKey,
   fileType,
+  fileName,
+  parentFolder,
 }) => {
   const [initialContent, setInitialContent] = useState<Block[]>([]);
   const [loading, setLoading] = useState(false);
@@ -117,16 +127,23 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
           onClick={async () => {
             if (!editorRef) return;
             const json = JSON.stringify(await editorRef.document);
-            try {
-              await axios.put(
-                `${process.env.REACT_APP_API_BASE_URL}/api/file/upload/owltxt`,
-                { content: json },
-                { withCredentials: true },
-              );
-              onClose();
-            } catch (error) {
-              console.error('Error saving owl text content', error);
+
+            // saving owl note, lowkey could be designed better but i cba
+            if (fileId && gcsKey && fileType) {
+              try {
+                await axios.put(
+                  `${process.env.REACT_APP_API_BASE_URL}/api/file/save/owlnote/:fileId`,
+                  { content: json },
+                  { withCredentials: true },
+                );
+              } catch (error) {
+                console.error('Error saving owl text content', error);
+              }
+            } else if (onOwlNoteCreate) {
+              onOwlNoteCreate(fileName, json, parentFolder);
             }
+
+            onClose();
           }}
         >
           Save

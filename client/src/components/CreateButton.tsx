@@ -103,6 +103,26 @@ const CreateButton: React.FC<CreateButtonProps> = ({
     }
   };
 
+  const handleCreateOwlNote = async (
+    fileName: string,
+    content: string,
+    parentFolder: string | null,
+  ) => {
+    const requestBody = { fileName, content, parentFolder };
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/create/owlnote`,
+        requestBody,
+        { withCredentials: true },
+      );
+      refreshFiles(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Folder creation failed:', error);
+      throw error;
+    }
+  };
+
   return (
     <>
       <Draggable
@@ -172,8 +192,11 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         onFileUpload={handleUploadFile}
       />
       <OwlNoteEditorDialog
+        fileName="file1" //TODO: hardcode filename for now, fix later
+        parentFolder={currentFolderId}
         open={blockNoteOpen}
         onClose={() => setBlockNoteOpen(false)}
+        onOwlNoteCreate={handleCreateOwlNote}
       />
     </>
   );

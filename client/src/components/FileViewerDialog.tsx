@@ -35,7 +35,7 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
   const isPDF = fileType === 'application/pdf';
   const isText = isSupportedFileTypeText(fileType);
   const isAudio = fileType.startsWith('audio/');
-  const isOwlText = fileType === 'text/owltxt';
+  const isOwlNote = fileType === 'text/owlnote';
 
   useEffect(() => {
     if (open && src && !src.startsWith('about:blank')) {
@@ -44,14 +44,14 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
       setBlocknoteContent(null);
       console.log('fileType', fileType);
 
-      if (isOwlText || (isSupportedFileTypeText(fileType) && !isPDF)) {
+      if (isOwlNote || (isSupportedFileTypeText(fileType) && !isPDF)) {
         fetch(src)
           .then((response) => {
             if (!response.ok) throw new Error('Invalid file source');
             return response.text();
           })
           .then((text) => {
-            if (isOwlText) {
+            if (isOwlNote) {
               try {
                 console.log(text);
 
@@ -76,7 +76,7 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
           });
       }
     }
-  }, [open, src, fileType, isPDF, isOwlText]);
+  }, [open, src, fileType, isPDF, isOwlNote]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -152,7 +152,7 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
             onLoad={() => setLoading(false)}
           />
         )}
-        {isOwlText && blocknoteContent && (
+        {isOwlNote && blocknoteContent && (
           <BlockNoteViewer content={blocknoteContent} />
         )}
 
@@ -181,7 +181,7 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
           !isPDF &&
           !isText &&
           !isAudio &&
-          !isOwlText &&
+          !isOwlNote &&
           !loading && <p>Unsupported file type</p>}
       </DialogContent>
     </Dialog>

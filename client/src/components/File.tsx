@@ -539,13 +539,15 @@ const FileComponent = (props: FileComponentProps) => {
       {/* necessary to only open one websocket at a time */}
       {isEditDialogOpen && (
         <>
-          {props.file.fileType === 'text/owltxt' ? (
+          {props.file.fileType === 'text/owlnote' ? (
             <OwlNoteEditorDialog
               open={isEditDialogOpen}
               onClose={handleCloseEditor}
               fileId={props.file.id}
               gcsKey={props.file.gcsKey}
               fileType={props.file.fileType}
+              fileName={props.file.name}
+              parentFolder={props.file.parentFolder}
             />
           ) : (
             <TextEditor
