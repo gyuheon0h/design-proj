@@ -3,6 +3,7 @@ import { authorize } from '../../middleware/authorize';
 import FolderModel from '../../db_models/FolderModel';
 import { AuthenticatedRequest } from '../../middleware/authorize';
 import PermissionModel from '../../db_models/PermissionModel';
+import { isUniqueFoldername } from '../folders/folderHelpers';
 
 const folderRouter = Router();
 
@@ -60,6 +61,12 @@ folderRouter.post(
       // Validate required fields
       if (!name) {
         return res.status(400).json({ error: 'Name is required' });
+      }
+
+      // Check for duplicate file name in the folder
+      const isUnique = await isUniqueFoldername(owner, name, parentFolder);
+      if (!isUnique) {
+        return res.status(400).json({ message: 'File name already exists in the directory' });
       }
 
       const newFolder = await FolderModel.createFolder({
@@ -380,6 +387,12 @@ folderRouter.patch('/:folderId/rename', authorize, async (req, res) => {
 
     if (userId !== folder.owner) {
       return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    // Check if the new name is unique in the same directory
+    const isUnique = await isUniqueFoldername(userId, resourceName, folder.parentFolder);
+    if (!isUnique) {
+      return res.status(400).json({ message: 'File name already exists in the directory' });
     }
 
     const updatedFolder = await FolderModel.updateFolderMetadata(folderId, {

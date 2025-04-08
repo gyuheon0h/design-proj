@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import StorageService from '../../storage';
 import FileModel from '../../db_models/FileModel';
 import PermissionModel from '../../db_models/PermissionModel';
-import { inferMimeType } from './fileHelpers';
+import { inferMimeType, isUniqueFileName } from './fileHelpers';
 
 const fileRouter = Router();
 const upload = multer(); // Using memory storage to keep things minimal (TODO: implement streaming)
@@ -96,11 +96,21 @@ fileRouter.post(
         return res.status(400).json({ message: 'No file uploaded' });
       }
 
+      const { fileName, parentFolder = null } = req.body;
+      if (!fileName) {
+        return res.status(400).json({ message: 'No file name provided' });
+      }
+
+      const userId = (req as any).user.userId;
+
+      // Check for duplicate file name in the folder
+      const isUnique = await isUniqueFileName(userId, fileName, parentFolder);
+      if (!isUnique) {
+        return res.status(400).json({ message: 'File name already exists in the directory' });
+      }
+
       let { originalname, buffer, mimetype, size } = req.file;
       console.log('req.file.size bytes:', size);
-
-      const { parentFolder = null, fileName } = req.body;
-      const userId = (req as any).user.userId;
 
       const userFiles = await FileModel.getFilesByOwner(userId);
       userFiles.forEach((file) => {
@@ -112,30 +122,22 @@ fileRouter.post(
         0,
       );
 
-      // define storage limit
       const STORAGE_LIMIT = 15 * 1024 * 1024 * 1024; // 15GB
 
       if (totalStorageUsed + size > STORAGE_LIMIT) {
         console.log('total used: ', totalStorageUsed);
-
-        return res
-          .status(400)
-          .json({ error: 'Storage limit exceeded. Cannot upload file.' });
+        return res.status(400).json({ error: 'Storage limit exceeded. Cannot upload file.' });
       }
 
-      // If the MIME type is 'application/octet-stream', try to infer it
       if (mimetype === 'application/octet-stream') {
         mimetype = inferMimeType(originalname);
       }
 
-      // Generate a unique file ID and file pagth
       const fileId = uuidv4();
       const gcsFilePath = `uploads/${userId}/${parentFolder || 'root'}/${fileId}-${originalname}`;
 
-      // Upload to GCS
       await StorageService.uploadFile(gcsFilePath, buffer, mimetype);
 
-      // Save metadata to the database
       const fileMetadata = await FileModel.create({
         id: fileId,
         name: fileName,
@@ -143,7 +145,7 @@ fileRouter.post(
         createdAt: new Date(),
         lastModifiedBy: null,
         lastModifiedAt: new Date(),
-        parentFolder: parentFolder || null, // Allow null for root files
+        parentFolder: parentFolder || null,
         gcsKey: gcsFilePath,
         fileType: mimetype,
         fileSize: size,
@@ -151,18 +153,19 @@ fileRouter.post(
 
       await PermissionModel.createPermission({
         fileId: fileMetadata.id,
-        userId: userId,
+        userId,
         role: 'owner',
       });
 
-      return res
-        .status(201)
-        .json({ message: 'File uploaded successfully', file: fileMetadata });
+      return res.status(201).json({
+        message: 'File uploaded successfully',
+        file: fileMetadata,
+      });
     } catch (error) {
       console.error('File upload error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
-  },
+  }
 );
 
 fileRouter.get('/download/:fileId', authorize, async (req, res) => {
@@ -259,9 +262,16 @@ fileRouter.patch('/:fileId/rename', authorize, async (req, res) => {
       return res.status(404).json({ message: 'File not found' });
     }
 
+    // Check if the new name is unique in the same directory
+    const isUnique = await isUniqueFileName(userId, resourceName, file.parentFolder);
+    if (!isUnique) {
+      return res.status(400).json({ message: 'File name already exists in the directory' });
+    }
+    
+
     const fileMetadata = await FileModel.updateFileMetadata(fileId, {
       name: resourceName,
-      lastModifiedBy: userId, //TODO: may need to get userName thru userId
+      lastModifiedBy: userId,
       lastModifiedAt: new Date(),
     });
 
@@ -532,5 +542,7 @@ fileRouter.post('/:fileId/view', async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+
 
 export default fileRouter;
