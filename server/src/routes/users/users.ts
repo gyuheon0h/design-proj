@@ -413,7 +413,7 @@ userRouter.delete(
 // returns the total storage used by {userId} in bytes
 userRouter.get(
   '/:userId/storage-used',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {

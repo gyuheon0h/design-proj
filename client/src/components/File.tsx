@@ -384,6 +384,7 @@ const FileComponent = (props: FileComponentProps) => {
 
   const formatDate = (dateString: string | Date) => {
     const date = new Date(dateString);
+
     if (isNaN(date.getTime())) {
       return 'Unknown';
     }
@@ -636,76 +637,76 @@ const FileComponent = (props: FileComponentProps) => {
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         {props.page === 'trash' ? (
-          <MenuItem onClick={handleRestoreClick}>
+          <MenuItem onClick={handleRestoreClick} key="restore">
             <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
             Restore
           </MenuItem>
         ) : props.page === 'shared' ? (
-          <>
-            {currentPermission?.role === 'editor' && isEditSupported && (
-              <MenuItem onClick={handleEditClick}>
+          [
+            currentPermission?.role === 'editor' && isEditSupported && (
+              <MenuItem onClick={handleEditClick} key="edit">
                 <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
                 Edit
               </MenuItem>
-            )}
+            ),
             <MenuItem
               onClick={() => {
                 downloadFile(props.file.id, props.file.name);
                 handleOptionsClose();
               }}
+              key="download"
             >
               <InsertDriveFileIcon
                 sx={{ fontSize: '20px', marginRight: '9px' }}
               />{' '}
               Download
-            </MenuItem>
-          </>
+            </MenuItem>,
+          ]
         ) : (
-          <>
-            {isEditSupported && (
-              <MenuItem onClick={handleEditClick}>
+          [
+            isEditSupported && (
+              <MenuItem onClick={handleEditClick} key="edit">
                 <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
                 Edit
               </MenuItem>
-            )}
-
-            <MenuItem onClick={handlePermissionsClick}>
+            ),
+            <MenuItem onClick={handlePermissionsClick} key="share">
               <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
-            </MenuItem>
-
-            <MenuItem onClick={handleRenameClick}>
+            </MenuItem>,
+            <MenuItem onClick={handleRenameClick} key="rename">
               <DriveFileRenameOutlineIcon
                 sx={{ fontSize: '20px', marginRight: '9px' }}
               />{' '}
               Rename
-            </MenuItem>
-
-            <MenuItem onClick={handleMoveClick}>
+            </MenuItem>,
+            <MenuItem onClick={handleMoveClick} key="move">
               <DriveFileMove sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
               Move
-            </MenuItem>
-
+            </MenuItem>,
             <MenuItem
               onClick={() => {
                 downloadFile(props.file.id, props.file.name);
                 handleOptionsClose();
               }}
+              key="download"
             >
               <InsertDriveFileIcon
                 sx={{ fontSize: '20px', marginRight: '9px' }}
               />{' '}
               Download
-            </MenuItem>
-
-            <Divider />
-
-            <MenuItem onClick={handleDeleteClick} sx={{ color: '#FF6347' }}>
+            </MenuItem>,
+            <Divider key="divider" />,
+            <MenuItem
+              onClick={handleDeleteClick}
+              sx={{ color: '#FF6347' }}
+              key="delete"
+            >
               <DeleteIcon
                 sx={{ fontSize: '20px', marginRight: '9px', color: '#FF6347' }}
               />{' '}
               Delete
-            </MenuItem>
-          </>
+            </MenuItem>,
+          ]
         )}
       </Menu>
 
