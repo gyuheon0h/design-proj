@@ -68,19 +68,22 @@ const getFileIcon = (fileType: string) => {
   let iconColor = colors.fileGray;
   if (mimeType === 'image') iconColor = colors.fileImage;
   else if (mimeType === 'video') iconColor = colors.fileVideo;
-  else if (mimeType === 'application' && extension === 'pdf') iconColor = '#F44336';
-  else if (mimeType === 'application' && extension.includes('sheet')) iconColor = colors.fileSpreadsheet;
-  else if (mimeType === 'application' && extension.includes('document')) iconColor = colors.fileDocument;
+  else if (mimeType === 'application' && extension === 'pdf')
+    iconColor = '#F44336';
+  else if (mimeType === 'application' && extension.includes('sheet'))
+    iconColor = colors.fileSpreadsheet;
+  else if (mimeType === 'application' && extension.includes('document'))
+    iconColor = colors.fileDocument;
   else if (mimeType === 'text') iconColor = colors.fileDocument;
 
-  const iconStyle = { 
-    fontSize: 24, 
+  const iconStyle = {
+    fontSize: 24,
     color: '#FFF',
     width: '100%',
     height: '100%',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   };
 
   const iconContainerStyle = {
@@ -91,7 +94,7 @@ const getFileIcon = (fileType: string) => {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: '10px'
+    marginRight: '10px',
   };
 
   switch (mimeType) {
@@ -114,7 +117,11 @@ const getFileIcon = (fileType: string) => {
             <TableChartIcon sx={iconStyle} />
           </Box>
         );
-      else if (extension.includes('document') || extension === 'docx' || extension === 'doc')
+      else if (
+        extension.includes('document') ||
+        extension === 'docx' ||
+        extension === 'doc'
+      )
         return (
           <Box sx={iconContainerStyle}>
             <DescriptionIcon sx={iconStyle} />
@@ -378,15 +385,15 @@ const FileComponent = (props: FileComponentProps) => {
 
   const formatDate = (dateString: string | Date) => {
     const date = new Date(dateString);
-    
+
     if (isNaN(date.getTime())) {
       return 'Unknown';
     }
-    
+
     const now = new Date();
     const diffTime = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
       return 'Today';
     } else if (diffDays === 1) {
@@ -396,7 +403,7 @@ const FileComponent = (props: FileComponentProps) => {
     } else if (diffDays < 60) {
       return '1 month ago';
     } else {
-      return `${Math.floor(diffDays/30)} months ago`;
+      return `${Math.floor(diffDays / 30)} months ago`;
     }
   };
 
@@ -404,7 +411,7 @@ const FileComponent = (props: FileComponentProps) => {
     // Extract tag from filename and return it with # prefix
     const nameParts = fileName.split('.');
     const baseName = nameParts[0].toLowerCase();
-    
+
     // Prefix with # and limit to 10 characters
     return '#' + baseName.replace(/[^a-z0-9]/g, '').substring(0, 10);
   };
@@ -428,9 +435,9 @@ const FileComponent = (props: FileComponentProps) => {
       >
         {/* File Icon and Name */}
         <TableCell
-          sx={{ 
-            padding: '12px 16px', 
-            display: 'flex', 
+          sx={{
+            padding: '12px 16px',
+            display: 'flex',
             alignItems: 'center',
             borderBottom: 'none',
           }}
@@ -479,14 +486,20 @@ const FileComponent = (props: FileComponentProps) => {
         <TableCell sx={{ borderBottom: 'none' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Avatar
-              sx={{ 
+              sx={{
                 ...avatarStyles.small,
-                bgcolor: ownerUserName === 'Sarah Luan' ? '#F44336' : 
-                         ownerUserName === 'Emily Yang' ? '#673AB7' :
-                         ownerUserName === 'Jake Lehrman' ? '#FF9800' :
-                         ownerUserName === 'Ethan Hsu' ? '#607D8B' :
-                         ownerUserName === 'Henry Pu' ? '#FF9800' : 
-                         colors.avatar,
+                bgcolor:
+                  ownerUserName === 'Sarah Luan'
+                    ? '#F44336'
+                    : ownerUserName === 'Emily Yang'
+                      ? '#673AB7'
+                      : ownerUserName === 'Jake Lehrman'
+                        ? '#FF9800'
+                        : ownerUserName === 'Ethan Hsu'
+                          ? '#607D8B'
+                          : ownerUserName === 'Henry Pu'
+                            ? '#FF9800'
+                            : colors.avatar,
                 marginRight: 1,
               }}
             >
@@ -515,7 +528,11 @@ const FileComponent = (props: FileComponentProps) => {
                 color: isFavorited ? '#FF6347' : colors.textSecondary,
               }}
             >
-              {isFavorited ? <FavoriteIcon fontSize="small" /> : <FavoriteBorderIcon fontSize="small" />}
+              {isFavorited ? (
+                <FavoriteIcon fontSize="small" />
+              ) : (
+                <FavoriteBorderIcon fontSize="small" />
+              )}
             </IconButton>
 
             <IconButton
@@ -545,60 +562,76 @@ const FileComponent = (props: FileComponentProps) => {
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         {props.page === 'trash' ? (
-          <MenuItem onClick={handleRestoreClick}>
-            <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Restore
+          <MenuItem onClick={handleRestoreClick} key="restore">
+            <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+            Restore
           </MenuItem>
         ) : props.page === 'shared' ? (
-          <>
-            {currentPermission?.role === 'editor' && isEditSupported && (
-              <MenuItem onClick={handleEditClick}>
-                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Edit
+          [
+            currentPermission?.role === 'editor' && isEditSupported && (
+              <MenuItem onClick={handleEditClick} key="edit">
+                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+                Edit
               </MenuItem>
-            )}
+            ),
             <MenuItem
               onClick={() => {
                 downloadFile(props.file.id, props.file.name);
                 handleOptionsClose();
               }}
+              key="download"
             >
-              <InsertDriveFileIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Download
-            </MenuItem>
-          </>
+              <InsertDriveFileIcon
+                sx={{ fontSize: '20px', marginRight: '9px' }}
+              />{' '}
+              Download
+            </MenuItem>,
+          ]
         ) : (
-          <>
-            {isEditSupported && (
-              <MenuItem onClick={handleEditClick}>
-                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Edit
+          [
+            isEditSupported && (
+              <MenuItem onClick={handleEditClick} key="edit">
+                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+                Edit
               </MenuItem>
-            )}
-
-            <MenuItem onClick={handlePermissionsClick}>
+            ),
+            <MenuItem onClick={handlePermissionsClick} key="share">
               <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
-            </MenuItem>
-
-            <MenuItem onClick={handleRenameClick}>
-              <DriveFileRenameOutlineIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Rename
-            </MenuItem>
-
-            <MenuItem onClick={handleMoveClick}>
-              <DriveFileMove sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
-            </MenuItem>
-
+            </MenuItem>,
+            <MenuItem onClick={handleRenameClick} key="rename">
+              <DriveFileRenameOutlineIcon
+                sx={{ fontSize: '20px', marginRight: '9px' }}
+              />{' '}
+              Rename
+            </MenuItem>,
+            <MenuItem onClick={handleMoveClick} key="move">
+              <DriveFileMove sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+              Move
+            </MenuItem>,
             <MenuItem
               onClick={() => {
                 downloadFile(props.file.id, props.file.name);
                 handleOptionsClose();
               }}
+              key="download"
             >
-              <InsertDriveFileIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Download
-            </MenuItem>
-
-            <Divider />
-
-            <MenuItem onClick={handleDeleteClick} sx={{ color: '#FF6347' }}>
-              <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px', color: '#FF6347' }} /> Delete
-            </MenuItem>
-          </>
+              <InsertDriveFileIcon
+                sx={{ fontSize: '20px', marginRight: '9px' }}
+              />{' '}
+              Download
+            </MenuItem>,
+            <Divider key="divider" />,
+            <MenuItem
+              onClick={handleDeleteClick}
+              sx={{ color: '#FF6347' }}
+              key="delete"
+            >
+              <DeleteIcon
+                sx={{ fontSize: '20px', marginRight: '9px', color: '#FF6347' }}
+              />{' '}
+              Delete
+            </MenuItem>,
+          ]
         )}
       </Menu>
 
