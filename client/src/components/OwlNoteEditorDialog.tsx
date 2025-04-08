@@ -132,7 +132,7 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
             if (fileId && gcsKey && fileType) {
               try {
                 await axios.put(
-                  `${process.env.REACT_APP_API_BASE_URL}/api/file/save/owlnote/:fileId`,
+                  `${process.env.REACT_APP_API_BASE_URL}/api/file/save/owlnote/${fileId}`,
                   { content: json },
                   { withCredentials: true },
                 );

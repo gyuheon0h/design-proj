@@ -207,7 +207,6 @@ fileRouter.put('/save/owlnote/:fileId', authorize, async (req, res) => {
     }
 
     const userId = (req as any).user.userId;
-
     const { fileId } = req.params;
     const file = await FileModel.getById(fileId);
 
