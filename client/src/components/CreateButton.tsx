@@ -175,7 +175,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
             setBlockNoteOpen(true);
           }}
         >
-          Create BlockNote File
+          Create OwlNote File
         </MenuItem>
       </Menu>
 
@@ -192,7 +192,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         onFileUpload={handleUploadFile}
       />
       <OwlNoteEditorDialog
-        fileName="file1" //TODO: hardcode filename for now, fix later
+        // fileName="file1" //TODO: hardcode filename for now, fix later
         parentFolder={currentFolderId}
         open={blockNoteOpen}
         onClose={() => setBlockNoteOpen(false)}

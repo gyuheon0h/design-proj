@@ -5,13 +5,13 @@ import { BlockNoteView } from '@blocknote/mantine';
 import { useCreateBlockNote } from '@blocknote/react';
 import { Block } from '@blocknote/core';
 
-interface BlockNoteViewerProps {
+interface OwlNoteViewerProp {
   content: Block[];
   editable?: boolean;
   onEditorCreated?: (editor: any) => void;
 }
 
-const BlockNoteViewer: React.FC<BlockNoteViewerProps> = ({
+const OwlNoteViewer: React.FC<OwlNoteViewerProp> = ({
   content,
   editable = false,
   onEditorCreated,
@@ -31,4 +31,4 @@ const BlockNoteViewer: React.FC<BlockNoteViewerProps> = ({
   );
 };
 
-export default BlockNoteViewer;
+export default OwlNoteViewer;

@@ -9,7 +9,7 @@ import TextPreview from './TextPreview';
 import '@blocknote/core/fonts/inter.css';
 import '@blocknote/mantine/style.css';
 import { Block } from '@blocknote/core';
-import BlockNoteViewer from './BlockNoteViewer';
+import OwlNoteViewer from './OwlNoteViewer';
 
 interface FileViewerDialogProps {
   open: boolean;
@@ -66,7 +66,7 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
               setTextContent(text);
             }
             setLoading(false);
-            console.log('blocknote content 2', blocknoteContent);
+            // console.log('blocknote content 2', blocknoteContent);
           })
           .catch((error) => {
             console.error('Error fetching file:', error);
@@ -76,7 +76,7 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
           });
       }
     }
-  }, [open, src, fileType, isPDF, isOwlNote]);
+  }, [open, src, fileType, isPDF, isOwlNote, blocknoteContent]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -153,7 +153,7 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
           />
         )}
         {isOwlNote && blocknoteContent && (
-          <BlockNoteViewer content={blocknoteContent} />
+          <OwlNoteViewer content={blocknoteContent} />
         )}
 
         {isText && textContent && (

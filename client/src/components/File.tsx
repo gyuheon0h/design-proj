@@ -292,6 +292,19 @@ const FileComponent = (props: FileComponentProps) => {
     }
   };
 
+  const handleSaveOwlNote = async (fileId: string, content: string) => {
+    try {
+      await axios.put(
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/save/owlnote/${fileId}`,
+        { content },
+        { withCredentials: true },
+      );
+    } catch (error) {
+      console.error('Error saving owl text content', error);
+    }
+    props.refreshFiles(props.file.parentFolder);
+  };
+
   const handleRenameClick = (event: React.MouseEvent) => {
     event.stopPropagation();
     setIsRenameDialogOpen(true);
@@ -543,10 +556,10 @@ const FileComponent = (props: FileComponentProps) => {
             <OwlNoteEditorDialog
               open={isEditDialogOpen}
               onClose={handleCloseEditor}
+              onOwlNoteSave={handleSaveOwlNote}
               fileId={props.file.id}
               gcsKey={props.file.gcsKey}
               fileType={props.file.fileType}
-              fileName={props.file.name}
               parentFolder={props.file.parentFolder}
             />
           ) : (

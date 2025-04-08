@@ -7,13 +7,14 @@ import {
   Button,
   CircularProgress,
   Box,
+  TextField,
 } from '@mui/material';
 
 import '@blocknote/core/fonts/inter.css';
 import '@blocknote/mantine/style.css';
 
 import axios from 'axios';
-import BlockNoteViewer from './BlockNoteViewer';
+import OwlNoteViewer from './OwlNoteViewer';
 import { Block } from '@blocknote/core';
 
 interface OwlNoteEditorDialogProps {
@@ -24,10 +25,10 @@ interface OwlNoteEditorDialogProps {
     content: string,
     parentFolder: string | null,
   ) => Promise<void>;
+  onOwlNoteSave?: (fileName: string, content: string) => Promise<void>;
   fileId?: string;
   gcsKey?: string;
   fileType?: string;
-  fileName: string;
   parentFolder: string | null;
 }
 
@@ -49,15 +50,19 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
   open,
   onClose,
   onOwlNoteCreate,
+  onOwlNoteSave,
   fileId,
   gcsKey,
   fileType,
-  fileName,
   parentFolder,
 }) => {
   const [initialContent, setInitialContent] = useState<Block[]>([]);
   const [loading, setLoading] = useState(false);
   const [editorRef, setEditorRef] = useState<any>(null);
+  // State for file name dialog
+  const [isFileNameDialogOpen, setIsFileNameDialogOpen] = useState(false);
+  const [newFileName, setNewFileName] = useState('');
+  const [contentToSave, setContentToSave] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && fileId && gcsKey && fileType) {
@@ -90,66 +95,105 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
     }
   }, [open, fileId, gcsKey, fileType]);
 
+  const effectiveContent =
+    initialContent.length > 0 ? initialContent : defaultContent;
+
+  // this function handles the save action for both create and update.
+  const handleSave = async () => {
+    if (!editorRef) return;
+    const json = JSON.stringify(await editorRef.document);
+
+    if (fileId && onOwlNoteSave) {
+      onOwlNoteSave(fileId, json);
+      onClose();
+    } else if (onOwlNoteCreate) {
+      setContentToSave(json);
+      setIsFileNameDialogOpen(true);
+    }
+  };
+
+  // called when the user confirms the file name in the new dialog.
+  const handleConfirmFileName = async () => {
+    if (onOwlNoteCreate && contentToSave) {
+      try {
+        await onOwlNoteCreate(newFileName.trim(), contentToSave, parentFolder);
+      } catch (error) {
+        console.error('Error creating new OwlNote file', error);
+      }
+    }
+    setIsFileNameDialogOpen(false);
+    onClose();
+  };
+
+  // determine whether the new file name is valid (non-empty after trimming)
+  const isFileNameValid = newFileName.trim().length > 0;
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>
-        {initialContent.length > 0
-          ? 'Edit BlockNote File'
-          : 'Create BlockNote File'}
-      </DialogTitle>
-      <DialogContent>
-        {loading ? (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              minHeight: '200px',
-            }}
-          >
-            <CircularProgress />
-          </Box>
-        ) : (
-          <BlockNoteViewer
-            key={JSON.stringify(
-              initialContent.length > 0 ? initialContent : defaultContent,
-            )}
-            content={
-              initialContent.length > 0 ? initialContent : defaultContent
-            }
-            editable={true}
-            onEditorCreated={setEditorRef}
-          />
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button
-          onClick={async () => {
-            if (!editorRef) return;
-            const json = JSON.stringify(await editorRef.document);
+    <>
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+        <DialogTitle>
+          {initialContent.length > 0
+            ? 'Edit OwlNote File'
+            : 'Create OwlNote File'}
+        </DialogTitle>
+        <DialogContent>
+          {loading ? (
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '200px',
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          ) : (
+            <OwlNoteViewer
+              key={JSON.stringify(effectiveContent)}
+              content={effectiveContent}
+              editable={true}
+              onEditorCreated={setEditorRef}
+            />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleSave}>Save</Button>
+        </DialogActions>
+      </Dialog>
 
-            // saving owl note, lowkey could be designed better but i cba
-            if (fileId && gcsKey && fileType) {
-              try {
-                await axios.put(
-                  `${process.env.REACT_APP_API_BASE_URL}/api/file/save/owlnote/${fileId}`,
-                  { content: json },
-                  { withCredentials: true },
-                );
-              } catch (error) {
-                console.error('Error saving owl text content', error);
-              }
-            } else if (onOwlNoteCreate) {
-              onOwlNoteCreate(fileName, json, parentFolder);
-            }
-
-            onClose();
-          }}
+      {/* additional dialog prompting for file name if creating a new OwlNote file */}
+      {isFileNameDialogOpen && (
+        <Dialog
+          open={isFileNameDialogOpen}
+          onClose={() => setIsFileNameDialogOpen(false)}
         >
-          Save
-        </Button>
-      </DialogActions>
-    </Dialog>
+          <DialogTitle>Enter a File Name</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="File Name"
+              type="text"
+              fullWidth
+              variant="standard"
+              value={newFileName}
+              onChange={(e) => setNewFileName(e.target.value)}
+              error={!isFileNameValid}
+              helperText={!isFileNameValid ? 'File name is required.' : ''}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setIsFileNameDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmFileName} disabled={!isFileNameValid}>
+              Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+    </>
   );
 };
 
