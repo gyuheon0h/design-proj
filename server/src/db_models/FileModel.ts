@@ -11,6 +11,7 @@ interface File {
   parentFolder: string | null;
   gcsKey: string;
   fileType: string;
+  fileSize: number;
   deletedAt: Date | null;
 }
 

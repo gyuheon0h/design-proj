@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import SearchIcon from '@mui/icons-material/Search';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
@@ -8,6 +7,7 @@ import EventIcon from '@mui/icons-material/Event';
 import Filter from './Filter';
 import { colors } from '../Styles';
 import Typography from '@mui/material/Typography';
+import { Paper, InputBase } from '@mui/material';
 
 interface SearchBarProps {
   location: string;
@@ -69,39 +69,35 @@ const SearchBar: React.FC<SearchBarProps> = ({
         alignItems: 'center',
         width: '100%',
         mt: 2,
+        gap: 2,
       }}
     >
       {/* Search Bar */}
-      <TextField
-        fullWidth
-        variant="outlined"
-        placeholder={`Search in ${location}`}
-        value={searchTerm}
-        onChange={handleSearchChange}
+      <Paper
+        elevation={0}
         sx={{
-          maxWidth: 680,
-          backgroundColor: '#f0f2f5',
-          borderRadius: '50px',
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '50px',
-            paddingLeft: 1,
-          },
-          '& .MuiOutlinedInput-notchedOutline': {
-            border: 'none',
-          },
-          '& .MuiInputBase-input::placeholder': {
-            color: colors.darkGrey,
-            opacity: 1,
-          },
+          display: 'flex',
+          alignItems: 'center',
+          height: 40,
+          borderRadius: '4px',
+          backgroundColor: '#FFFFFF',
+          border: '1px solid #E0E0E0',
+          paddingLeft: 2,
+          flex: 1,
+          maxWidth: 600,
         }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon sx={{ color: colors.darkGrey }} />
-            </InputAdornment>
-          ),
-        }}
-      />
+      >
+        <SearchIcon sx={{ color: 'rgba(0, 0, 0, 0.54)', mr: 1 }} />
+        <InputBase
+          sx={{
+            flex: 1,
+            fontSize: '14px',
+          }}
+          placeholder={`Search here...`}
+          value={searchTerm}
+          onChange={handleSearchChange}
+        />
+      </Paper>
 
       {/* Filters Section */}
       <Box sx={{ display: 'flex', gap: '10px' }}>
@@ -121,7 +117,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           {selectedFilters.fileType && (
             <Typography
               variant="body2"
-              sx={{ color: colors.darkGrey, marginTop: '4px' }}
+              sx={{ color: colors.textSecondary, marginTop: '4px' }}
             >
               {selectedFilters.fileType}
             </Typography>
@@ -144,7 +140,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           {selectedFilters.modifiedAt && (
             <Typography
               variant="body2"
-              sx={{ color: colors.darkGrey, marginTop: '4px' }}
+              sx={{ color: colors.textSecondary, marginTop: '4px' }}
             >
               {selectedFilters.modifiedAt}
             </Typography>
@@ -167,7 +163,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           {selectedFilters.createdAt && (
             <Typography
               variant="body2"
-              sx={{ color: colors.darkGrey, marginTop: '4px' }}
+              sx={{ color: colors.textSecondary, marginTop: '4px' }}
             >
               {selectedFilters.createdAt}
             </Typography>
