@@ -76,7 +76,7 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
           });
       }
     }
-  }, [open, src, fileType, isPDF, isOwlNote, blocknoteContent]);
+  }, [open, src, fileType, isPDF, isOwlNote]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
