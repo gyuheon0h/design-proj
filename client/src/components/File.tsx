@@ -50,7 +50,6 @@ import { File } from '../interfaces/File';
 import axios from 'axios';
 import TextEditor from './TextEditor';
 import { Permission } from '../interfaces/Permission';
-import { permission } from 'process';
 import { useStorage } from '../context/StorageContext';
 
 export interface FileComponentProps {

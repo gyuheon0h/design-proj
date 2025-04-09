@@ -4,19 +4,12 @@ import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutli
 import DeleteIcon from '@mui/icons-material/Delete';
 import RestoreIcon from '@mui/icons-material/Restore';
 import Divider from '@mui/material/Divider';
-import {
-  Box,
-  Typography,
-  IconButton,
-  Menu,
-  MenuItem,
-  Paper,
-} from '@mui/material';
+import { Box, Typography, IconButton, Menu, MenuItem } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import FolderIcon from '@mui/icons-material/Folder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import { colors, folderStyles } from '../Styles';
+import { folderStyles } from '../Styles';
 import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import MoveDialog from './MoveDialog';
