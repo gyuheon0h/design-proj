@@ -56,11 +56,20 @@ export interface FileComponentProps {
 
 const getFileIcon = (fileType: string) => {
   const lowerCaseType = fileType.trim().toLowerCase();
-  const mimeType = lowerCaseType.split('/')[0];
+  const [mimeType, subtype] = lowerCaseType.split('/');
 
   switch (mimeType) {
     case 'text':
-      return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+      switch (subtype) {
+        case 'owlnote':
+          return (
+            <Typography sx={{ fontSize: 30, marginRight: '10px' }}>
+              🦉
+            </Typography>
+          );
+        default:
+          return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+      }
     case 'application':
       if (lowerCaseType === 'application/json')
         return (
