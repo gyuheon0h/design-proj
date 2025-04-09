@@ -5,7 +5,7 @@ import { AuthenticatedRequest } from '../../middleware/authorizeUser';
 import PermissionModel from '../../db_models/PermissionModel';
 import { checkPermission } from '../../middleware/checkPermission';
 import { bubbleUpResource } from '../helper';
-import { recursiveDeletePermissions } from '../../db_models/modelHelpers';
+import { recursiveDeletePermissions } from '../../db_models/ModelHelpers';
 
 const folderRouter = Router();
 

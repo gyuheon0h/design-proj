@@ -1,5 +1,5 @@
 import BaseModel from './baseModel';
-import { recursiveDeletePermissions } from './modelHelpers';
+import { recursiveDeletePermissions } from './ModelHelpers';
 
 interface File {
   id: string;
