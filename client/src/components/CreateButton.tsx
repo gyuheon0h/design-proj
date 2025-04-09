@@ -5,6 +5,7 @@ import UploadDialog from './CreateFileDialog';
 import FolderDialog from './CreateFolderDialog';
 import AddIcon from '@mui/icons-material/Add';
 import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
+import OwlNoteEditorDialog from './OwlNoteEditorDialog';
 
 interface CreateButtonProps {
   currentFolderId: string | null;
@@ -26,6 +27,8 @@ const CreateButton: React.FC<CreateButtonProps> = ({
 
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+
+  const [blockNoteOpen, setBlockNoteOpen] = useState(false);
 
   // Drag detection
   const [didDrag, setDidDrag] = useState(false);
@@ -103,6 +106,26 @@ const CreateButton: React.FC<CreateButtonProps> = ({
     }
   };
 
+  const handleCreateOwlNote = async (
+    fileName: string,
+    content: string,
+    parentFolder: string | null,
+  ) => {
+    const requestBody = { fileName, content, parentFolder };
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/create/owlnote`,
+        requestBody,
+        { withCredentials: true },
+      );
+      refreshFiles(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Folder creation failed:', error);
+      throw error;
+    }
+  };
+
   return (
     <>
       <Draggable
@@ -149,6 +172,14 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         >
           Upload a File
         </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            setBlockNoteOpen(true);
+          }}
+        >
+          Create OwlNote File
+        </MenuItem>
       </Menu>
 
       <FolderDialog
@@ -162,6 +193,14 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         open={uploadDialogOpen}
         onClose={closeUploadDialog}
         onFileUpload={handleUploadFile}
+      />
+      <OwlNoteEditorDialog
+        // fileName="file1" //TODO: hardcode filename for now, fix later
+        parentFolder={currentFolderId}
+        open={blockNoteOpen}
+        onClose={() => setBlockNoteOpen(false)}
+        onOwlNoteCreate={handleCreateOwlNote}
+        fileName={null}
       />
     </>
   );

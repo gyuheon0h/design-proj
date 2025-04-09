@@ -165,6 +165,97 @@ fileRouter.post(
   },
 );
 
+//TODO protect the two new owlnote endpoints with perms
+fileRouter.post('/create/owlnote', authorize, async (req, res) => {
+  try {
+    const { fileName, content, parentFolder = null } = req.body;
+
+    // Validate required fields
+    if (!content) {
+      return res.status(400).json({ error: 'Content is required' });
+    }
+    if (!fileName) {
+      return res.status(400).json({ error: 'File name is required' });
+    }
+
+    const userId = (req as any).user.userId;
+    const fileId = uuidv4();
+
+    let finalFileName = fileName;
+    if (!finalFileName.endsWith('.owlnote')) {
+      finalFileName += '.owlnote';
+    }
+
+    const buffer = Buffer.from(content, 'utf-8');
+    const mimeType = 'text/owlnote';
+
+    const gcsFilePath = `uploads/${userId}/${parentFolder || 'root'}/${fileId}-${finalFileName}`;
+
+    await StorageService.uploadFile(gcsFilePath, buffer, mimeType);
+
+    const fileMetadata = await FileModel.create({
+      id: fileId,
+      name: finalFileName,
+      owner: userId,
+      createdAt: new Date(),
+      lastModifiedBy: null,
+      lastModifiedAt: new Date(),
+      parentFolder: parentFolder || null, // allow null for root files
+      gcsKey: gcsFilePath,
+      fileType: mimeType, // this should be 'text/owlnote'
+    });
+
+    await PermissionModel.createPermission({
+      fileId: fileMetadata.id,
+      userId: userId,
+      role: 'owner',
+    });
+
+    return res.status(201).json({
+      message: 'OwlNote file saved successfully',
+      file: fileMetadata,
+    });
+  } catch (error) {
+    console.error('OwlNote file upload error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+//TODO protect the two new owlnote endpoints with perms
+fileRouter.put('/save/owlnote/:fileId', authorize, async (req, res) => {
+  try {
+    const { content } = req.body;
+
+    // Validate required fields
+    if (!content) {
+      return res.status(400).json({ error: 'Content is required' });
+    }
+
+    const userId = (req as any).user.userId;
+    const { fileId } = req.params;
+    const file = await FileModel.getById(fileId);
+
+    if (!file) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    await StorageService.saveToGCS(file.gcsKey, content, file.fileType);
+
+    const fileMetadata = await FileModel.updateFileMetadata(fileId, {
+      lastModifiedBy: userId, //TODO: may need to get userName thru userId
+      lastModifiedAt: new Date(),
+    });
+
+    return res.status(201).json({
+      message: 'OwlNote file saved successfully',
+      file: fileMetadata,
+    });
+  } catch (error) {
+    console.error('OwlNote file save error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 fileRouter.get('/download/:fileId', authorize, async (req, res) => {
   try {
     const { fileId } = req.params;
