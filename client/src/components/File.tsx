@@ -407,15 +407,6 @@ const FileComponent = (props: FileComponentProps) => {
     }
   };
 
-  const getTagFromName = (fileName: string): string => {
-    // Extract tag from filename and return it with # prefix
-    const nameParts = fileName.split('.');
-    const baseName = nameParts[0].toLowerCase();
-
-    // Prefix with # and limit to 10 characters
-    return '#' + baseName.replace(/[^a-z0-9]/g, '').substring(0, 10);
-  };
-
   const lastModifiedDate = formatDate(props.file.lastModifiedAt);
   const createdDate = formatDate(props.file.createdAt);
 
@@ -457,22 +448,6 @@ const FileComponent = (props: FileComponentProps) => {
               {props.file.name}
             </Typography>
           </Tooltip>
-        </TableCell>
-
-        {/* Tag */}
-        <TableCell sx={{ borderBottom: 'none' }}>
-          <Typography
-            variant="body2"
-            sx={{
-              color: colors.textSecondary,
-              backgroundColor: 'rgba(0, 0, 0, 0.04)',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              display: 'inline-block',
-            }}
-          >
-            {getTagFromName(props.file.name)}
-          </Typography>
         </TableCell>
 
         {/* Created Date */}

@@ -51,11 +51,10 @@ const FileContainer: React.FC<FileContainerProps> = ({
       <Table sx={{ tableLayout: 'fixed' }}>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Name</TableCell>
-            <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>Tag</TableCell>
-            <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>Created</TableCell>
+            <TableCell sx={{ width: '35%', fontWeight: 'bold' }}>Name</TableCell>
+            <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Created</TableCell>
             <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Owner</TableCell>
-            <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>Last Modified</TableCell>
+            <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Last Modified</TableCell>
             <TableCell sx={{ width: '5%' }}></TableCell>
           </TableRow>
         </TableHead>
