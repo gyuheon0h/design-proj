@@ -570,6 +570,7 @@ const FileComponent = (props: FileComponentProps) => {
               gcsKey={props.file.gcsKey}
               fileType={props.file.fileType}
               parentFolder={props.file.parentFolder}
+              fileName={props.file.name}
             />
           ) : (
             <TextEditor
@@ -591,6 +592,7 @@ const FileComponent = (props: FileComponentProps) => {
               onClose={handleCloseFileViewer}
               src={fileSrc}
               fileType={props.file.fileType}
+              fileName={props.file.name}
             />
             {error && (
               <ErrorAlert

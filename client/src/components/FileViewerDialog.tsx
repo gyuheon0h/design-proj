@@ -16,6 +16,7 @@ interface FileViewerDialogProps {
   onClose: () => void;
   src: string;
   fileType: string;
+  fileName: string;
 }
 
 const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
@@ -23,6 +24,7 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
   onClose,
   src,
   fileType,
+  fileName,
 }) => {
   const [loading, setLoading] = useState(true);
   const [textContent, setTextContent] = useState<string | null>(null);
@@ -153,7 +155,7 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
           />
         )}
         {isOwlNote && blocknoteContent && (
-          <OwlNoteViewer content={blocknoteContent} />
+          <OwlNoteViewer content={blocknoteContent} fileName={fileName} />
         )}
 
         {isText && textContent && (

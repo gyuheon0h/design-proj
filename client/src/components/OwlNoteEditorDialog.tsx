@@ -30,6 +30,7 @@ interface OwlNoteEditorDialogProps {
   gcsKey?: string;
   fileType?: string;
   parentFolder: string | null;
+  fileName: string | null;
 }
 
 const defaultContent: Block[] = [
@@ -55,6 +56,7 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
   gcsKey,
   fileType,
   parentFolder,
+  fileName,
 }) => {
   const [initialContent, setInitialContent] = useState<Block[]>([]);
   const [loading, setLoading] = useState(false);
@@ -154,6 +156,7 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
               content={effectiveContent}
               editable={true}
               onEditorCreated={setEditorRef}
+              fileName={fileName || newFileName}
             />
           )}
         </DialogContent>

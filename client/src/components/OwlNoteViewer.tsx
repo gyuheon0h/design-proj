@@ -10,25 +10,18 @@ import {
 } from '@blocknote/xl-pdf-exporter';
 import * as ReactPDF from '@react-pdf/renderer';
 
-// // Create the exporter
-// const exporter = new PDFExporter(editor.schema, pdfDefaultSchemaMappings);
-
-// // Convert the blocks to a react-pdf document
-// const pdfDocument = await exporter.toReactPDFDocument(editor.document);
-
-// // Use react-pdf to write to file:
-// await ReactPDF.render(pdfDocument, `filename.pdf`);
-
 interface OwlNoteViewerProp {
   content: Block[];
   editable?: boolean;
   onEditorCreated?: (editor: any) => void;
+  fileName: string;
 }
 
 const OwlNoteViewer: React.FC<OwlNoteViewerProp> = ({
   content,
   editable = false,
   onEditorCreated,
+  fileName,
 }) => {
   const editor = useCreateBlockNote({ initialContent: content });
 
@@ -68,7 +61,7 @@ const OwlNoteViewer: React.FC<OwlNoteViewerProp> = ({
       // create an anchor element and simulate a click to download the PDF
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'exported_document.pdf';
+      link.download = fileName + '.pdf';
       link.click();
 
       // clean up the URL object.

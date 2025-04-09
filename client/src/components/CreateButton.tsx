@@ -197,6 +197,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         open={blockNoteOpen}
         onClose={() => setBlockNoteOpen(false)}
         onOwlNoteCreate={handleCreateOwlNote}
+        fileName={null}
       />
     </>
   );
