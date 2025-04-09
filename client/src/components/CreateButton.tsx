@@ -5,6 +5,8 @@ import UploadDialog from './CreateFileDialog';
 import FolderDialog from './CreateFolderDialog';
 import AddIcon from '@mui/icons-material/Add';
 import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
+import UploadProgressToast from './UploadProgress';
+import { useUser } from '../context/UserContext';
 
 interface CreateButtonProps {
   currentFolderId: string | null;
@@ -20,69 +22,27 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   refreshStorage,
 }) => {
   const nodeRef = useRef<HTMLDivElement>(null);
-
+  const userContext = useUser();
+  const userId = userContext.userId;
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const menuOpen = Boolean(anchorEl);
-
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
-  // Drag detection
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showUploadToast, setShowUploadToast] = useState(false);
+
+  const menuOpen = Boolean(anchorEl);
   const [didDrag, setDidDrag] = useState(false);
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
+  const handleMenuClose = () => setAnchorEl(null);
+  const openFolderDialog = () => setFolderDialogOpen(true);
+  const closeFolderDialog = () => setFolderDialogOpen(false);
+  const openUploadDialog = () => setUploadDialogOpen(true);
+  const closeUploadDialog = () => setUploadDialogOpen(false);
 
-  const openFolderDialog = () => {
-    setFolderDialogOpen(true);
-  };
-
-  const closeFolderDialog = () => {
-    setFolderDialogOpen(false);
-  };
-
-  const openUploadDialog = () => {
-    setUploadDialogOpen(true);
-  };
-
-  const closeUploadDialog = () => {
-    setUploadDialogOpen(false);
-  };
-
-  // Draggable handlers
-  const handleDragStart = () => {
-    // Reset drag state
-    setDidDrag(false);
-  };
-
-  const handleDrag = (e: DraggableEvent, data: DraggableData) => {
+  const handleDragStart = () => setDidDrag(false);
+  const handleDrag = (e: DraggableEvent, data: DraggableData) =>
     setDidDrag(true);
-  };
-
-  const handleUploadFile = async (file: Blob, fileName: string) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('fileName', fileName);
-
-    if (currentFolderId) {
-      formData.append('parentFolder', currentFolderId);
-    }
-
-    try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/file/upload`,
-        formData,
-        { withCredentials: true },
-      );
-      refreshFiles(currentFolderId);
-      await refreshStorage();
-      return response.data;
-    } catch (error) {
-      console.error('Upload failed:', error);
-      throw error;
-    }
-  };
 
   const handleCreateFolder = async (
     folderName: string,
@@ -101,6 +61,13 @@ const CreateButton: React.FC<CreateButtonProps> = ({
       console.error('Folder creation failed:', error);
       throw error;
     }
+  };
+
+  const handleFileUpload = async (file: Blob, fileName: string) => {
+    // Save selected file & trigger toast
+    setSelectedFile(new File([file], fileName));
+    setUploadDialogOpen(false);
+    setShowUploadToast(true);
   };
 
   return (
@@ -131,7 +98,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
       <Menu
         anchorEl={anchorEl}
         open={menuOpen && !didDrag}
-        onClose={() => setAnchorEl(null)}
+        onClose={handleMenuClose}
       >
         <MenuItem
           onClick={() => {
@@ -161,8 +128,19 @@ const CreateButton: React.FC<CreateButtonProps> = ({
       <UploadDialog
         open={uploadDialogOpen}
         onClose={closeUploadDialog}
-        onFileUpload={handleUploadFile}
+        onFileUpload={handleFileUpload}
       />
+
+      {selectedFile && showUploadToast && (
+        <UploadProgressToast
+          userId={userId}
+          file={selectedFile}
+          parentFolder={currentFolderId}
+          onClose={() => setShowUploadToast(false)}
+          refreshFiles={refreshFiles}
+          refreshStorage={refreshStorage}
+        />
+      )}
     </>
   );
 };

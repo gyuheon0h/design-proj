@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import {
   AuthenticatedRequest,
   authorizeUser,
@@ -14,6 +14,64 @@ import { checkPermission } from '../../middleware/checkPermission';
 const fileRouter = Router();
 const upload = multer(); // Using memory storage to keep things minimal (TODO: implement streaming)
 
+const sseClients = new Map<string, Response>();
+/**
+ * SSE End point in order to receive periodic events from the GCS.
+ * This is a handler that, when a request arrives at this endpoint, processes it/triggers the logic in some way.
+ */
+fileRouter.get('/events/:userId', (req: Request, res: Response) => {
+  const { userId } = req.params;
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders(); // important to flush headers early
+
+  // Send a "heartbeat" to keep the connection open
+  const heartbeat = setInterval(() => {
+    res.write(`event: ping\ndata: {}\n\n`);
+  }, 30000);
+
+  // Add this client to our SSE client map
+  sseClients.set(userId, res);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    sseClients.delete(userId);
+    res.end();
+  });
+});
+
+/**
+ * Helper to send SSE events
+ * @param userId the user to which we are sending this event.
+ * @param event the event
+ * @param data
+ */
+function sendSSE(userId: string, event: string, data: any) {
+  const client = sseClients.get(userId);
+  if (client) {
+    client.write(`event: ${event}\n`);
+    client.write(`data: ${JSON.stringify(data)}\n\n`);
+  }
+}
+
+// Cancel Route
+const activeUploadControllers = new Map();
+
+fileRouter.post('/upload/cancel/:userId', authorizeUser, (req, res) => {
+  const { userId } = req.params;
+
+  const controller = activeUploadControllers.get(userId);
+  if (controller) {
+    controller.abort();
+    activeUploadControllers.delete(userId);
+    sendSSE(userId, 'error', { message: 'Upload cancelled by user' });
+    return res.status(200).json({ message: 'Upload cancelled' });
+  } else {
+    return res.status(404).json({ error: 'No active upload for this user' });
+  }
+});
 /**
  * POST /api/files/upload
  * Route to upload a file
@@ -29,45 +87,51 @@ fileRouter.post(
       }
 
       let { originalname, buffer, mimetype, size } = req.file;
-      console.log('req.file.size bytes:', size);
-
       const { parentFolder = null, fileName } = req.body;
       const userId = (req as any).user.userId;
 
       const userFiles = await FileModel.getFilesByOwner(userId);
-      userFiles.forEach((file) => {
-        console.log(`[STORAGE DEBUG] ${file.name}: ${file.fileSize} bytes`);
-      });
-
       const totalStorageUsed = userFiles.reduce(
         (sum, file) => sum + Number(file.fileSize),
         0,
       );
 
-      // define storage limit
       const STORAGE_LIMIT = 15 * 1024 * 1024 * 1024; // 15GB
-
       if (totalStorageUsed + size > STORAGE_LIMIT) {
-        console.log('total used: ', totalStorageUsed);
-
         return res
           .status(400)
           .json({ error: 'Storage limit exceeded. Cannot upload file.' });
       }
 
-      // If the MIME type is 'application/octet-stream', try to infer it
       if (mimetype === 'application/octet-stream') {
         mimetype = inferMimeType(originalname);
       }
 
-      // Generate a unique file ID and file pagth
       const fileId = uuidv4();
       const gcsFilePath = `uploads/${userId}/${parentFolder || 'root'}/${fileId}-${originalname}`;
 
-      // Upload to GCS
-      await StorageService.uploadFile(gcsFilePath, buffer, mimetype);
+      // Notify client: starting upload
+      sendSSE(userId, 'status', {
+        message: 'Uploading file to cloud storage...',
+      });
 
-      // Save metadata to the database
+      const controller = new AbortController();
+      activeUploadControllers.set(userId, controller);
+
+      // Upload with progress
+      await StorageService.uploadFileWithProgress(
+        gcsFilePath,
+        buffer,
+        mimetype,
+        (percent) => {
+          sendSSE(userId, 'progress', { percent });
+        },
+        controller.signal, // pass signal to StorageService
+      );
+
+      // Notify client: starting DB save
+      sendSSE(userId, 'status', { message: 'Saving metadata to database...' });
+
       const fileMetadata = await FileModel.create({
         id: fileId,
         name: fileName,
@@ -75,7 +139,7 @@ fileRouter.post(
         createdAt: new Date(),
         lastModifiedBy: null,
         lastModifiedAt: new Date(),
-        parentFolder: parentFolder || null, // Allow null for root files
+        parentFolder: parentFolder || null,
         gcsKey: gcsFilePath,
         fileType: mimetype,
         fileSize: size,
@@ -83,15 +147,23 @@ fileRouter.post(
 
       await PermissionModel.createPermission({
         fileId: fileMetadata.id,
-        userId: userId,
+        userId,
         role: 'owner',
       });
 
-      return res
-        .status(201)
-        .json({ message: 'File uploaded successfully', file: fileMetadata });
+      // Notify client: done
+      sendSSE(userId, 'done', { fileId });
+
+      return res.status(201).json({
+        message: 'File uploaded successfully',
+        file: fileMetadata,
+      });
     } catch (error) {
       console.error('File upload error:', error);
+      const userId = (req as any).user?.userId;
+      if (userId) {
+        sendSSE(userId, 'error', { message: 'Upload failed' });
+      }
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   },

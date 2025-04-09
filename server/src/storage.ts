@@ -93,6 +93,65 @@ const StorageService = {
   },
 
   /**
+   * This function seeks to upload a file more gradually than dumping the entire file.
+   * @param filePath The path of the file that we are attempting to upload.
+   * @param buffer The size of the element that we've buffered.
+   * @param mimeType the type of the file that we're working with.
+   * @param onProgress The percent to update frontend with.
+   * @param abortSignal Optional signal if aborted to cancel GCS operation.
+   * @returns
+   */
+
+  uploadFileWithProgress: async (
+    filePath: string,
+    buffer: Buffer,
+    mimeType: string,
+    onProgress?: (percent: number) => void,
+    abortSignal?: AbortSignal,
+  ) => {
+    const file = bucket.file(filePath);
+    const stream = file.createWriteStream({
+      metadata: { contentType: mimeType },
+    });
+    if (abortSignal) {
+      abortSignal.addEventListener('abort', () => {
+        stream.destroy(new Error('Upload aborted by user'));
+      });
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      const chunkSize = 1024 * 64; // 64 KB chunks
+      let offset = 0;
+      const totalSize = buffer.length;
+      function writeNextChunk() {
+        const end = Math.min(offset + chunkSize, totalSize);
+        const chunk = buffer.slice(offset, end);
+        const canContinue = stream.write(chunk, () => {
+          offset = end;
+          const percent = Math.round((offset / totalSize) * 100);
+          if (onProgress) onProgress(percent);
+
+          if (offset < totalSize) {
+            writeNextChunk();
+          } else {
+            stream.end();
+          }
+        });
+
+        // If backpressure, wait for drain
+        if (!canContinue) {
+          stream.once('drain', writeNextChunk);
+        }
+      }
+
+      stream.on('error', reject);
+      stream.on('finish', resolve);
+
+      writeNextChunk();
+    });
+  },
+
+  /**
    * List all files in the GCS bucket.
    * @returns A list of file names in the bucket.
    */
