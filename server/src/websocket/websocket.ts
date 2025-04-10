@@ -1,8 +1,8 @@
 // WebSocketServer.ts - Server-side implementation with improved revision tracking
 import { Server as WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
-import StorageService from './storage';
-import FileModel from './db_models/FileModel';
+import StorageService from '../storage';
+import FileModel from '../dbModels/FileModel';
 
 // operation types
 interface InsertOperation {

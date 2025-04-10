@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import userModel from '../../db_models/UserModel';
+import userModel from '../../dbModels/UserModel';
 import { AuthenticatedRequest, authorize } from '../../middleware/authorize';
 
 const authRouter = Router();

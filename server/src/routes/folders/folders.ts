@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { authorize } from '../../middleware/authorize';
-import FolderModel from '../../db_models/FolderModel';
+import FolderModel from '../../dbModels/FolderModel';
 import { AuthenticatedRequest } from '../../middleware/authorize';
-import PermissionModel from '../../db_models/PermissionModel';
+import PermissionModel from '../../dbModels/PermissionModel';
 
 const folderRouter = Router();
 

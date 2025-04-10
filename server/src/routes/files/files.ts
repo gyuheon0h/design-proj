@@ -3,8 +3,8 @@ import { AuthenticatedRequest, authorize } from '../../middleware/authorize';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import StorageService from '../../storage';
-import FileModel from '../../db_models/FileModel';
-import PermissionModel from '../../db_models/PermissionModel';
+import FileModel from '../../dbModels/FileModel';
+import PermissionModel from '../../dbModels/PermissionModel';
 import { inferMimeType } from './fileHelpers';
 
 const fileRouter = Router();

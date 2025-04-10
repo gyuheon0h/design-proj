@@ -1,7 +1,7 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import apiRoutes from './routes/api'; // Collects all API routes
-import { query } from './db_models/db';
+import { query } from './dbModels/db';
 import StorageService from './storage';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';

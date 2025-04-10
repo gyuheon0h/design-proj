@@ -1,6 +1,6 @@
 import app from './app';
 import http from 'http';
-import setupWebSocketServer from './websocket';
+import setupWebSocketServer from './websocket/websocket';
 
 const PORT = process.env.PORT || 5001;
 
