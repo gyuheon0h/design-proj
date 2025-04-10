@@ -3,7 +3,6 @@ import FileComponent from './File';
 import { File } from '../interfaces/File';
 import ErrorAlert from '../components/ErrorAlert';
 import { Table, TableHead, TableRow, TableCell, TableBody, Box, Typography } from '@mui/material';
-// Using the colors import to fix the ESLint warning
 import { colors } from '../Styles';
 
 interface FileContainerProps {
@@ -54,11 +53,10 @@ const FileContainer: React.FC<FileContainerProps> = ({
       <Table sx={{ tableLayout: 'fixed' }}>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ width: '30%', fontWeight: 'bold' }}>Name</TableCell>
+            <TableCell sx={{ width: '35%', fontWeight: 'bold' }}>Name</TableCell>
             <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>Created</TableCell>
-            <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>Owner</TableCell>
-            <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>Last Modified</TableCell>
-            <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>Modified By</TableCell>
+            <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Owner</TableCell>
+            <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Last Modified</TableCell>
             <TableCell sx={{ width: '10%' }}></TableCell>
           </TableRow>
         </TableHead>
