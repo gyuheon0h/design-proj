@@ -101,12 +101,11 @@ const getFileIcon = (fileType: string) => {
     case 'text':
       if (extension === 'owlnote')
         return (
-            <Typography sx={{ fontSize: 30, marginRight: '10px' }}>
-              🦉
-            </Typography>
-          );
-      else return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-        
+          <Typography sx={{ fontSize: 30, marginRight: '10px' }}>🦉</Typography>
+        );
+      else
+        return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+
     case 'application':
       if (extension === 'pdf')
         return (
