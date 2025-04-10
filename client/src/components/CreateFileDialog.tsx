@@ -7,6 +7,7 @@ import {
   TextField,
   Button,
   Input,
+  Typography,
 } from '@mui/material';
 import { typography } from '../Styles';
 
@@ -23,24 +24,34 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [newFileName, setNewFileName] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const selectedFile = event.target.files[0];
       setFile(selectedFile);
-      setNewFileName(selectedFile.name); // Set initial file name
+      setNewFileName(selectedFile.name);
+      setErrorMessage('');
     }
   };
 
   const handleUploadClick = async () => {
     if (file) {
+      setErrorMessage('');
       try {
         await onFileUpload(file, newFileName);
         setFile(null);
         setNewFileName('');
         onClose();
-      } catch (error) {
-        console.error('File upload failed:', error);
+      } catch (error: any) {
+        if (
+          error.response?.status === 400 &&
+          error.response.data?.message === 'File name already exists in the directory'
+        ) {
+          setErrorMessage('A file with that name already exists in this folder.');
+        } else {
+          setErrorMessage('An unexpected error occurred during upload.');
+        }
       }
     }
   };
@@ -62,12 +73,20 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
           value={newFileName}
           onChange={(e) => setNewFileName(e.target.value)}
           disabled={!file}
+          error={!!errorMessage}
         />
+        {errorMessage && (
+          <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+            {errorMessage}
+          </Typography>
+        )}
       </DialogContent>
       <DialogActions>
         <Button
           onClick={() => {
             setNewFileName('');
+            setFile(null);
+            setErrorMessage('');
             onClose();
           }}
           sx={{ fontFamily: typography.fontFamily }}

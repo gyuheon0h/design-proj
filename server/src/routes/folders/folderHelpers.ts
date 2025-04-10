@@ -26,3 +26,15 @@ export async function isNestedSharedFolder(
 
   return false; // No shared parent folder found
 }
+
+export async function isUniqueFoldername(userID: string, newFolderName: string, parentFolderId: string | null): Promise<boolean> {
+  if (parentFolderId === null) {
+    // Get all folders in the home directory
+    const filesInHome = await FolderModel.getSubfoldersByOwner(userID, null);
+    return !filesInHome.some(folder => folder.name === newFolderName);
+  } else {
+    // Get all subfolders in the folder
+    const filesInFolder = await FolderModel.getSubfolders(parentFolderId);
+    return !filesInFolder.some(folder => folder.name === newFolderName);
+  }
+}

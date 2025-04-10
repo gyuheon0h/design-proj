@@ -6,6 +6,7 @@ import {
   TextField,
   DialogActions,
   Button,
+  Typography,
 } from '@mui/material';
 import axios from 'axios';
 
@@ -28,15 +29,17 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
 }) => {
   const [baseName, setBaseName] = useState('');
   const [extension, setExtension] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    setErrorMessage(''); // Reset error on dialog open
     if (resourceType === 'folder') {
       setBaseName(resourceName);
       setExtension('');
     } else {
       const splitName = resourceName.split('.');
       if (splitName.length === 1) {
-        setBaseName(resourceName); // No extension case
+        setBaseName(resourceName);
         setExtension('');
       } else {
         setBaseName(splitName.slice(0, -1).join('.'));
@@ -47,19 +50,32 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
 
   const handleRename = async () => {
     if (baseName.trim()) {
+      setErrorMessage('');
       try {
         await axios.patch(
           `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/rename`,
-          { resourceName: resourceType === 'folder' ? baseName : `${baseName}.${extension}` },
-          { withCredentials: true },
+          {
+            resourceName:
+              resourceType === 'folder' ? baseName : `${baseName}.${extension}`,
+          },
+          { withCredentials: true }
         );
         onSuccess();
         onClose();
-      } catch (error) {
+      } catch (error: any) {
+        if (
+          error.response?.status === 400 &&
+          error.response.data?.message === 'File name already exists in the directory'
+        ) {
+          setErrorMessage('A file or folder with that name already exists in this location.');
+        } else {
+          setErrorMessage('An unexpected error occurred. Please try again.');
+        }
         console.error('Error renaming file:', error);
       }
     }
   };
+  
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -74,6 +90,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
           variant="outlined"
           value={baseName}
           onChange={(e) => setBaseName(e.target.value)}
+          error={!!errorMessage}
         />
         {resourceType === 'file' && (
           <TextField
@@ -85,6 +102,11 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
             value={extension}
             disabled
           />
+        )}
+        {errorMessage && (
+          <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+            {errorMessage}
+          </Typography>
         )}
       </DialogContent>
       <DialogActions>

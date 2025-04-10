@@ -1,6 +1,7 @@
 // WIP FILE IGNORE
 import FolderModel from '../../db_models/FolderModel';
 import PermissionModel from '../../db_models/PermissionModel';
+import FileModel from '../../db_models/FileModel';
 
 const extensionToMimeType: { [key: string]: string } = {
   ts: 'application/x-typescript',
@@ -83,4 +84,16 @@ export async function isNestedSharedFile(
   }
 
   return false; // No shared parent folder found
+}
+
+export async function isUniqueFileName(userId: string, newFileName: string, parentFolderId: string | null): Promise<boolean> {
+  if (parentFolderId === null) {
+    // Get all files in the home directory
+    const filesInHome = await FileModel.getFilesByOwnerAndFolder(userId, null);
+    return !filesInHome.some(file => file.name === newFileName);
+  } else {
+    // Get all files in the folder
+    const filesInFolder = await FileModel.getFilesByFolder(parentFolderId);
+    return !filesInFolder.some(file => file.name === newFileName);
+  }
 }
