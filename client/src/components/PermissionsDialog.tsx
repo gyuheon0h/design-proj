@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,7 +9,6 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
   Box,
   IconButton,
   CircularProgress,
@@ -25,7 +24,6 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
-import PersonIcon from '@mui/icons-material/Person';
 import axios from 'axios';
 import { User } from '../interfaces/User';
 import { Permission } from '../interfaces/Permission';
@@ -178,8 +176,8 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
   const resourceType = fileId ? 'file' : 'folder';
   const resourceId = fileId || folderId;
 
-  // Fetch Permissions
-  const fetchPermissions = async () => {
+  // Fetch Permissions - memoized with useCallback
+  const fetchPermissions = useCallback(async () => {
     if (!resourceId) return;
     try {
       const response = await axios.get(
@@ -190,16 +188,16 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
     } catch (error) {
       console.error('Error getting permissions:', error);
     }
-  };
+  }, [resourceId, resourceType]); // Include dependencies that fetchPermissions relies on
 
-  // Fetch Data
-  const fetchData = async () => {
+  // Use useCallback to memoize the fetchData function
+  const fetchData = useCallback(async () => {
     setIsDataLoaded(false);
     const [fetchedUsers] = await Promise.all([getAllUsers()]);
     setUsers(fetchedUsers);
     await fetchPermissions();
     setIsDataLoaded(true);
-  };
+  }, [fetchPermissions]); // Include fetchPermissions as a dependency
 
   // Effect for data loading
   useEffect(() => {
@@ -213,7 +211,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
       setNewUserId('');
       setNewRole('viewer');
     }
-  }, [open, fileId, folderId]);
+  }, [open, fileId, folderId, fetchData]); // Added fetchData to dependencies
 
   // Handle Role Change
   const handleRoleChange = async (
