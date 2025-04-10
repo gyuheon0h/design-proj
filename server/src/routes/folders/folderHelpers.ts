@@ -1,6 +1,6 @@
 // WIP FILE IGNORE
-import FolderModel from '../../db_models/FolderModel';
-import PermissionModel from '../../db_models/PermissionModel';
+import FolderModel from '../../dbModels/FolderModel';
+import PermissionModel from '../../dbModels/PermissionModel';
 
 export async function isNestedSharedFolder(
   folderId: string,

@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import UserModel from '../../db_models/UserModel';
+import UserModel from '../../dbModels/UserModel';
 import { AuthenticatedRequest, authorize } from '../../middleware/authorize';
-import PermissionModel from '../../db_models/PermissionModel';
-import FolderModel from '../../db_models/FolderModel';
-import FileModel from '../../db_models/FileModel';
+import PermissionModel from '../../dbModels/PermissionModel';
+import FolderModel from '../../dbModels/FolderModel';
+import FileModel from '../../dbModels/FileModel';
 import StorageService from '../../storage';
 import jwt from 'jsonwebtoken';
 

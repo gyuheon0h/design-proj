@@ -1,6 +1,6 @@
 import BaseModel from './baseModel';
 
-interface File {
+export interface File {
   id: string;
   name: string;
   owner: string;
@@ -13,7 +13,7 @@ interface File {
   fileSize: number;
 }
 
-class FileModel extends BaseModel<File> {
+export class FileModel extends BaseModel<File> {
   constructor() {
     super('File');
   }
