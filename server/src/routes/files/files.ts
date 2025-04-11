@@ -97,7 +97,7 @@ fileRouter.post(
   },
 );
 
-fileRouter.get('/download/:fileId', authorize, async (req, res) => {
+fileRouter.get('/download/:fileId', authorizeUser, async (req, res) => {
   try {
     const { fileId } = req.params;
     const file = await FileModel.getById(fileId);
@@ -116,7 +116,7 @@ fileRouter.get('/download/:fileId', authorize, async (req, res) => {
 });
 
 //TODO protect the two new owlnote endpoints with perms
-fileRouter.post('/create/owlnote', authorize, async (req, res) => {
+fileRouter.post('/create/owlnote', authorizeUser, async (req, res) => {
   try {
     const { fileName, content, parentFolder = null } = req.body;
 
@@ -185,19 +185,14 @@ fileRouter.get(
         return res.status(404).json({ message: 'File not found' });
       }
 
-      await StorageService.saveToGCS(file.gcsKey, content, file.fileType);
-
-      const fileMetadata = await FileModel.updateFileMetadata(fileId, {
-        lastModifiedBy: userId, //TODO: may need to get userName thru userId
-        lastModifiedAt: new Date(),
-      });
-
-      return res.status(201).json({
-        message: 'OwlNote file saved successfully',
-        file: fileMetadata,
-      });
+      const fileStream = await StorageService.getFileStream(file.gcsKey);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${file.name}"`,
+      );
+      fileStream.pipe(res);
     } catch (error) {
-      console.error('OwlNote file save error:', error);
+      console.error('Error downloading file:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   },

@@ -55,7 +55,7 @@ const StorageService = {
   },
 
   /**
-   *
+   * Saves a file
    * @param fileId - The path of the file in the bucket
    * @param content  - the string content for that file
    */

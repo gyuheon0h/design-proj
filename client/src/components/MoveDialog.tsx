@@ -13,7 +13,6 @@ import {
   Typography,
   TextField,
   Box,
-  Divider,
   ListItemIcon,
   Paper,
   Breadcrumbs,
@@ -55,18 +54,20 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   const [currentParentFolder, setCurrentParentFolder] = useState<Folder | null>(
     null,
   );
-  const [folders, setFolders] = useState<Folder[]>([]);
+  const [, setFolders] = useState<Folder[]>([]);
   const [folderHistory, setFolderHistory] = useState<Folder[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
   const [rootDirectory, setRootDirectory] = useState<Folder | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filteredFolders, setFilteredFolders] = useState<Folder[]>([]);
-  const [invalidMoveReason, setInvalidMoveReason] = useState<string | null>(null);
+  const [filteredFolders] = useState<Folder[]>([]);
+  const [invalidMoveReason, setInvalidMoveReason] = useState<string | null>(
+    null,
+  );
 
   // fetch subfolders for the given parent folder ID
-  const [disabled, setDisabled] = useState<boolean>(false);
+  const [, setDisabled] = useState<boolean>(false);
 
   const fetchSubFolders = useCallback(
     async (folderId: string | null) => {
@@ -154,9 +155,9 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
         ? rootDirectory === null
           ? null
           : rootDirectory.id
-        : currentParentFolder.id,
-    );
-      currentParentFolder === null ? null : currentParentFolder.id,
+        : currentParentFolder === null
+          ? null
+          : currentParentFolder.id,
     );
     // automatically select the root directory when at the root
     if (currentParentFolder === null) {
@@ -177,13 +178,13 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   // Navigate into folder
   const handleGoIntoFolder = (event: React.MouseEvent, folder: Folder) => {
     event.stopPropagation();
-    
+
     // Prevent navigation into the folder we're trying to move (if it's a folder)
     if (resourceType === 'folder' && folder.id === resourceId) {
       setError("Cannot navigate into the folder you're trying to move");
       return;
     }
-    
+
     setFolderHistory((prev) => [...prev, folder]);
     setCurrentParentFolder(folder);
     setSelectedFolder(folder);
@@ -209,7 +210,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
       setError(`Invalid move: ${invalidMoveReason}`);
       return;
     }
-    
+
     try {
       await axios.patch(
         `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/move`,
@@ -257,9 +258,9 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           underline="hover"
           key={folder.id}
           color="inherit"
-          sx={{ 
-            cursor: 'pointer', 
-            fontWeight: index === folderHistory.length - 1 ? 'bold' : 'normal'
+          sx={{
+            cursor: 'pointer',
+            fontWeight: index === folderHistory.length - 1 ? 'bold' : 'normal',
           }}
           onClick={() => {
             const newHistory = folderHistory.slice(0, index + 1);
@@ -268,7 +269,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           }}
         >
           {folder.name}
-        </Link>
+        </Link>,
       );
     });
 
@@ -291,15 +292,15 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
         sx: {
           borderRadius: '12px',
           overflow: 'hidden',
-        }
+        },
       }}
     >
       {/* Header Section */}
-      <DialogTitle 
-        sx={{ 
+      <DialogTitle
+        sx={{
           backgroundColor: '#f8f9fa',
           borderBottom: '1px solid #eee',
-          pb: 1
+          pb: 1,
         }}
       >
         <Typography variant="h6" component="div" fontWeight="bold">
@@ -323,7 +324,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
               ),
               sx: {
                 borderRadius: '6px',
-              }
+              },
             }}
           />
         </Box>
@@ -360,6 +361,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
             <ListItemText primary="Back to parent folder" />
           </ListItem>
         )}
+
         {/* Folders Section */}
         <Typography
           variant="subtitle2"
@@ -369,6 +371,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           ALL FOLDERS
         </Typography>
 
+        {/* Loading Indicator */}
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
             <CircularProgress sx={{ color: '#4286f5' }} />
@@ -398,8 +401,9 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           <List disablePadding>
             {filteredFolders.map((folder) => {
               // Check if this is the folder we're trying to move (to prevent navigation into itself)
-              const isMovingFolder = resourceType === 'folder' && folder.id === resourceId;
-              
+              const isMovingFolder =
+                resourceType === 'folder' && folder.id === resourceId;
+
               return (
                 <ListItem
                   key={folder.id}
@@ -408,8 +412,8 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
                   sx={{
                     mb: 1,
                     borderRadius: '6px',
-                    backgroundColor: isMovingFolder 
-                      ? alpha('#ff9800', 0.1) 
+                    backgroundColor: isMovingFolder
+                      ? alpha('#ff9800', 0.1)
                       : selectedFolder?.id === folder.id
                         ? alpha('#4286f5', 0.1)
                         : 'white',
@@ -433,22 +437,26 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
                   }}
                 >
                   {/* Select Folder (Highlight Only) */}
-                  <Box 
+                  <Box
                     onClick={(e) => handleSelectFolder(e, folder)}
-                    sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
                       flex: 1,
-                      overflow: 'hidden'
+                      overflow: 'hidden',
                     }}
                   >
                     <ListItemIcon>
-                      <FolderIcon sx={{ color: isMovingFolder ? '#ff9800' : '#4286f5' }} />
+                      <FolderIcon
+                        sx={{ color: isMovingFolder ? '#ff9800' : '#4286f5' }}
+                      />
                     </ListItemIcon>
-                    <ListItemText 
-                      primary={folder.name + (isMovingFolder ? ' (current item)' : '')}
+                    <ListItemText
+                      primary={
+                        folder.name + (isMovingFolder ? ' (current item)' : '')
+                      }
                       primaryTypographyProps={{
-                        noWrap: true
+                        noWrap: true,
                       }}
                     />
                   </Box>
@@ -460,8 +468,8 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
                     sx={{
                       color: isMovingFolder ? '#ccc' : '#888',
                       '&:hover': {
-                        backgroundColor: alpha('#000', 0.05)
-                      }
+                        backgroundColor: alpha('#000', 0.05),
+                      },
                     }}
                     size="small"
                   >
@@ -470,26 +478,20 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
                 </ListItem>
               );
             })}
-                <IconButton
-                  onClick={(e) => handleGoIntoFolder(e, folder)}
-                  disabled={resourceId === folder.id}
-                >
-                  <ArrowForwardIosIcon />
-                </IconButton>
-              </ListItem>
-            ))}
           </List>
         )}
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, backgroundColor: '#f8f9fa', borderTop: '1px solid #eee' }}>
-        <Button 
-          onClick={handleClose} 
-          sx={{ 
+      <DialogActions
+        sx={{ p: 2, backgroundColor: '#f8f9fa', borderTop: '1px solid #eee' }}
+      >
+        <Button
+          onClick={handleClose}
+          sx={{
             borderRadius: '6px',
             px: 2,
             textTransform: 'none',
-            color: '#666'
+            color: '#666',
           }}
         >
           Cancel
@@ -499,14 +501,14 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
             <Button
               onClick={handleMove}
               variant="contained"
-              sx={{ 
+              sx={{
                 backgroundColor: '#4286f5',
                 borderRadius: '6px',
                 px: 2,
                 '&:hover': {
                   backgroundColor: '#3a76d8',
                 },
-                textTransform: 'none'
+                textTransform: 'none',
               }}
               disabled={isInvalidMove()}
             >
@@ -515,7 +517,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           </span>
         </Tooltip>
       </DialogActions>
-      
+
       {error && (
         <ErrorAlert
           open={!!error}

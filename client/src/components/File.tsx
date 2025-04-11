@@ -163,7 +163,7 @@ const getFileIcon = (fileType: string) => {
 
 const FileComponent = (props: FileComponentProps) => {
   const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
-  const [modifiedByName, setModifiedByName] = useState<string>('Loading...');
+  const [, setModifiedByName] = useState<string>('Loading...');
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
