@@ -13,7 +13,11 @@ import { getYjsProviderForRoom } from '@liveblocks/yjs';
 import { useRoom } from '@liveblocks/react';
 import { useUser } from '../context/UserContext';
 import { useRef } from 'react';
-import { cloneBlocksWithNewIds } from '../utils/cloneBlocks';
+import {
+  sanitizeBlocks,
+  safeEditorReplaceBlocks,
+  cloneBlocksWithNewIds,
+} from '../utils/blockUtils';
 
 interface OwlNoteViewerProp {
   content: Block[];
@@ -33,37 +37,22 @@ const OwlNoteViewer: React.FC<OwlNoteViewerProp> = ({
   const provider = useMemo(() => getYjsProviderForRoom(room), [room]);
   const yDoc = provider.getYDoc();
 
-  // const editor = useCreateBlockNote({ initialContent: content });
+  // const editor = useCreateBlockNote({ initialContent: content }); // for non multi collab
   const editor = useCreateBlockNote({
+    // initialContent: cloneBlocksWithNewIds(content), // loads cleanly up front, prevents parse error
     collaboration: {
       provider,
       fragment: yDoc.getXmlFragment('default'),
       user: {
         name: useUser().userId,
-        color: '#ff5733', // any hex color you want for cursor
+        color: '#ff5733',
       },
     },
   });
 
-  const hasPopulated = useRef(false);
-
   useEffect(() => {
-    if (
-      editor &&
-      content &&
-      !hasPopulated.current &&
-      editor.document.length === 1 &&
-      editor.document[0].type === 'paragraph' &&
-      editor.document[0].content.length === 0
-    ) {
-      try {
-        console.log('Document is empty. Inserting cloned blocks...');
-        const clonedContent = cloneBlocksWithNewIds(content);
-        editor.insertBlocks(clonedContent, editor.document[0], 'after');
-        hasPopulated.current = true;
-      } catch (err) {
-        console.error('Failed to insert blocks:', err);
-      }
+    if (editor && content) {
+      safeEditorReplaceBlocks(editor, content);
     }
   }, [editor, content]);
 

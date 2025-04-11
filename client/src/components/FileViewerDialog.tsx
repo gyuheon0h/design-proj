@@ -59,6 +59,7 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
                 console.log('text: ', text);
 
                 const parsed = JSON.parse(text);
+
                 console.log('PARSED:', parsed);
 
                 setBlocknoteContent(parsed);

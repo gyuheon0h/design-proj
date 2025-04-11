@@ -7,6 +7,7 @@ import App from './App';
 import { UserProvider } from './context/UserContext';
 import './index.css';
 import './index.css';
+import { LiveblocksProvider } from '@liveblocks/react/suspense';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement,
@@ -18,9 +19,13 @@ root.render(
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <BrowserRouter>
-          <UserProvider>
-            <App />
-          </UserProvider>
+          <LiveblocksProvider
+            publicApiKey={process.env.REACT_APP_LIVEBLOCKS_PUBLIC_KEY!}
+          >
+            <UserProvider>
+              <App />
+            </UserProvider>
+          </LiveblocksProvider>
         </BrowserRouter>
       </ThemeProvider>
     </ThemeProvider>
