@@ -10,6 +10,7 @@ import '@blocknote/core/fonts/inter.css';
 import '@blocknote/mantine/style.css';
 import { Block } from '@blocknote/core';
 import OwlNoteViewer from './OwlNoteViewer';
+import { RoomProvider, ClientSideSuspense } from '@liveblocks/react';
 
 interface FileViewerDialogProps {
   open: boolean;
@@ -55,12 +56,16 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
           .then((text) => {
             if (isOwlNote) {
               try {
-                console.log(text);
+                console.log('text: ', text);
 
                 const parsed = JSON.parse(text);
                 console.log('PARSED:', parsed);
 
                 setBlocknoteContent(parsed);
+                console.log(
+                  'Final BlockNote content passed to viewer:',
+                  parsed,
+                ); // should be array of block objs
               } catch (err) {
                 console.error('Invalid BlockNote format');
               }
@@ -154,8 +159,29 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
             onLoad={() => setLoading(false)}
           />
         )}
-        {isOwlNote && blocknoteContent && (
+        {/* {isOwlNote && blocknoteContent && (
           <OwlNoteViewer content={blocknoteContent} fileName={fileName} />
+        )} */}
+        {isOwlNote && blocknoteContent && (
+          <RoomProvider id={`viewer-${fileName}`} initialPresence={{}}>
+            <ClientSideSuspense
+              fallback={
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <CircularProgress />
+                </Box>
+              }
+            >
+              {() => (
+                <OwlNoteViewer content={blocknoteContent} fileName={fileName} />
+              )}
+            </ClientSideSuspense>
+          </RoomProvider>
         )}
 
         {isText && textContent && (

@@ -1,5 +1,5 @@
 // BlockNoteViewer.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Box, Button } from '@mui/material';
 import { BlockNoteView } from '@blocknote/mantine';
 import { useCreateBlockNote } from '@blocknote/react';
@@ -9,6 +9,11 @@ import {
   pdfDefaultSchemaMappings,
 } from '@blocknote/xl-pdf-exporter';
 import * as ReactPDF from '@react-pdf/renderer';
+import { getYjsProviderForRoom } from '@liveblocks/yjs';
+import { useRoom } from '@liveblocks/react';
+import { useUser } from '../context/UserContext';
+import { useRef } from 'react';
+import { cloneBlocksWithNewIds } from '../utils/cloneBlocks';
 
 interface OwlNoteViewerProp {
   content: Block[];
@@ -23,7 +28,44 @@ const OwlNoteViewer: React.FC<OwlNoteViewerProp> = ({
   onEditorCreated,
   fileName,
 }) => {
-  const editor = useCreateBlockNote({ initialContent: content });
+  const room = useRoom();
+
+  const provider = useMemo(() => getYjsProviderForRoom(room), [room]);
+  const yDoc = provider.getYDoc();
+
+  // const editor = useCreateBlockNote({ initialContent: content });
+  const editor = useCreateBlockNote({
+    collaboration: {
+      provider,
+      fragment: yDoc.getXmlFragment('default'),
+      user: {
+        name: useUser().userId,
+        color: '#ff5733', // any hex color you want for cursor
+      },
+    },
+  });
+
+  const hasPopulated = useRef(false);
+
+  useEffect(() => {
+    if (
+      editor &&
+      content &&
+      !hasPopulated.current &&
+      editor.document.length === 1 &&
+      editor.document[0].type === 'paragraph' &&
+      editor.document[0].content.length === 0
+    ) {
+      try {
+        console.log('Document is empty. Inserting cloned blocks...');
+        const clonedContent = cloneBlocksWithNewIds(content);
+        editor.insertBlocks(clonedContent, editor.document[0], 'after');
+        hasPopulated.current = true;
+      } catch (err) {
+        console.error('Failed to insert blocks:', err);
+      }
+    }
+  }, [editor, content]);
 
   useEffect(() => {
     if (onEditorCreated) {

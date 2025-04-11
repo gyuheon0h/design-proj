@@ -16,6 +16,7 @@ import '@blocknote/mantine/style.css';
 import axios from 'axios';
 import OwlNoteViewer from './OwlNoteViewer';
 import { Block } from '@blocknote/core';
+import { RoomProvider, ClientSideSuspense } from '@liveblocks/react';
 
 interface OwlNoteEditorDialogProps {
   open: boolean;
@@ -151,13 +152,35 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
               <CircularProgress />
             </Box>
           ) : (
-            <OwlNoteViewer
-              key={JSON.stringify(effectiveContent)}
-              content={effectiveContent}
-              editable={true}
-              onEditorCreated={setEditorRef}
-              fileName={fileName || newFileName}
-            />
+            <RoomProvider
+              id={`owlnote-${fileId || 'new'}`}
+              initialPresence={{}}
+            >
+              <ClientSideSuspense
+                fallback={
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      minHeight: '200px',
+                    }}
+                  >
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                {() => (
+                  <OwlNoteViewer
+                    key={JSON.stringify(effectiveContent)}
+                    content={effectiveContent}
+                    editable={true}
+                    onEditorCreated={setEditorRef}
+                    fileName={fileName || newFileName}
+                  />
+                )}
+              </ClientSideSuspense>
+            </RoomProvider>
           )}
         </DialogContent>
         <DialogActions>
