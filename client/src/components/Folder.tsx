@@ -13,7 +13,7 @@ import { folderStyles } from '../Styles';
 import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import MoveDialog from './MoveDialog';
-import { getIsFavoritedByFileId } from '../utils/helperRequests';
+import { downloadFile, getIsFavoritedByFileId } from '../utils/helperRequests';
 import ErrorAlert from '../components/ErrorAlert';
 import { Folder } from '../interfaces/Folder';
 import axios from 'axios';
@@ -54,6 +54,72 @@ const FolderComponent = (props: FolderProps) => {
   const handleOptionsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
+  };
+  const getMenuItems = () => {
+    if (props.page === 'trash') {
+      return (
+        <MenuItem onClick={handleRestoreClick}>
+          <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Restore
+        </MenuItem>
+      );
+    }
+
+    const menuItems = [];
+
+    // Share
+    menuItems.push(
+      <MenuItem key="share" onClick={handlePermissionsClick}>
+        <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
+      </MenuItem>,
+      <Divider key="divider-share" sx={{ my: 0.2 }} />,
+    );
+
+    // Rename
+    menuItems.push(
+      <MenuItem key="rename" onClick={handleRenameClick}>
+        <DriveFileRenameOutlineIcon
+          sx={{ fontSize: '20px', marginRight: '9px' }}
+        />{' '}
+        Rename
+      </MenuItem>,
+      <Divider key="divider-rename" sx={{ my: 0.2 }} />,
+    );
+
+    // Delete (only in home & favorites)
+    if (props.page === 'home' || props.page === 'favorites') {
+      menuItems.push(
+        <MenuItem key="delete" onClick={handleDeleteClick}>
+          <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Delete
+        </MenuItem>,
+        <Divider key="divider-delete" sx={{ my: 0.2 }} />,
+      );
+    }
+
+    // // Download
+    // menuItems.push(
+    //   <MenuItem
+    //     key="download"
+    //     onClick={() => {
+    //       downloadFile(props.file.id, props.file.name);
+    //       handleOptionsClose();
+    //     }}
+    //   >
+    //     <InsertDriveFileIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+    //     Download
+    //   </MenuItem>,
+    //   <Divider key="divider-download" sx={{ my: 0.2 }} />,
+    // );
+
+    // Move (shared, home)
+    if (props.page !== 'favorites') {
+      menuItems.push(
+        <MenuItem key="move" onClick={handleMoveClick}>
+          <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
+        </MenuItem>,
+      );
+    }
+
+    return menuItems;
   };
 
   const handleOptionsClose = (
@@ -265,53 +331,15 @@ const FolderComponent = (props: FolderProps) => {
       <Menu
         anchorEl={anchorEl}
         open={open}
+        onClick={(event) => event.stopPropagation()}
         onClose={handleOptionsClose}
-        elevation={2}
         PaperProps={{
           sx: {
-            borderRadius: '8px',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-            width: '180px',
+            width: '150px',
           },
         }}
       >
-        {props.page === 'trash' ? (
-          <MenuItem onClick={handleRestoreClick}>
-            <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-            Restore
-          </MenuItem>
-        ) : props.page === 'shared' ? (
-          []
-        ) : (
-          [
-            <MenuItem key="share" onClick={handlePermissionsClick}>
-              <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
-            </MenuItem>,
-            <Divider key="div1" sx={{ my: 0.2 }} />,
-            <MenuItem key="rename" onClick={handleRenameClick}>
-              <DriveFileRenameOutlineIcon
-                sx={{ fontSize: '20px', marginRight: '9px' }}
-              />{' '}
-              Rename
-            </MenuItem>,
-            <Divider key="div2" sx={{ my: 0.2 }} />,
-            <MenuItem key="move" onClick={handleMoveClick}>
-              <DriveFileMove sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-              Move
-            </MenuItem>,
-            <Divider key="div3" sx={{ my: 0.2 }} />,
-            <MenuItem
-              key="delete"
-              onClick={handleDeleteClick}
-              sx={{ color: '#FF6347' }}
-            >
-              <DeleteIcon
-                sx={{ fontSize: '20px', marginRight: '9px', color: '#FF6347' }}
-              />{' '}
-              Delete
-            </MenuItem>,
-          ]
-        )}
+        {getMenuItems()}
       </Menu>
 
       {/* Dialogs */}

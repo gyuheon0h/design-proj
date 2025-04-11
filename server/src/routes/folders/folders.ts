@@ -260,7 +260,7 @@ folderRouter.put(
       if (!folder) return res.status(404).json({ error: 'File not found.' });
 
       // check owner
-      if (folder.owner !== currentUserId) {
+      if (role === 'owner' || userId == folder.owner) {
         return res.status(403).json({ error: 'Not allowed (sharing error).' });
       }
 
@@ -331,7 +331,7 @@ folderRouter.delete(
       }
 
       // check owner
-      if (folder.owner !== currentUserId) {
+      if (userId == folder.owner) {
         return res
           .status(403)
           .json({ error: 'You do not have permission to modify this file.' });

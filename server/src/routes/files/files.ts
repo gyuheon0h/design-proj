@@ -452,7 +452,7 @@ fileRouter.put(
       if (!file) return res.status(404).json({ error: 'File not found.' });
 
       // check owner
-      if (file.owner !== currentUserId) {
+      if (role === 'owner' || userId == file.owner) {
         return res.status(403).json({ error: 'Not allowed.' });
       }
 
@@ -497,8 +497,8 @@ fileRouter.put(
  */
 fileRouter.delete(
   '/:fileId/permissions/:userId',
-  checkPermission('share'),
   authorizeUser,
+  checkPermission('share'),
   async (req: AuthenticatedRequest, res) => {
     try {
       const currentUserId = req.user?.userId;
@@ -515,7 +515,7 @@ fileRouter.delete(
       }
 
       // check owner
-      if (file.owner !== currentUserId) {
+      if (userId == file.owner) {
         return res
           .status(403)
           .json({ error: 'You do not have permission to modify this file.' });

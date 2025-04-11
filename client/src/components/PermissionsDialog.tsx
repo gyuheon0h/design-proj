@@ -364,9 +364,11 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
             {permissions.length > 0 ? (
               <Box sx={{ mb: 4 }}>
                 {permissions
-                  .filter((perm) => !perm.deletedAt && perm.userId !== userId)
+                  .filter((perm) => !perm.deletedAt)
                   .map((perm) => {
                     const user = users.find((u) => u.id === perm.userId);
+                    const isOwner = perm.role === 'owner';
+
                     return (
                       <Paper
                         key={perm.id}
@@ -410,53 +412,72 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
                             </Typography>
                           </Box>
                         </Box>
-                        <Box display="flex" alignItems="center">
-                          <FormControl
-                            size="small"
-                            sx={{ mr: 2, minWidth: 100 }}
-                          >
-                            <Select
-                              value={perm.role}
-                              onChange={(e) =>
-                                handleRoleChange(
-                                  perm.id,
-                                  perm.userId,
-                                  e.target.value as 'editor' | 'viewer',
-                                )
-                              }
-                              sx={{
-                                borderRadius: '8px',
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                  borderColor: '#e0e0e0',
-                                },
-                              }}
-                              displayEmpty
-                            >
-                              <MenuItem value="editor">Editor</MenuItem>
-                              <MenuItem value="viewer">Viewer</MenuItem>
-                            </Select>
-                          </FormControl>
 
-                          <Button
-                            variant="outlined"
-                            color="error"
-                            size="small"
-                            onClick={() =>
-                              handleRemovePermission(perm.id, perm.userId)
-                            }
-                            sx={{
-                              borderRadius: '8px',
-                              textTransform: 'none',
-                              borderColor: '#e0e0e0',
-                              color: '#d32f2f',
-                              '&:hover': {
-                                borderColor: '#d32f2f',
-                                backgroundColor: 'rgba(211, 47, 47, 0.04)',
-                              },
-                            }}
-                          >
-                            Remove
-                          </Button>
+                        <Box display="flex" alignItems="center">
+                          {isOwner ? (
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              color="primary"
+                              sx={{
+                                px: 2,
+                                py: 0.5,
+                                borderRadius: '8px',
+                                backgroundColor: '#e3f2fd',
+                              }}
+                            >
+                              Owner
+                            </Typography>
+                          ) : (
+                            <>
+                              <FormControl
+                                size="small"
+                                sx={{ mr: 2, minWidth: 100 }}
+                              >
+                                <Select
+                                  value={perm.role}
+                                  onChange={(e) =>
+                                    handleRoleChange(
+                                      perm.id,
+                                      perm.userId,
+                                      e.target.value as 'editor' | 'viewer',
+                                    )
+                                  }
+                                  sx={{
+                                    borderRadius: '8px',
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                      borderColor: '#e0e0e0',
+                                    },
+                                  }}
+                                  displayEmpty
+                                >
+                                  <MenuItem value="editor">Editor</MenuItem>
+                                  <MenuItem value="viewer">Viewer</MenuItem>
+                                </Select>
+                              </FormControl>
+
+                              <Button
+                                variant="outlined"
+                                color="error"
+                                size="small"
+                                onClick={() =>
+                                  handleRemovePermission(perm.id, perm.userId)
+                                }
+                                sx={{
+                                  borderRadius: '8px',
+                                  textTransform: 'none',
+                                  borderColor: '#e0e0e0',
+                                  color: '#d32f2f',
+                                  '&:hover': {
+                                    borderColor: '#d32f2f',
+                                    backgroundColor: 'rgba(211, 47, 47, 0.04)',
+                                  },
+                                }}
+                              >
+                                Remove
+                              </Button>
+                            </>
+                          )}
                         </Box>
                       </Paper>
                     );

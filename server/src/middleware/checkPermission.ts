@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import PermissionModel, { Permission } from '../db_models/PermissionModel';
 import { bubbleUpResource } from '../routes/helper';
+import { AuthenticatedRequest } from './authorizeUser';
 
 type Role = 'viewer' | 'editor' | 'owner';
 
@@ -14,9 +15,13 @@ const blockedActions: Record<Role, string[]> = {
 
 // A middleware factory to check if the user has the correct permission for a given action
 export const checkPermission = (action: string) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({ message: 'Not authenticated' });
       }
@@ -54,7 +59,6 @@ export const checkPermission = (action: string) => {
             .json({ message: 'Forbidden: insufficient permissions' });
         }
       }
-
       next();
     } catch (error) {
       console.error('Permission check error:', error);
