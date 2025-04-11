@@ -21,13 +21,15 @@ root.render(
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <BrowserRouter>
-          <LiveblocksProvider
-            publicApiKey={process.env.REACT_APP_LIVEBLOCKS_PUBLIC_KEY!}
-          >
-            <UserProvider>
-              <App />
-            </UserProvider>
-          </LiveblocksProvider>
+          <UserProvider>
+            <StorageProvider>
+              <LiveblocksProvider
+                publicApiKey={process.env.REACT_APP_LIVEBLOCKS_PUBLIC_KEY!}
+              >
+                <App />
+              </LiveblocksProvider>
+            </StorageProvider>
+          </UserProvider>
         </BrowserRouter>
       </ThemeProvider>
     </ThemeProvider>
