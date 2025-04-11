@@ -7,7 +7,8 @@ import Register from './pages/RegisterPage';
 import NavigationDrawer from './components/Drawer';
 import Favorites from './pages/FavoritesPage';
 import Trash from './pages/TrashPage';
-import { Fade } from '@mui/material';
+import { Fade, Box } from '@mui/material';
+import { colors } from './Styles';
 
 function App() {
   const location = useLocation();
@@ -15,23 +16,38 @@ function App() {
     location.pathname !== '/' && location.pathname !== '/register';
 
   return (
-    <div style={{ display: 'flex', overflowY: 'scroll' }}>
+    <Box 
+      sx={{ 
+        display: 'flex', 
+        height: '100vh',
+        bgcolor: shouldShowDrawer ? colors.mainBackground : '#FFFFFF',
+        overflow: 'hidden',
+      }}
+    >
       {shouldShowDrawer && <NavigationDrawer />}
-      <div style={{ flexGrow: 1 }}>
-        <Fade in={true} timeout={500} key={location.pathname}>
-          <div>
+      <Box 
+        sx={{ 
+          flexGrow: 1, 
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <Fade in={true} timeout={300} key={location.pathname}>
+          <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<Login />} />
-              <Route path="/home/*?" element={<Home />} />
-              <Route path="/favorites/*?" element={<Favorites />} />
-              <Route path="/shared/*?" element={<Shared />} />
+              <Route path="/home/*" element={<Home />} />
+              <Route path="/favorites/*" element={<Favorites />} />
+              <Route path="/shared/*" element={<Shared />} />
               <Route path="/trash" element={<Trash />} />
               <Route path="/register" element={<Register />} />
             </Routes>
-          </div>
+          </Box>
         </Fade>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }
 
