@@ -73,7 +73,7 @@ const OwlNoteViewer: React.FC<OwlNoteViewerProp> = ({
 
   return (
     <Box sx={{ width: '100%', height: '100%', overflow: 'auto' }}>
-      <BlockNoteView editor={editor} editable={editable} />
+      <BlockNoteView editor={editor} editable={editable} theme={'light'} />
       <Button onClick={handleExportPdf}>EXPORT PDF</Button>
     </Box>
   );
