@@ -1,5 +1,5 @@
 import BaseModel from './baseModel';
-import { recursiveDeletePermissions } from './modelHelpers';
+import { recursiveDeletePermissions } from './ModelHelpers';
 
 interface Folder {
   id: string;
@@ -9,26 +9,6 @@ interface Folder {
   deletedAt: Date | null;
   parentFolder: string | null;
 }
-// interface Permission {
-//   id: string;
-//   fileId: string; // includes folders
-//   userId: string;
-//   role: 'owner' | 'editor' | 'viewer';
-//   isFavorited: boolean;
-//   deletedAt: Date | null;
-// }
-// interface File {
-//   id: string;
-//   name: string;
-//   owner: string;
-//   createdAt: Date;
-//   lastModifiedBy: string | null;
-//   lastModifiedAt: Date;
-//   parentFolder: string | null;
-//   gcsKey: string;
-//   fileType: string;
-//   deletedAt: Date | null;
-// }
 
 class FolderModel extends BaseModel<Folder> {
   constructor() {

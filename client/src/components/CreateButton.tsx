@@ -7,6 +7,7 @@ import AddIcon from '@mui/icons-material/Add';
 import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
 import UploadProgressToast from './UploadProgress';
 import { useUser } from '../context/UserContext';
+import OwlNoteEditorDialog from './OwlNoteEditorDialog';
 
 interface CreateButtonProps {
   currentFolderId: string | null;
@@ -27,12 +28,13 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-
+  const [blockNoteOpen, setBlockNoteOpen] = useState(false);
+  // Drag detection
+  const [didDrag, setDidDrag] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showUploadToast, setShowUploadToast] = useState(false);
 
   const menuOpen = Boolean(anchorEl);
-  const [didDrag, setDidDrag] = useState(false);
 
   const handleMenuClose = () => setAnchorEl(null);
   const openFolderDialog = () => setFolderDialogOpen(true);
@@ -68,6 +70,26 @@ const CreateButton: React.FC<CreateButtonProps> = ({
     setSelectedFile(new File([file], fileName));
     setUploadDialogOpen(false);
     setShowUploadToast(true);
+  };
+
+  const handleCreateOwlNote = async (
+    fileName: string,
+    content: string,
+    parentFolder: string | null,
+  ) => {
+    const requestBody = { fileName, content, parentFolder };
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/create/owlnote`,
+        requestBody,
+        { withCredentials: true },
+      );
+      refreshFiles(currentFolderId);
+      return response.data;
+    } catch (error) {
+      console.error('Folder creation failed:', error);
+      throw error;
+    }
   };
 
   return (
@@ -116,6 +138,14 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         >
           Upload a File
         </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            setBlockNoteOpen(true);
+          }}
+        >
+          Create OwlNote File
+        </MenuItem>
       </Menu>
 
       <FolderDialog
@@ -141,6 +171,14 @@ const CreateButton: React.FC<CreateButtonProps> = ({
           refreshStorage={refreshStorage}
         />
       )}
+      <OwlNoteEditorDialog
+        // fileName="file1" //TODO: hardcode filename for now, fix later
+        parentFolder={currentFolderId}
+        open={blockNoteOpen}
+        onClose={() => setBlockNoteOpen(false)}
+        onOwlNoteCreate={handleCreateOwlNote}
+        fileName={null}
+      />
     </>
   );
 };

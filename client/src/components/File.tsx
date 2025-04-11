@@ -50,6 +50,7 @@ import { File } from '../interfaces/File';
 import axios from 'axios';
 import TextEditor from './TextEditor';
 import { Permission } from '../interfaces/Permission';
+import OwlNoteEditorDialog from './OwlNoteEditorDialog';
 import { useStorage } from '../context/StorageContext';
 
 export interface FileComponentProps {
@@ -98,11 +99,13 @@ const getFileIcon = (fileType: string) => {
 
   switch (mimeType) {
     case 'text':
-      return (
-        <Box sx={iconContainerStyle}>
-          <DescriptionIcon sx={iconStyle} />
-        </Box>
-      );
+      if (extension === 'owlnote')
+        return (
+          <Typography sx={{ fontSize: 30, marginRight: '10px' }}>🦉</Typography>
+        );
+      else
+        return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+
     case 'application':
       if (extension === 'pdf')
         return (
@@ -360,6 +363,19 @@ const FileComponent = (props: FileComponentProps) => {
     }
   };
 
+  const handleSaveOwlNote = async (fileId: string, content: string) => {
+    try {
+      await axios.put(
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/save/owlnote/${fileId}`,
+        { content },
+        { withCredentials: true },
+      );
+    } catch (error) {
+      console.error('Error saving owl text content', error);
+    }
+    props.refreshFiles(props.file.parentFolder);
+  };
+
   const handleRenameClick = (event: React.MouseEvent) => {
     event.stopPropagation();
     setIsRenameDialogOpen(true);
@@ -405,15 +421,6 @@ const FileComponent = (props: FileComponentProps) => {
     }
   };
 
-  const getTagFromName = (fileName: string): string => {
-    // Extract tag from filename and return it with # prefix
-    const nameParts = fileName.split('.');
-    const baseName = nameParts[0].toLowerCase();
-
-    // Prefix with # and limit to 10 characters
-    return '#' + baseName.replace(/[^a-z0-9]/g, '').substring(0, 10);
-  };
-
   const lastModifiedDate = formatDate(props.file.lastModifiedAt);
   const createdDate = formatDate(props.file.createdAt);
 
@@ -455,22 +462,6 @@ const FileComponent = (props: FileComponentProps) => {
               {props.file.name}
             </Typography>
           </Tooltip>
-        </TableCell>
-
-        {/* Tag */}
-        <TableCell sx={{ borderBottom: 'none' }}>
-          <Typography
-            variant="body2"
-            sx={{
-              color: colors.textSecondary,
-              backgroundColor: 'rgba(0, 0, 0, 0.04)',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              display: 'inline-block',
-            }}
-          >
-            {getTagFromName(props.file.name)}
-          </Typography>
         </TableCell>
 
         {/* Created Date */}
@@ -650,13 +641,28 @@ const FileComponent = (props: FileComponentProps) => {
       />
 
       {isEditDialogOpen && (
-        <TextEditor
-          fileId={props.file.id}
-          gcsKey={props.file.gcsKey}
-          mimeType={props.file.fileType}
-          open={isEditDialogOpen}
-          onClose={handleCloseEditor}
-        />
+        <>
+          {props.file.fileType === 'text/owlnote' ? (
+            <OwlNoteEditorDialog
+              open={isEditDialogOpen}
+              onClose={handleCloseEditor}
+              onOwlNoteSave={handleSaveOwlNote}
+              fileId={props.file.id}
+              gcsKey={props.file.gcsKey}
+              fileType={props.file.fileType}
+              parentFolder={props.file.parentFolder}
+              fileName={props.file.name}
+            />
+          ) : (
+            <TextEditor
+              fileId={props.file.id}
+              gcsKey={props.file.gcsKey}
+              mimeType={props.file.fileType}
+              open={isEditDialogOpen}
+              onClose={handleCloseEditor}
+            />
+          )}
+        </>
       )}
 
       <Modal open={isFileViewerOpen} onClose={handleCloseFileViewer}>
@@ -667,6 +673,7 @@ const FileComponent = (props: FileComponentProps) => {
               onClose={handleCloseFileViewer}
               src={fileSrc}
               fileType={props.file.fileType}
+              fileName={props.file.name}
             />
             {error && (
               <ErrorAlert
