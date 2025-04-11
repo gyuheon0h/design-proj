@@ -8,7 +8,6 @@ import {
   useFolderPath,
 } from '../utils/helperRequests';
 import { useNavigate } from 'react-router-dom';
-// import { useUser } from '../context/UserContext';
 import { File } from '../interfaces/File';
 import { Box, Divider, Typography } from '@mui/material';
 import { typography } from '../Styles';

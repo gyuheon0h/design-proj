@@ -1,5 +1,6 @@
 import { BlockNoteEditor } from '@blocknote/core';
 import { Block } from '@blocknote/core';
+import { clone } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
 const VALID_BLOCK_TYPES = [
@@ -65,7 +66,9 @@ export const safeEditorReplaceBlocks = (
 
   requestAnimationFrame(() => {
     try {
-      const sanitized = sanitizeBlocks(content);
+      const clonedContent = cloneBlocksWithNewIds(content);
+      const sanitized = sanitizeBlocks(clonedContent);
+      editor.insertBlocks(clonedContent, editor.document[0], 'after');
 
       if (
         editor.document.length === 1 &&
