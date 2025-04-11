@@ -1,7 +1,10 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import userModel from '../../db_models/UserModel';
-import { AuthenticatedRequest, authorize } from '../../middleware/authorize';
+import {
+  AuthenticatedRequest,
+  authorizeUser,
+} from '../../middleware/authorizeUser';
 
 const authRouter = Router();
 
@@ -93,7 +96,7 @@ authRouter.post('/register', async (req: Request, res: Response) => {
 // this is almost exactly the same as login. However,
 authRouter.post(
   '/verify-password',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {

@@ -13,7 +13,6 @@ import {
   Typography,
   TextField,
   Box,
-  Divider,
   ListItemIcon,
   Paper,
   Breadcrumbs,
@@ -54,17 +53,22 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   const userContext = useUser();
   const [currentParentFolder, setCurrentParentFolder] = useState<Folder | null>(
     null,
-  ); // null at root
-  const [folders, setFolders] = useState<Folder[]>([]); // child folders of parent
+  );
+  const [, setFolders] = useState<Folder[]>([]);
   const [folderHistory, setFolderHistory] = useState<Folder[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
+  const [rootDirectory, setRootDirectory] = useState<Folder | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filteredFolders, setFilteredFolders] = useState<Folder[]>([]);
-  const [invalidMoveReason, setInvalidMoveReason] = useState<string | null>(null);
+  const [filteredFolders] = useState<Folder[]>([]);
+  const [invalidMoveReason, setInvalidMoveReason] = useState<string | null>(
+    null,
+  );
 
   // fetch subfolders for the given parent folder ID
+  const [, setDisabled] = useState<boolean>(false);
+
   const fetchSubFolders = useCallback(
     async (folderId: string | null) => {
       setLoading(true);
@@ -74,8 +78,8 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
             `${process.env.REACT_APP_API_BASE_URL}/api/user/${userContext.userId}/${page}/folder`,
             { withCredentials: true },
           );
+
           if (page === 'shared') {
-            // we merely need this check to deal with the permissions thing properly.
             setFolders(res.data.folders);
           } else {
             setFolders(res.data);
@@ -96,90 +100,97 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
     [page, userContext.userId],
   );
 
-  // reset states when opening dialog
+  // Reset state when dialog opens
   useEffect(() => {
     if (open) {
-      setCurrentParentFolder(null); // set parent folder to null/root
-      setFolderHistory([]); // reset history
-      setSelectedFolder(null); // automatically select the root directory
-      setSearchQuery(''); // reset search query
-      fetchSubFolders(null); // load subfolders of root directory
+      const init = async () => {
+        setLoading(true);
+        if (page === 'shared') {
+          try {
+            let bubbleUpRes = await axios.get(
+              `${process.env.REACT_APP_API_BASE_URL}/api/folder/bubbleUpPerms/${resourceId}`,
+              { withCredentials: true },
+            );
+
+            console.log(bubbleUpRes);
+
+            // If the resource is a top-level shared folder, set the error.
+            if (bubbleUpRes.data.fileId === resourceId) {
+              console.log('resource is top-level!');
+              setError('Cannot move top-level shared resource');
+              setDisabled(true);
+            } else {
+              // Otherwise, fetch the folder details.
+              bubbleUpRes = await axios.get(
+                `${process.env.REACT_APP_API_BASE_URL}/api/folder/${resourceId}`,
+                { withCredentials: true },
+              );
+              setCurrentParentFolder(null);
+              setSelectedFolder(bubbleUpRes.data);
+              setRootDirectory(bubbleUpRes.data);
+              await fetchSubFolders(bubbleUpRes.data.id);
+            }
+          } catch (error) {
+            console.error('Error fetching shared folder:', error);
+            setError('Failed to load shared folder. Please try again.');
+          }
+        } else {
+          setCurrentParentFolder(null);
+          setSelectedFolder(null);
+          setRootDirectory(null);
+          await fetchSubFolders(null);
+        }
+        setFolderHistory([]);
+        setLoading(false);
+      };
+
+      setDisabled(false);
+      init();
     }
-  }, [fetchSubFolders, open]);
+  }, [fetchSubFolders, open, page, resourceId]);
 
   useEffect(() => {
     fetchSubFolders(
-      currentParentFolder === null ? null : currentParentFolder.id,
+      currentParentFolder === null
+        ? rootDirectory === null
+          ? null
+          : rootDirectory.id
+        : currentParentFolder === null
+          ? null
+          : currentParentFolder.id,
     );
     // automatically select the root directory when at the root
     if (currentParentFolder === null) {
       setSelectedFolder(null);
     }
-  }, [currentParentFolder, fetchSubFolders]);
 
-  // Filter folders based on search query
-  useEffect(() => {
-    let results = [...folders];
-    if (searchQuery) {
-      results = folders.filter((folder) =>
-        folder.name.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
+    if (currentParentFolder === null && page === 'shared') {
+      setSelectedFolder(rootDirectory);
     }
-    setFilteredFolders(results);
-  }, [folders, searchQuery]);
+  }, [currentParentFolder, fetchSubFolders, page, rootDirectory]);
 
-  // Check if the move is valid whenever selectedFolder changes
-  useEffect(() => {
-    // Reset the invalid move reason
-    setInvalidMoveReason(null);
-    
-    // Case 1: Can't move a folder to its current location (no change)
-    if (selectedFolder?.id === parentFolderId) {
-      setInvalidMoveReason("This is already the current location");
-      return;
-    }
-    
-    // Case 2: Can't move a resource into itself (for folders)
-    if (resourceType === 'folder' && selectedFolder?.id === resourceId) {
-      setInvalidMoveReason("Cannot move a folder into itself");
-      return;
-    }
-    
-    // Case 3: Can't move to root if already at root
-    if (selectedFolder === null && parentFolderId === null) {
-      setInvalidMoveReason("Already at root location");
-      return;
-    }
-    
-    // Case 4: Check if trying to move to a descendant folder (only applies to folders)
-    if (resourceType === 'folder' && folderHistory.some(folder => folder.id === resourceId)) {
-      setInvalidMoveReason("Cannot move a folder into its descendant");
-      return;
-    }
-  }, [selectedFolder, parentFolderId, resourceId, resourceType, folderHistory]);
-
-  // select the folder without navigating into it
+  // Select folder without navigating into it
   const handleSelectFolder = (event: React.MouseEvent, folder: Folder) => {
     event.stopPropagation();
     setSelectedFolder(folder);
   };
 
-  // navigate into the clicked folder and select it
+  // Navigate into folder
   const handleGoIntoFolder = (event: React.MouseEvent, folder: Folder) => {
     event.stopPropagation();
-    
+
     // Prevent navigation into the folder we're trying to move (if it's a folder)
     if (resourceType === 'folder' && folder.id === resourceId) {
       setError("Cannot navigate into the folder you're trying to move");
       return;
     }
-    
+
     setFolderHistory((prev) => [...prev, folder]);
     setCurrentParentFolder(folder);
     setSelectedFolder(folder);
   };
 
-  // go back to the previous folder
+  // Go back to the previous folder
   const handleGoBack = () => {
     if (folderHistory.length > 0) {
       const newHistory = [...folderHistory];
@@ -192,21 +203,20 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
     }
   };
 
-  // move the file to the selected folder
+  // Move the resource to the selected folder
   const handleMove = async () => {
     // Extra validation before making the API call
     if (isInvalidMove()) {
       setError(`Invalid move: ${invalidMoveReason}`);
       return;
     }
-    
+
     try {
       await axios.patch(
         `${process.env.REACT_APP_API_BASE_URL}/api/${resourceType}/${resourceId}/move`,
         { parentFolderId: selectedFolder === null ? null : selectedFolder.id },
         { withCredentials: true },
       );
-
       onSuccess();
     } catch (error) {
       console.error('Error moving file:', error);
@@ -220,14 +230,16 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
     return invalidMoveReason !== null;
   };
 
-  // close the dialog and reset state
+  // Close the dialog and reset state
   const handleClose = () => {
     setCurrentParentFolder(null);
     setSelectedFolder(null);
     setFolderHistory([]);
     setSearchQuery('');
     setInvalidMoveReason(null);
+    setError(null);
     onClose();
+    setDisabled(false);
   };
 
   // Handle search input change
@@ -246,9 +258,9 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           underline="hover"
           key={folder.id}
           color="inherit"
-          sx={{ 
-            cursor: 'pointer', 
-            fontWeight: index === folderHistory.length - 1 ? 'bold' : 'normal'
+          sx={{
+            cursor: 'pointer',
+            fontWeight: index === folderHistory.length - 1 ? 'bold' : 'normal',
           }}
           onClick={() => {
             const newHistory = folderHistory.slice(0, index + 1);
@@ -257,7 +269,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           }}
         >
           {folder.name}
-        </Link>
+        </Link>,
       );
     });
 
@@ -280,15 +292,15 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
         sx: {
           borderRadius: '12px',
           overflow: 'hidden',
-        }
+        },
       }}
     >
       {/* Header Section */}
-      <DialogTitle 
-        sx={{ 
+      <DialogTitle
+        sx={{
           backgroundColor: '#f8f9fa',
           borderBottom: '1px solid #eee',
-          pb: 1
+          pb: 1,
         }}
       >
         <Typography variant="h6" component="div" fontWeight="bold">
@@ -312,7 +324,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
               ),
               sx: {
                 borderRadius: '6px',
-              }
+              },
             }}
           />
         </Box>
@@ -389,8 +401,9 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           <List disablePadding>
             {filteredFolders.map((folder) => {
               // Check if this is the folder we're trying to move (to prevent navigation into itself)
-              const isMovingFolder = resourceType === 'folder' && folder.id === resourceId;
-              
+              const isMovingFolder =
+                resourceType === 'folder' && folder.id === resourceId;
+
               return (
                 <ListItem
                   key={folder.id}
@@ -399,8 +412,8 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
                   sx={{
                     mb: 1,
                     borderRadius: '6px',
-                    backgroundColor: isMovingFolder 
-                      ? alpha('#ff9800', 0.1) 
+                    backgroundColor: isMovingFolder
+                      ? alpha('#ff9800', 0.1)
                       : selectedFolder?.id === folder.id
                         ? alpha('#4286f5', 0.1)
                         : 'white',
@@ -424,22 +437,26 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
                   }}
                 >
                   {/* Select Folder (Highlight Only) */}
-                  <Box 
+                  <Box
                     onClick={(e) => handleSelectFolder(e, folder)}
-                    sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
                       flex: 1,
-                      overflow: 'hidden'
+                      overflow: 'hidden',
                     }}
                   >
                     <ListItemIcon>
-                      <FolderIcon sx={{ color: isMovingFolder ? '#ff9800' : '#4286f5' }} />
+                      <FolderIcon
+                        sx={{ color: isMovingFolder ? '#ff9800' : '#4286f5' }}
+                      />
                     </ListItemIcon>
-                    <ListItemText 
-                      primary={folder.name + (isMovingFolder ? ' (current item)' : '')}
+                    <ListItemText
+                      primary={
+                        folder.name + (isMovingFolder ? ' (current item)' : '')
+                      }
                       primaryTypographyProps={{
-                        noWrap: true
+                        noWrap: true,
                       }}
                     />
                   </Box>
@@ -451,8 +468,8 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
                     sx={{
                       color: isMovingFolder ? '#ccc' : '#888',
                       '&:hover': {
-                        backgroundColor: alpha('#000', 0.05)
-                      }
+                        backgroundColor: alpha('#000', 0.05),
+                      },
                     }}
                     size="small"
                   >
@@ -465,14 +482,16 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
         )}
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, backgroundColor: '#f8f9fa', borderTop: '1px solid #eee' }}>
-        <Button 
-          onClick={handleClose} 
-          sx={{ 
+      <DialogActions
+        sx={{ p: 2, backgroundColor: '#f8f9fa', borderTop: '1px solid #eee' }}
+      >
+        <Button
+          onClick={handleClose}
+          sx={{
             borderRadius: '6px',
             px: 2,
             textTransform: 'none',
-            color: '#666'
+            color: '#666',
           }}
         >
           Cancel
@@ -482,14 +501,14 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
             <Button
               onClick={handleMove}
               variant="contained"
-              sx={{ 
+              sx={{
                 backgroundColor: '#4286f5',
                 borderRadius: '6px',
                 px: 2,
                 '&:hover': {
                   backgroundColor: '#3a76d8',
                 },
-                textTransform: 'none'
+                textTransform: 'none',
               }}
               disabled={isInvalidMove()}
             >
@@ -498,7 +517,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
           </span>
         </Tooltip>
       </DialogActions>
-      
+
       {error && (
         <ErrorAlert
           open={!!error}
