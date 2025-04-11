@@ -24,7 +24,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   username,
   searchQuery,
 }) => {
-  // ====== CONSTANTS AND REFS ======
   const visibleItems = 5; // Maximum number of folders visible without scrolling
   const folderWidth = 140; // Folder width (in pixels)
   const gap = 16; // Gap between folders (in pixels)
@@ -39,7 +38,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const isTransitioningRef = useRef(false);
   const transformRef = useRef<HTMLDivElement>(null);
 
-  // ====== STATE VARIABLES ======
   const [wasDragging, setWasDragging] = useState(false);
   const [filteredFolders, setFilteredFolders] = useState<Folder[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +65,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
 
       if (transformRef.current) {
         if (instant) {
-          // Disable transitions and jump instantly.
+          // Disable transitions and jump instantly
           transformRef.current.style.transition = 'none';
           transformRef.current.style.transform = `translate3d(${position}px, 0, 0)`;
           void transformRef.current.offsetHeight; // force reflow
@@ -75,7 +73,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
           setTranslateX(position);
           setCurrentTranslateX(position);
 
-          // Re-enable transition after a minimal delay.
+          // Re-enable transition after a minimal delay
           setTimeout(() => {
             if (transformRef.current) {
               transformRef.current.style.transition = 'transform 0.2s ease-out';
@@ -83,7 +81,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
             isTransitioningRef.current = false;
           }, 0);
         } else {
-          // Use smooth animation.
+          // Use smooth animation
           transformRef.current.style.transition = 'transform 0.2s ease-out';
           transformRef.current.style.transform = `translate3d(${position}px, 0, 0)`;
 
@@ -110,9 +108,9 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     const buffer = 10; // A 10px buffer
     const originalFoldersWidth = filteredFolders.length * slideWidth;
 
-    // If the user has scrolled too far right (i.e. translateX > buffer)
+    // If the user has scrolled too far right
     if (translateX > buffer) {
-      // Animate the reset smoothly.
+      // Animate the reset smoothly
       resetPosition(translateX - originalFoldersWidth, false);
       return;
     }
@@ -151,7 +149,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
           : [];
     }
 
-    // Sort folders using natural (numeric) order.
+    // Sort folders using natural (numeric) order
     foldersArray.sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { numeric: true }),
     );
@@ -172,7 +170,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     setFilteredFolders(updatedFilteredFolders);
 
     if (canScroll && updatedFilteredFolders.length > 0) {
-      // Create three copies for the infinite scroll effect.
+      // Create three copies for the infinite scroll effect
       const display = [
         ...updatedFilteredFolders,
         ...updatedFilteredFolders,
@@ -180,7 +178,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
       ];
       setDisplayFolders(display);
 
-      // Position the view to start at the middle set.
+      // Position the view to start at the middle set
       const newPosition = -updatedFilteredFolders.length * slideWidth;
 
       console.log('Initializing infinite carousel', {
@@ -199,7 +197,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         transformRef.current.style.transition = 'transform 0.2s ease-out';
       }
     } else {
-      // Not enough folders to need scrolling.
+      // Not enough folders to need scrolling
       setDisplayFolders(updatedFilteredFolders);
       setTranslateX(0);
       setCurrentTranslateX(0);
@@ -216,7 +214,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   }, [folders, searchQuery, slideWidth, visibleItems]);
 
   /**
-   * Runs the momentum animation after drag ends.
+   * Runs the momentum animation after drag ends
    */
   const animate = useCallback(() => {
     if (isDragging) {
@@ -241,7 +239,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         transformRef.current.style.transform = `translate3d(${next}px, 0, 0)`;
         setTranslateX(next);
       }
-      // Check bounds during momentum if not dragging.
+      // Check bounds during momentum if not dragging
       checkBounds();
       animationRef.current = requestAnimationFrame(animate);
     } else {
@@ -251,7 +249,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   }, [isDragging, translateX, checkBounds]);
 
   /**
-   * Handles drag/touch start.
+   * Handles drag/touch start
    */
   const handleDragStart = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
@@ -291,7 +289,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
       }
       setTranslateX(next);
 
-      // We do not call checkBounds here to avoid mid-drag jumps.
+      // Do not call checkBounds here to avoid mid-drag jumps
       const dt = Date.now() - lastTimeRef.current;
       if (dt > 0) {
         velocityRef.current = ((clientX - lastMouseXRef.current) / dt) * 12;
@@ -314,10 +312,10 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     setWasDragging(totalMovement > 5);
     setCurrentTranslateX(translateX);
 
-    // Start momentum animation.
+    // Start momentum animation
     animationRef.current = requestAnimationFrame(animate);
 
-    // Immediately check bounds (will animate into place smoothly if needed).
+    // Immediately check bounds (will animate into place smoothly if needed)
     checkBounds();
 
     setTimeout(() => {
