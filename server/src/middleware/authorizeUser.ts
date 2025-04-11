@@ -28,8 +28,8 @@ export const authorizeUser = async (
       userId: string;
       username: string;
     };
-    req.user = decoded; // Set the user on the request object
 
+    req.user = decoded; // Set the user on the request object
     next(); // Proceed to the next handler
   } catch (error) {
     console.error('Authorization error:', error);
