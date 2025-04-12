@@ -50,6 +50,8 @@ fileRouter.get('/events/:userId', (req: Request, res: Response) => {
  */
 function sendSSE(userId: string, event: string, data: any) {
   const client = sseClients.get(userId);
+  console.log(`[SSE] ${userId} → ${event}`, data);
+
   if (client) {
     client.write(`event: ${event}\n`);
     client.write(`data: ${JSON.stringify(data)}\n\n`);
@@ -107,7 +109,10 @@ fileRouter.post(
         mimetype = inferMimeType(originalname);
       }
 
-      const fileId = uuidv4();
+      const fileId = req.body.fileId || uuidv4(); // Use frontend's fileId if provided
+
+      sendSSE(userId, 'status', { message: 'Starting upload', fileId });
+
       const gcsFilePath = `uploads/${userId}/${parentFolder || 'root'}/${fileId}-${originalname}`;
 
       // Notify client: starting upload
@@ -124,13 +129,13 @@ fileRouter.post(
         buffer,
         mimetype,
         (percent) => {
-          sendSSE(userId, 'progress', { percent });
+          sendSSE(userId, 'progress', { percent, fileId });
         },
         controller.signal, // pass signal to StorageService
       );
 
       // Notify client: starting DB save
-      sendSSE(userId, 'status', { message: 'Saving metadata to database...' });
+      sendSSE(userId, 'status', { message: 'Saving...', fileId });
 
       const fileMetadata = await FileModel.create({
         id: fileId,

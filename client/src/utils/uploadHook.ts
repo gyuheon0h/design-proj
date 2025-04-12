@@ -1,54 +1,33 @@
-// useSSEUploadProgress.ts
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { SSEManager } from './SSEManager';
 
-export function useSSEUploadProgress() {
+export const useSSEUploadProgress = (fileId: string, userId: string) => {
   const [progress, setProgress] = useState<number | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
-  const [done, setDone] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [eventSource, setEventSource] = useState<EventSource | null>(null);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState(false);
 
-  const startListening = (userId: string) => {
-    if (eventSource) return; // prevent duplicate connections
+  useEffect(() => {
+    SSEManager.init(userId);
 
-    const baseURL = process.env.REACT_APP_API_BASE_URL;
-    const source = new EventSource(`${baseURL}/api/file/events/${userId}`);
-    setEventSource(source);
-
-    source.addEventListener('progress', (event) => {
-      const { percent } = JSON.parse(event.data);
-      setProgress(percent);
+    SSEManager.subscribe({
+      fileId,
+      onProgress: ({ percent }) => {
+        setProgress(percent);
+      },
+      onDone: () => {
+        setTimeout(() => {
+          setDone(true);
+        }, 400);
+      },
+      onError: () => {
+        setError(true);
+      },
     });
 
-    source.addEventListener('status', (event) => {
-      const { message } = JSON.parse(event.data);
-      setStatus(message);
-    });
+    return () => {
+      SSEManager.unsubscribe(fileId);
+    };
+  }, [fileId, userId]);
 
-    source.addEventListener('done', (event) => {
-      setDone(true);
-      source.close();
-    });
-
-    source.addEventListener('error', () => {
-      setError('An error occurred during upload.');
-      source.close();
-    });
-  };
-
-  const stopListening = () => {
-    if (eventSource) {
-      eventSource.close();
-      setEventSource(null);
-    }
-  };
-
-  return {
-    progress,
-    status,
-    done,
-    error,
-    startListening,
-    stopListening,
-  };
-}
+  return { progress, done, error };
+};

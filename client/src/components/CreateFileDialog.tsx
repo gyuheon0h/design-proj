@@ -18,7 +18,9 @@ import IconButton from '@mui/material/IconButton';
 interface UploadDialogProps {
   open: boolean;
   onClose: () => void;
-  onFileUpload: (file: Blob | File, relativePath: string) => Promise<void>;
+  onBatchUpload: (
+    uploads: { file: File; relativePath: string }[],
+  ) => Promise<void>;
 }
 
 type UploadFile = {
@@ -29,7 +31,7 @@ type UploadFile = {
 const UploadDialog: React.FC<UploadDialogProps> = ({
   open,
   onClose,
-  onFileUpload,
+  onBatchUpload,
 }) => {
   const [files, setFiles] = useState<UploadFile[]>([]);
   const dropRef = useRef<HTMLDivElement>(null);
@@ -119,12 +121,10 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
   };
 
   const handleUpload = async () => {
-    for (const { file, relativePath } of files) {
-      try {
-        await onFileUpload(file, relativePath);
-      } catch (err) {
-        console.error(`Failed to upload ${relativePath}:`, err);
-      }
+    try {
+      await onBatchUpload(files);
+    } catch (err) {
+      console.error(`Batch upload failed`, err);
     }
     setFiles([]);
     onClose();

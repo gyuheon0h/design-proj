@@ -8,6 +8,7 @@ import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
 import UploadProgressToast from './UploadProgress';
 import { useUser } from '../context/UserContext';
 import OwlNoteEditorDialog from './OwlNoteEditorDialog';
+import { v4 as uuidv4 } from 'uuid';
 
 interface CreateButtonProps {
   currentFolderId: string | null;
@@ -31,8 +32,6 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   const [blockNoteOpen, setBlockNoteOpen] = useState(false);
   // Drag detection
   const [didDrag, setDidDrag] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [showUploadToast, setShowUploadToast] = useState(false);
 
   const menuOpen = Boolean(anchorEl);
 
@@ -65,11 +64,20 @@ const CreateButton: React.FC<CreateButtonProps> = ({
     }
   };
 
-  const handleFileUpload = async (file: Blob, fileName: string) => {
-    // Save selected file & trigger toast
-    setSelectedFile(new File([file], fileName));
+  const [uploadsInProgress, setUploadsInProgress] = useState<
+    { file: File; id: string }[]
+  >([]);
+
+  const handleBatchFileUpload = async (
+    uploads: { file: File; relativePath: string }[],
+  ) => {
+    const newUploads = uploads.map(({ file, relativePath }) => ({
+      file: new File([file], relativePath),
+      id: uuidv4(),
+    }));
+
+    setUploadsInProgress((prev) => [...prev, ...newUploads]);
     setUploadDialogOpen(false);
-    setShowUploadToast(true);
   };
 
   const handleCreateOwlNote = async (
@@ -158,19 +166,25 @@ const CreateButton: React.FC<CreateButtonProps> = ({
       <UploadDialog
         open={uploadDialogOpen}
         onClose={closeUploadDialog}
-        onFileUpload={handleFileUpload}
+        onBatchUpload={handleBatchFileUpload}
       />
 
-      {selectedFile && showUploadToast && (
+      {uploadsInProgress.map(({ file, id }, index) => (
         <UploadProgressToast
+          key={id}
+          file={file}
+          fileId={id}
           userId={userId}
-          file={selectedFile}
           parentFolder={currentFolderId}
-          onClose={() => setShowUploadToast(false)}
+          onClose={() =>
+            setUploadsInProgress((prev) => prev.filter((u) => u.id !== id))
+          }
           refreshFiles={refreshFiles}
           refreshStorage={refreshStorage}
+          offset={index}
         />
-      )}
+      ))}
+
       <OwlNoteEditorDialog
         // fileName="file1" //TODO: hardcode filename for now, fix later
         parentFolder={currentFolderId}

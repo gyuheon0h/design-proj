@@ -101,7 +101,6 @@ const StorageService = {
    * @param abortSignal Optional signal if aborted to cancel GCS operation.
    * @returns
    */
-
   uploadFileWithProgress: async (
     filePath: string,
     buffer: Buffer,
@@ -113,6 +112,11 @@ const StorageService = {
     const stream = file.createWriteStream({
       metadata: { contentType: mimeType },
     });
+
+    // Prevent MaxListenersExceededWarning
+    stream.setMaxListeners(30);
+
+    // Handle aborts
     if (abortSignal) {
       abortSignal.addEventListener('abort', () => {
         stream.destroy(new Error('Upload aborted by user'));
@@ -120,32 +124,60 @@ const StorageService = {
     }
 
     return new Promise<void>((resolve, reject) => {
+      let lastSentPercent = -1;
+
       const chunkSize = 1024 * 64; // 64 KB chunks
       let offset = 0;
       const totalSize = buffer.length;
+
+      const onError = (err: Error) => {
+        cleanup();
+        reject(err);
+      };
+
+      const onFinish = () => {
+        cleanup();
+        resolve();
+      };
+
+      const onDrain = () => {
+        writeNextChunk();
+      };
+
+      function cleanup() {
+        stream.removeListener('error', onError);
+        stream.removeListener('finish', onFinish);
+        stream.removeListener('drain', onDrain);
+      }
+
       function writeNextChunk() {
+        if (offset >= totalSize) {
+          stream.end(); // wait for finish
+          return;
+        }
+
         const end = Math.min(offset + chunkSize, totalSize);
         const chunk = buffer.slice(offset, end);
+
         const canContinue = stream.write(chunk, () => {
           offset = end;
           const percent = Math.round((offset / totalSize) * 100);
-          if (onProgress) onProgress(percent);
 
-          if (offset < totalSize) {
-            writeNextChunk();
-          } else {
-            stream.end();
+          if (onProgress && percent !== lastSentPercent) {
+            onProgress(percent);
+            lastSentPercent = percent;
           }
+
+          writeNextChunk(); // schedule next chunk
         });
 
-        // If backpressure, wait for drain
         if (!canContinue) {
-          stream.once('drain', writeNextChunk);
+          stream.once('drain', onDrain);
         }
       }
 
-      stream.on('error', reject);
-      stream.on('finish', resolve);
+      stream.on('error', onError);
+      stream.on('finish', onFinish);
 
       writeNextChunk();
     });

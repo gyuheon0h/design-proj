@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Snackbar,
   Alert,
   IconButton,
   Typography,
@@ -13,26 +12,31 @@ import { useSSEUploadProgress } from '../utils/uploadHook';
 
 interface UploadProgressToastProps {
   file: File;
+  fileId: string;
   parentFolder: string | null;
   userId: string;
   onClose: () => void;
   refreshFiles: (folderId: string | null) => void;
   refreshStorage: () => Promise<void>;
+  offset?: number;
 }
 
 const UploadProgressToast: React.FC<UploadProgressToastProps> = ({
   file,
   parentFolder,
   userId,
+  fileId,
   onClose,
   refreshFiles,
   refreshStorage,
+  offset,
 }) => {
-  const { progress, done, error, startListening, stopListening } =
-    useSSEUploadProgress();
+  const { progress, done, error } = useSSEUploadProgress(fileId, userId);
+
   const hasStarted = useRef(false);
   const abortController = useRef<AbortController | null>(null);
   const [cancelled, setCancelled] = useState(false);
+  const SNACKBAR_HEIGHT = 80;
 
   useEffect(() => {
     const uploadFile = async () => {
@@ -40,7 +44,7 @@ const UploadProgressToast: React.FC<UploadProgressToastProps> = ({
       formData.append('file', file);
       formData.append('fileName', file.name);
       formData.append('parentFolder', parentFolder ?? '');
-
+      formData.append('fileId', fileId);
       abortController.current = new AbortController();
 
       try {
@@ -64,10 +68,9 @@ const UploadProgressToast: React.FC<UploadProgressToastProps> = ({
 
     if (!hasStarted.current) {
       hasStarted.current = true;
-      startListening(userId);
       uploadFile();
     }
-  }, [file, userId, parentFolder, startListening]);
+  }, [file, userId, parentFolder, fileId]);
 
   useEffect(() => {
     if (done && !cancelled) {
@@ -79,16 +82,18 @@ const UploadProgressToast: React.FC<UploadProgressToastProps> = ({
 
   const handleCancel = () => {
     abortController.current?.abort();
-    stopListening();
     setCancelled(true);
     setTimeout(onClose, 4000);
   };
 
   return (
-    <Snackbar
-      open
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-      sx={{ bottom: { xs: 90, sm: 100 } }}
+    <Box
+      sx={{
+        position: 'fixed',
+        left: 24,
+        bottom: 24 + (offset ?? 0) * SNACKBAR_HEIGHT,
+        zIndex: (theme) => theme.zIndex.snackbar,
+      }}
     >
       <Alert
         severity={
@@ -134,7 +139,7 @@ const UploadProgressToast: React.FC<UploadProgressToastProps> = ({
           </Box>
         )}
       </Alert>
-    </Snackbar>
+    </Box>
   );
 };
 
