@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import SendIcon from '@mui/icons-material/Send';
-import DriveFileMove from '@mui/icons-material/DriveFileMove';
 import RestoreIcon from '@mui/icons-material/Restore';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import EditNoteIcon from '@mui/icons-material/EditNote';
@@ -181,9 +180,7 @@ const FileComponent = (props: FileComponentProps) => {
 
   const isEditSupported = isSupportedFileTypeText(props.file.fileType);
 
-  const [currentPermission, setCurrentPermission] = useState<Permission | null>(
-    null,
-  );
+  const [, setCurrentPermission] = useState<Permission | null>(null);
 
   useEffect(() => {
     const fetchPermission = async () => {
