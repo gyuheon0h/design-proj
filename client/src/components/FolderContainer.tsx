@@ -19,25 +19,26 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   page,
   folders,
   onFolderClick,
-  currentFolderId,
   refreshFolders,
-  username,
   searchQuery,
 }) => {
-  const visibleItems = 5; // Maximum number of folders visible without scrolling
-  const folderWidth = 140; // Folder width (in pixels)
-  const gap = 16; // Gap between folders (in pixels)
+  // Constants and refs
+  const visibleItems = 6; // maximum folders visible without scrolling
+  const folderWidth = 140; // each folder width (in pixels)
+  const gap = 16; // gap between folders in pixels
   const containerRef = useRef<HTMLDivElement>(null);
-  const slideWidth = folderWidth + gap; // Total width per folder item
+  const slideWidth = folderWidth + gap; // total width taken by each folder
 
   // Animation and physics refs
-  const animationRef = useRef<number | undefined>(undefined);
-  const velocityRef = useRef(0);
+  // No velocity and momentum for simplicity
+  // const animationRef = useRef<number | undefined>(undefined);
+  // const velocityRef = useRef(0);
   const lastMouseXRef = useRef(0);
-  const lastTimeRef = useRef(Date.now());
+  // const lastTimeRef = useRef(Date.now());
   const isTransitioningRef = useRef(false);
   const transformRef = useRef<HTMLDivElement>(null);
 
+  // State variables
   const [wasDragging, setWasDragging] = useState(false);
   const [filteredFolders, setFilteredFolders] = useState<Folder[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -48,95 +49,92 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const [shouldScroll, setShouldScroll] = useState(false);
   const [displayFolders, setDisplayFolders] = useState<Folder[]>([]);
 
+  // Use a ref to always track the latest isDragging value.
+  const isDraggingRef = useRef(isDragging);
+  useEffect(() => {
+    isDraggingRef.current = isDragging;
+    console.log('[useEffect] isDragging changed to:', isDragging);
+  }, [isDragging]);
+
   /**
-   * Resets the scroll position.
-   * If instant is false, this update animates smoothly.
+   * Dynamically reorders the cloned sets to maintain infinite scrolling.
+   *
+   * If the user scrolls too far to the right (translateX > -totalSetWidth)
+   * then move the left clone to the end and subtract one set width.
+   *
+   * If the user scrolls too far to the left (translateX < -(2 * totalSetWidth))
+   * then move the right clone to the beginning and add one set width.
    */
-  const resetPosition = useCallback(
-    (position: number, instant = true) => {
-      if (isTransitioningRef.current) return;
-      isTransitioningRef.current = true;
+  const reorderClones = useCallback(() => {
+    console.log(
+      '[reorderClones] Checking reorder conditions. translateX:',
+      translateX,
+    );
+    if (!shouldScroll) {
+      console.log('[reorderClones] shouldScroll is false. Exiting.');
+      return;
+    }
+    const n = filteredFolders.length;
+    if (n === 0) return;
+    const totalSetWidth = n * slideWidth;
+    let newTranslateX = translateX;
+    let newDisplayFolders = displayFolders;
+    let changed = false;
 
-      console.log('Resetting position', {
-        from: translateX,
-        to: position,
-        instant,
-      });
+    // Condition for scrolling to the right.
+    if (translateX > -totalSetWidth) {
+      console.log(
+        '[reorderClones] Right side condition met. translateX:',
+        translateX,
+      );
+      newDisplayFolders = displayFolders
+        .slice(0, n)
+        .concat(displayFolders.slice(n));
+      newTranslateX = translateX - totalSetWidth - slideWidth - gap / 4;
+      changed = true;
+    }
+    // Condition for scrolling to the left.
+    else if (translateX < -(2 * totalSetWidth)) {
+      console.log(
+        '[reorderClones] Left side condition met. translateX:',
+        translateX,
+      );
+      newDisplayFolders = displayFolders
+        .slice(-n)
+        .concat(displayFolders.slice(0, -n));
+      newTranslateX = translateX + totalSetWidth + slideWidth + gap / 4;
+      changed = true;
+    }
 
+    if (changed) {
+      console.log(
+        '[reorderClones] Reordering clones. New translateX:',
+        newTranslateX,
+        'n:',
+        n,
+        'old translateX:',
+        translateX,
+      );
+      setDisplayFolders(newDisplayFolders);
+      setTranslateX(newTranslateX);
+      setCurrentTranslateX(newTranslateX);
       if (transformRef.current) {
-        if (instant) {
-          // Disable transitions and jump instantly
-          transformRef.current.style.transition = 'none';
-          transformRef.current.style.transform = `translate3d(${position}px, 0, 0)`;
-          void transformRef.current.offsetHeight; // force reflow
-
-          setTranslateX(position);
-          setCurrentTranslateX(position);
-
-          // Re-enable transition after a minimal delay
-          setTimeout(() => {
-            if (transformRef.current) {
-              transformRef.current.style.transition = 'transform 0.2s ease-out';
-            }
-            isTransitioningRef.current = false;
-          }, 0);
-        } else {
-          // Use smooth animation
-          transformRef.current.style.transition = 'transform 0.2s ease-out';
-          transformRef.current.style.transform = `translate3d(${position}px, 0, 0)`;
-
-          setTranslateX(position);
-          setCurrentTranslateX(position);
-
-          setTimeout(() => {
-            isTransitioningRef.current = false;
-          }, 200);
-        }
+        transformRef.current.style.transition = 'none';
+        transformRef.current.style.transform = `translate3d(${newTranslateX}px, 0, 0)`;
+        void transformRef.current.offsetHeight;
+        transformRef.current.style.transition = 'transform 0.2s ease-out';
       }
-    },
-    [translateX],
-  );
+    } else {
+      console.log('[reorderClones] No reordering needed.');
+    }
+  }, [translateX, displayFolders, filteredFolders, slideWidth, shouldScroll]);
 
   /**
-   * Checks boundaries and, if needed, resets the position with smooth animation.
-   * Note: This function does nothing while the user is actively dragging.
-   */
-  const checkBounds = useCallback(() => {
-    if (isTransitioningRef.current || !shouldScroll || isDragging) return;
-    if (filteredFolders.length <= visibleItems) return;
-
-    const buffer = 10; // A 10px buffer
-    const originalFoldersWidth = filteredFolders.length * slideWidth;
-
-    // If the user has scrolled too far right
-    if (translateX > buffer) {
-      // Animate the reset smoothly
-      resetPosition(translateX - originalFoldersWidth, false);
-      return;
-    }
-
-    // If the user has scrolled too far left
-    if (translateX < -originalFoldersWidth - buffer) {
-      resetPosition(translateX + originalFoldersWidth, false);
-      return;
-    }
-  }, [
-    isDragging,
-    filteredFolders.length,
-    resetPosition,
-    shouldScroll,
-    slideWidth,
-    translateX,
-    visibleItems,
-  ]);
-
-  /**
-   * Processes folders, sets up infinite scroll if needed,
-   * and initializes the container’s position.
+   * Processes the folder data, applies filtering and sorting,
+   * and sets up the initial array for infinite scrolling.
    */
   useEffect(() => {
     let foldersArray: Folder[] = [];
-
     if (Array.isArray(folders)) {
       foldersArray = folders;
     } else {
@@ -149,7 +147,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
           : [];
     }
 
-    // Sort folders using natural (numeric) order
+    // Sort folders using natural (numeric-aware) order.
     foldersArray.sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { numeric: true }),
     );
@@ -159,18 +157,28 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
     );
 
     const canScroll = updatedFilteredFolders.length > visibleItems;
+    console.log(
+      '[useEffect] canScroll:',
+      canScroll,
+      'Filtered folders:',
+      updatedFilteredFolders.length,
+    );
     setShouldScroll(canScroll);
 
+    // No momentum for simplicity
+    /*
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
       animationRef.current = undefined;
     }
-    velocityRef.current = 0;
+    */
+    // Reset velocity (if used in other parts)
+    // velocityRef.current = 0;
 
     setFilteredFolders(updatedFilteredFolders);
 
     if (canScroll && updatedFilteredFolders.length > 0) {
-      // Create three copies for the infinite scroll effect
+      // Create three sets for infinite scroll.
       const display = [
         ...updatedFilteredFolders,
         ...updatedFilteredFolders,
@@ -178,10 +186,9 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
       ];
       setDisplayFolders(display);
 
-      // Position the view to start at the middle set
+      // Initially, position on the middle clone.
       const newPosition = -updatedFilteredFolders.length * slideWidth;
-
-      console.log('Initializing infinite carousel', {
+      console.log('[useEffect] Initializing infinite carousel', {
         count: updatedFilteredFolders.length,
         displayCount: display.length,
         position: newPosition,
@@ -197,11 +204,9 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         transformRef.current.style.transition = 'transform 0.2s ease-out';
       }
     } else {
-      // Not enough folders to need scrolling
       setDisplayFolders(updatedFilteredFolders);
       setTranslateX(0);
       setCurrentTranslateX(0);
-
       if (transformRef.current) {
         transformRef.current.style.transition = 'none';
         transformRef.current.style.transform = 'translate3d(0px, 0, 0)';
@@ -209,23 +214,24 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         transformRef.current.style.transition = 'transform 0.2s ease-out';
       }
     }
-
     isTransitioningRef.current = false;
   }, [folders, searchQuery, slideWidth, visibleItems]);
 
   /**
-   * Runs the momentum animation after drag ends
+   * No Momentum for simplicity
    */
+  /*
   const animate = useCallback(() => {
-    if (isDragging) {
+    console.log('[animate] Entering animate. isDragging (ref):', isDraggingRef.current);
+    if (isDraggingRef.current) {
       animationRef.current = requestAnimationFrame(animate);
       return;
     }
-
     const now = Date.now();
     const dt = Math.min(now - lastTimeRef.current, 32);
     lastTimeRef.current = now;
 
+    // Apply friction.
     velocityRef.current *= Math.pow(0.92, dt / 16);
     const maxVelocity = 20;
     velocityRef.current = Math.min(
@@ -233,120 +239,132 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
       maxVelocity,
     );
 
+    console.log('[animate] translateX:', translateX, 'velocity:', velocityRef.current, 'dt:', dt);
+
     if (Math.abs(velocityRef.current) > 0.1) {
       const next = translateX + (velocityRef.current * dt) / 20;
       if (transformRef.current) {
         transformRef.current.style.transform = `translate3d(${next}px, 0, 0)`;
-        setTranslateX(next);
       }
-      // Check bounds during momentum if not dragging
-      checkBounds();
+      console.log('[animate] Momentum going.');
+      setTranslateX(next);
+      setCurrentTranslateX(next);
       animationRef.current = requestAnimationFrame(animate);
     } else {
       velocityRef.current = 0;
-      checkBounds();
+      console.log('[animate] Momentum stopped. Calling reorderClones.');
+      reorderClones();
     }
-  }, [isDragging, translateX, checkBounds]);
+  }, [translateX, reorderClones]);
+  */
 
   /**
-   * Handles drag/touch start
+   * Handles drag/touch start events.
    */
   const handleDragStart = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       if (!shouldScroll) return;
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      console.log('[handleDragStart] Drag started at clientX:', clientX);
       setIsDragging(true);
       setWasDragging(false);
-
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
       setDragStartX(clientX);
       setCurrentTranslateX(translateX);
       lastMouseXRef.current = clientX;
-      lastTimeRef.current = Date.now();
-      velocityRef.current = 0;
-
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      // lastTimeRef.current = Date.now(); // Not used without momentum.
+      // velocityRef.current = 0;
+      // if (animationRef.current) {
+      //   cancelAnimationFrame(animationRef.current);
+      // }
     },
     [shouldScroll, translateX],
   );
 
   /**
-   * Handles drag/touch movement.
-   * Note: We no longer invoke checkBounds here, so the reset won’t occur mid-drag.
+   * Handles drag/touch move events.
    */
   const handleDragMove = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       if (!isDragging || !shouldScroll) return;
       e.preventDefault();
-
       const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
       const diff = clientX - dragStartX;
       const next = currentTranslateX + diff * 0.8;
-
+      console.log(
+        '[handleDragMove] clientX:',
+        clientX,
+        'diff:',
+        diff,
+        'next translateX:',
+        next,
+      );
       if (transformRef.current) {
         transformRef.current.style.transform = `translate3d(${next}px, 0, 0)`;
       }
       setTranslateX(next);
-
-      // Do not call checkBounds here to avoid mid-drag jumps
-      const dt = Date.now() - lastTimeRef.current;
-      if (dt > 0) {
-        velocityRef.current = ((clientX - lastMouseXRef.current) / dt) * 12;
-      }
+      // Commenting out velocity/animation calculations.
+      // const dt = Date.now() - lastTimeRef.current;
+      // if (dt > 0) {
+      //   velocityRef.current = ((clientX - lastMouseXRef.current) / dt) * 12;
+      // }
       lastMouseXRef.current = clientX;
-      lastTimeRef.current = Date.now();
+      // lastTimeRef.current = Date.now();
     },
     [isDragging, shouldScroll, dragStartX, currentTranslateX],
   );
 
   /**
-   * Handles the end of a drag/touch event.
-   * On drag end, we trigger momentum animation and then check boundaries.
+   * Handles drag/touch end events.
+   * For simplicity, we disable momentum here and simply call reorderClones.
    */
   const handleDragEnd = useCallback(() => {
+    console.log(
+      '[handleDragEnd] Entering handleDragEnd. isDragging:',
+      isDragging,
+    );
     if (!isDragging || !shouldScroll) return;
-    setIsDragging(false);
-
     const totalMovement = Math.abs(translateX - currentTranslateX);
+    console.log('[handleDragEnd] Drag ended. Total movement:', totalMovement);
+
+    setIsDragging(false);
     setWasDragging(totalMovement > 5);
     setCurrentTranslateX(translateX);
 
-    // Start momentum animation
-    animationRef.current = requestAnimationFrame(animate);
+    // Call reorderClones unconditionally; it will check translateX internally.
+    reorderClones();
 
-    // Immediately check bounds (will animate into place smoothly if needed)
-    checkBounds();
-
-    setTimeout(() => {
-      setWasDragging(false);
-    }, 50);
-  }, [
-    isDragging,
-    shouldScroll,
-    translateX,
-    animate,
-    currentTranslateX,
-    checkBounds,
-  ]);
+    // No momentum or velovity for simplicity
+    // If you wanted momentum, you'd call animationRef.current = requestAnimationFrame(animate);
+    // setTimeout(() => {
+    //   setWasDragging(false);
+    // }, 50);
+  }, [isDragging, shouldScroll, translateX, currentTranslateX, reorderClones]);
 
   /**
-   * Swipe handlers via react-swipeable.
+   * Swipe handlers from react-swipeable.
    */
   const swipeHandlers = useSwipeable({
     onSwiping: (e) => {
       if (!shouldScroll) return;
       const diff = e.deltaX;
+      console.log('[swipeHandlers] Swiping. deltaX:', diff);
       setTranslateX((prev) => prev + diff * 0.8);
     },
-    onSwipedLeft: checkBounds,
-    onSwipedRight: checkBounds,
+    onSwipedLeft: () => {
+      console.log('[swipeHandlers] Swiped left. Calling reorderClones.');
+      reorderClones();
+    },
+    onSwipedRight: () => {
+      console.log('[swipeHandlers] Swiped right. Calling reorderClones.');
+      reorderClones();
+    },
     trackMouse: true,
     preventScrollOnSwipe: true,
     delta: 10,
     swipeDuration: 500,
   });
 
+  // Remove onMouseLeave to avoid accidental re-triggering of drag.
   useEffect(() => {
     setWasDragging(false);
   }, [folders]);
@@ -370,7 +388,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
         onMouseDown={shouldScroll ? handleDragStart : undefined}
         onMouseMove={shouldScroll ? handleDragMove : undefined}
         onMouseUp={shouldScroll ? handleDragEnd : undefined}
-        onMouseLeave={shouldScroll ? handleDragEnd : undefined}
         onTouchStart={shouldScroll ? handleDragStart : undefined}
         onTouchMove={shouldScroll ? handleDragMove : undefined}
         onTouchEnd={shouldScroll ? handleDragEnd : undefined}
@@ -397,6 +414,7 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
             ref={transformRef}
             sx={{
               display: 'flex',
+              flexDirection: 'row',
               position: 'relative',
               gap: 2,
               transform: shouldScroll
@@ -437,7 +455,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
           </Box>
         </Box>
       </Box>
-
       {error && (
         <ErrorAlert
           open={!!error}
