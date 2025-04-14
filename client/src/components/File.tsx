@@ -198,7 +198,7 @@ const getFileIcon = (fileType: string) => {
 const FileComponent = (props: FileComponentProps) => {
   const { userId } = useUser(); // Add this to get the current user ID
   const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
-  const [, setModifiedByName] = useState<string>('N/A');
+  const [modifiedByName, setModifiedByName] = useState<string>('N/A');
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
@@ -220,8 +220,6 @@ const FileComponent = (props: FileComponentProps) => {
   const [currentPermission, setCurrentPermission] = useState<Permission | null>(
     null,
   );
-
-  const isEditSupported = isSupportedFileTypeText(props.file.fileType);
 
   // Check if the file is shared with others
   useEffect(() => {

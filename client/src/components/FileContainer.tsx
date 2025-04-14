@@ -50,8 +50,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           marginBottom: '15px',
-          // Using the colors import to fix the ESLint warning
-          borderBottom: `1px solid ${colors.divider}`,
+          borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
         }}
       >
         <Typography variant="h2">Files</Typography>
