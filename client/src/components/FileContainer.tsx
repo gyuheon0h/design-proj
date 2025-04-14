@@ -2,8 +2,15 @@ import React, { useState, useEffect } from 'react';
 import FileComponent from './File';
 import { File } from '../interfaces/File';
 import ErrorAlert from '../components/ErrorAlert';
-import { Table, TableHead, TableRow, TableCell, TableBody, Box, Typography } from '@mui/material';
-import { colors } from '../Styles';
+import {
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Box,
+  Typography,
+} from '@mui/material';
 
 interface FileContainerProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -53,10 +60,18 @@ const FileContainer: React.FC<FileContainerProps> = ({
       <Table sx={{ tableLayout: 'fixed' }}>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ width: '35%', fontWeight: 'bold' }}>Name</TableCell>
-            <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>Created</TableCell>
-            <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Owner</TableCell>
-            <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>Last Modified</TableCell>
+            <TableCell sx={{ width: '35%', fontWeight: 'bold' }}>
+              Name
+            </TableCell>
+            <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>
+              Created
+            </TableCell>
+            <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>
+              Owner
+            </TableCell>
+            <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>
+              Last Modified
+            </TableCell>
             <TableCell sx={{ width: '10%' }}></TableCell>
           </TableRow>
         </TableHead>
@@ -71,13 +86,13 @@ const FileContainer: React.FC<FileContainerProps> = ({
           ))}
         </TableBody>
       </Table>
-      
+
       {filteredFiles.length === 0 && (
         <Box sx={{ textAlign: 'center', padding: '30px' }}>
           <Typography variant="body1">No files found</Typography>
         </Box>
       )}
-      
+
       {error && (
         <ErrorAlert
           open={!!error}

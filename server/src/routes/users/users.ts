@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import UserModel from '../../db_models/UserModel';
-import { AuthenticatedRequest, authorize } from '../../middleware/authorize';
+import {
+  AuthenticatedRequest,
+  authorizeUser,
+} from '../../middleware/authorizeUser';
 import PermissionModel from '../../db_models/PermissionModel';
 import FolderModel from '../../db_models/FolderModel';
 import FileModel from '../../db_models/FileModel';
@@ -37,7 +40,7 @@ userRouter.get('/all', async (req, res) => {
  */
 userRouter.get(
   '/:userId/home/file',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {
@@ -67,7 +70,7 @@ userRouter.get(
  */
 userRouter.get(
   '/:userId/home/folder',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {
@@ -98,7 +101,7 @@ userRouter.get(
  */
 userRouter.get(
   '/:userId/shared/folder',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       const currentUserId = (req as any).user.userId;
@@ -136,7 +139,7 @@ userRouter.get(
  */
 userRouter.get(
   '/:userId/shared/file',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       const currentUserId = (req as any).user.userId;
@@ -175,7 +178,7 @@ userRouter.get(
 
 userRouter.get(
   '/:userId/favorites/folder',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {
@@ -209,7 +212,7 @@ userRouter.get(
 
 userRouter.get(
   '/permissions/:fileId',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {
@@ -237,7 +240,7 @@ userRouter.get(
  */
 userRouter.get(
   '/:userId/favorites/file',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {
@@ -266,7 +269,7 @@ userRouter.get(
  */
 userRouter.patch(
   '/:userId/favorites/:fileId',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {
@@ -291,7 +294,7 @@ userRouter.patch(
 
 userRouter.get(
   '/:userId/trash/file',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       const userId = (req as any).user.userId;
@@ -304,7 +307,7 @@ userRouter.get(
   },
 );
 
-userRouter.get('/:userId/trash/folder', authorize, async (req, res) => {
+userRouter.get('/:userId/trash/folder', authorizeUser, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const deletedFolders = await FolderModel.getAllByOwnerAndDeleted(userId);
@@ -317,7 +320,7 @@ userRouter.get('/:userId/trash/folder', authorize, async (req, res) => {
 
 userRouter.post(
   '/:userId/update-profile',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {
@@ -374,7 +377,7 @@ userRouter.post(
 
 userRouter.delete(
   '/:userId/delete-account',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {
@@ -410,7 +413,7 @@ userRouter.delete(
 // returns the total storage used by {userId} in bytes
 userRouter.get(
   '/:userId/storage-used',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {
@@ -436,7 +439,7 @@ userRouter.get(
 
 userRouter.get(
   '/:userId/home/folder',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       // const { folderId } = req.body; // Get from request body
@@ -465,7 +468,7 @@ userRouter.get(
 
 userRouter.get(
   '/:userId/trash/file',
-  authorize,
+  authorizeUser,
   async (req: AuthenticatedRequest, res) => {
     try {
       const userId = (req as any).user.userId;

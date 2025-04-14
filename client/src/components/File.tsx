@@ -135,12 +135,11 @@ const getFileIcon = (fileType: string) => {
     case 'text':
       if (extension === 'owlnote')
         return (
-            <Typography sx={{ fontSize: 30, marginRight: '10px' }}>
-              🦉
-            </Typography>
-          );
-      else return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-        
+          <Typography sx={{ fontSize: 30, marginRight: '10px' }}>🦉</Typography>
+        );
+      else
+        return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+
     case 'application':
       if (extension === 'pdf')
         return (
@@ -199,7 +198,7 @@ const getFileIcon = (fileType: string) => {
 const FileComponent = (props: FileComponentProps) => {
   const { userId } = useUser(); // Add this to get the current user ID
   const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
-  const [modifiedByName, setModifiedByName] = useState<string>('N/A');
+  const [, setModifiedByName] = useState<string>('N/A');
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
@@ -215,6 +214,8 @@ const FileComponent = (props: FileComponentProps) => {
   const [fileSrc, setFileSrc] = useState('');
 
   const [error, setError] = useState<string | null>(null);
+
+  const isEditSupported = isSupportedFileTypeText(props.file.fileType);
 
   const [currentPermission, setCurrentPermission] = useState<Permission | null>(
     null,
@@ -261,7 +262,81 @@ const FileComponent = (props: FileComponentProps) => {
 
     fetchPermission();
   }, [props.page, props.file.id]);
+  const getMenuItems = () => {
+    if (props.page === 'trash') {
+      return (
+        <MenuItem onClick={handleRestoreClick}>
+          <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Restore
+        </MenuItem>
+      );
+    }
 
+    const menuItems = [];
+
+    if (isEditSupported) {
+      menuItems.push(
+        <MenuItem key="edit" onClick={handleEditClick}>
+          <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Edit
+        </MenuItem>,
+        <Divider key="divider-edit" sx={{ my: 0.2 }} />,
+      );
+    }
+
+    // Share
+    menuItems.push(
+      <MenuItem key="share" onClick={handlePermissionsClick}>
+        <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
+      </MenuItem>,
+      <Divider key="divider-share" sx={{ my: 0.2 }} />,
+    );
+
+    // Rename
+    menuItems.push(
+      <MenuItem key="rename" onClick={handleRenameClick}>
+        <DriveFileRenameOutlineIcon
+          sx={{ fontSize: '20px', marginRight: '9px' }}
+        />{' '}
+        Rename
+      </MenuItem>,
+      <Divider key="divider-rename" sx={{ my: 0.2 }} />,
+    );
+
+    // Delete (only in home & favorites)
+    if (props.page === 'home' || props.page === 'favorites') {
+      menuItems.push(
+        <MenuItem key="delete" onClick={handleDeleteClick}>
+          <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Delete
+        </MenuItem>,
+        <Divider key="divider-delete" sx={{ my: 0.2 }} />,
+      );
+    }
+
+    // Download
+    menuItems.push(
+      <MenuItem
+        key="download"
+        onClick={() => {
+          downloadFile(props.file.id, props.file.name);
+          handleOptionsClose();
+        }}
+      >
+        <InsertDriveFileIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
+        Download
+      </MenuItem>,
+      <Divider key="divider-download" sx={{ my: 0.2 }} />,
+    );
+
+    // Move (shared, home)
+    if (props.page !== 'favorites') {
+      menuItems.push(
+        <MenuItem key="move" onClick={handleMoveClick}>
+          <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
+        </MenuItem>,
+      );
+    }
+
+    return menuItems;
+  };
   useEffect(() => {
     const fetchOwnerUserName = async () => {
       if (props.file.owner) {
@@ -275,7 +350,6 @@ const FileComponent = (props: FileComponentProps) => {
         }
       }
     };
-
     fetchOwnerUserName();
   }, [props.file.owner]);
 
@@ -654,78 +728,7 @@ const FileComponent = (props: FileComponentProps) => {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        {props.page === 'trash' ? (
-          <MenuItem onClick={handleRestoreClick} key="restore">
-            <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-            Restore
-          </MenuItem>
-        ) : props.page === 'shared' ? (
-          [
-            currentPermission?.role === 'editor' && isEditSupported && (
-              <MenuItem onClick={handleEditClick} key="edit">
-                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-                Edit
-              </MenuItem>
-            ),
-            <MenuItem
-              onClick={() => {
-                downloadFile(props.file.id, props.file.name);
-                handleOptionsClose();
-              }}
-              key="download"
-            >
-              <InsertDriveFileIcon
-                sx={{ fontSize: '20px', marginRight: '9px' }}
-              />{' '}
-              Download
-            </MenuItem>,
-          ]
-        ) : (
-          [
-            isEditSupported && (
-              <MenuItem onClick={handleEditClick} key="edit">
-                <EditNoteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-                Edit
-              </MenuItem>
-            ),
-            <MenuItem onClick={handlePermissionsClick} key="share">
-              <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Share
-            </MenuItem>,
-            <MenuItem onClick={handleRenameClick} key="rename">
-              <DriveFileRenameOutlineIcon
-                sx={{ fontSize: '20px', marginRight: '9px' }}
-              />{' '}
-              Rename
-            </MenuItem>,
-            <MenuItem onClick={handleMoveClick} key="move">
-              <DriveFileMove sx={{ fontSize: '20px', marginRight: '9px' }} />{' '}
-              Move
-            </MenuItem>,
-            <MenuItem
-              onClick={() => {
-                downloadFile(props.file.id, props.file.name);
-                handleOptionsClose();
-              }}
-              key="download"
-            >
-              <InsertDriveFileIcon
-                sx={{ fontSize: '20px', marginRight: '9px' }}
-              />{' '}
-              Download
-            </MenuItem>,
-            <Divider key="divider" />,
-            <MenuItem
-              onClick={handleDeleteClick}
-              sx={{ color: '#FF6347' }}
-              key="delete"
-            >
-              <DeleteIcon
-                sx={{ fontSize: '20px', marginRight: '9px', color: '#FF6347' }}
-              />{' '}
-              Delete
-            </MenuItem>,
-          ]
-        )}
+        {getMenuItems()}
       </Menu>
 
       <RenameDialog
