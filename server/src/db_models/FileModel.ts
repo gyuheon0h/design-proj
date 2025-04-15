@@ -1,4 +1,5 @@
 import BaseModel from './baseModel';
+import { recursiveDeletePermissions } from './ModelHelpers';
 
 interface File {
   id: string;
@@ -11,6 +12,7 @@ interface File {
   gcsKey: string;
   fileType: string;
   fileSize: number;
+  deletedAt: Date | null;
 }
 
 class FileModel extends BaseModel<File> {
@@ -52,6 +54,7 @@ class FileModel extends BaseModel<File> {
 
   // Soft delete a file
   async deleteFile(id: string): Promise<boolean> {
+    recursiveDeletePermissions(id, null);
     return await this.softDelete(id);
   }
 
