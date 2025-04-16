@@ -1,49 +1,95 @@
-// Define Liveblocks types for your application
-// https://liveblocks.io/docs/api-reference/liveblocks-react#Typing-your-data
-declare global {
-  interface Liveblocks {
-    // Each user's Presence, for useMyPresence, useOthers, etc.
-    Presence: {
-      // Example, real-time cursor coordinates
-      // cursor: { x: number; y: number };
-    };
+import { BlockNoteEditor } from '@blocknote/core';
+import { Block } from '@blocknote/core';
+import { clone } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 
-    // The Storage tree for the room, for useMutation, useStorage, etc.
-    Storage: {
-      // Example, a conflict-free list
-      // animals: LiveList<string>;
-    };
+const VALID_BLOCK_TYPES = [
+  'paragraph',
+  'heading',
+  'codeBlock',
+  'bulletListItem',
+  'numberedListItem',
+  'checkListItem',
+  'table',
+  'file',
+  'image',
+  'video',
+  'audio',
+] as const;
 
-    // Custom user info set when authenticating with a secret key
-    UserMeta: {
-      id: string;
-      info: {
-        // Example properties, for useSelf, useUser, useOthers, etc.
-        // name: string;
-        // avatar: string;
-      };
-    };
+export const cloneBlocksWithNewIds = (blocks: Block[]): Block[] => {
+  const clone = (block: Block): Block => ({
+    ...block,
+    id: uuidv4(),
+    children: Array.isArray(block.children)
+      ? block.children.filter(Boolean).map(clone)
+      : [],
+  });
 
-    // Custom events, for useBroadcastEvent, useEventListener
-    RoomEvent: {};
-    // Example has two events, using a union
-    // | { type: "PLAY" }
-    // | { type: "REACTION"; emoji: "🔥" };
+  return (blocks || []).filter(Boolean).map(clone);
+};
 
-    // Custom metadata set on threads, for useThreads, useCreateThread, etc.
-    ThreadMetadata: {
-      // Example, attaching coordinates to a thread
-      // x: number;
-      // y: number;
-    };
+type ValidBlockType = (typeof VALID_BLOCK_TYPES)[number];
 
-    // Custom room info set with resolveRoomsInfo, for useRoomInfo
-    RoomInfo: {
-      // Example, rooms with a title and url
-      // title: string;
-      // url: string;
-    };
-  }
-}
+export const sanitizeBlocks = (blocks: Block[]): Block[] => {
+  const cleanText = (text: any): string =>
+    typeof text === 'string' ? text : '';
 
-export {};
+  const sanitize = (block: any): Block => ({
+    id: uuidv4(),
+    type: VALID_BLOCK_TYPES.includes(block.type) ? block.type : 'paragraph',
+    props: {
+      textAlignment: block.props?.textAlignment || 'left',
+      backgroundColor: block.props?.backgroundColor || 'default',
+      textColor: block.props?.textColor || 'default',
+    },
+    content: Array.isArray(block.content)
+      ? block.content.map((c: any) => ({
+          type: 'text',
+          text: cleanText(c.text),
+          styles: c.styles || {},
+        }))
+      : [],
+    children: Array.isArray(block.children)
+      ? block.children.filter(Boolean).map(sanitize)
+      : [],
+  });
+
+  return blocks.filter(Boolean).map(sanitize);
+};
+
+export const safeEditorReplaceBlocks = (
+  editor: BlockNoteEditor,
+  content: Block[],
+): void => {
+  if (!editor || !content) return;
+
+  requestAnimationFrame(() => {
+    try {
+      const clonedContent = cloneBlocksWithNewIds(content);
+      const sanitized = sanitizeBlocks(clonedContent);
+      editor.insertBlocks(clonedContent, editor.document[0], 'after');
+
+      if (
+        editor.document.length === 1 &&
+        editor.document[0].type === 'paragraph' &&
+        editor.document[0].content.length === 0
+      ) {
+        editor.replaceBlocks([editor.document[0]], sanitized);
+      } else {
+        editor.replaceBlocks([], sanitized);
+      }
+
+      // ✅ Optional: set selection to beginning
+      const firstBlock = editor.document[0];
+      if (firstBlock) {
+        editor.setSelection(firstBlock, firstBlock);
+      }
+
+      editor.focus(); // keep UX smooth
+      console.log('✅ Safe block injection completed.');
+    } catch (err) {
+      console.error('🔥 Safe injection failed:', err);
+    }
+  });
+};

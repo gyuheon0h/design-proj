@@ -25,7 +25,9 @@ root.render(
             publicApiKey={process.env.REACT_APP_LIVEBLOCKS_PUBLIC_KEY!}
           >
             <UserProvider>
-              <App />
+              <StorageProvider>
+                <App />
+              </StorageProvider>
             </UserProvider>
           </LiveblocksProvider>
         </BrowserRouter>
