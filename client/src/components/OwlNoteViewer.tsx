@@ -28,6 +28,9 @@ const OwlNoteViewer: React.FC<OwlNoteViewerProp> = ({
   onEditorCreated,
   fileName,
 }) => {
+  const userContext = useUser();
+  const userId = userContext.userId;
+
   const room = useRoom();
 
   const provider = useMemo(() => getYjsProviderForRoom(room), [room]);
@@ -39,7 +42,7 @@ const OwlNoteViewer: React.FC<OwlNoteViewerProp> = ({
       provider,
       fragment: yDoc.getXmlFragment('default'),
       user: {
-        name: useUser().userId,
+        name: userId,
         color: '#ff5733', // any hex color you want for cursor
       },
     },
@@ -47,19 +50,54 @@ const OwlNoteViewer: React.FC<OwlNoteViewerProp> = ({
 
   const hasPopulated = useRef(false);
 
+  // useEffect(() => {
+  //   if (
+  //     editor &&
+  //     content &&
+  //     !hasPopulated.current &&
+  //     editor.document.length === 1 &&
+  //     editor.document[0].type === 'paragraph' &&
+  //     editor.document[0].content.length === 0
+  //   ) {
+  //     try {
+  //       console.log('Document is empty. Inserting cloned blocks...');
+  //       const clonedContent = cloneBlocksWithNewIds(content);
+  //       editor.insertBlocks(clonedContent, editor.document[0], 'after');
+  //       hasPopulated.current = true;
+  //     } catch (err) {
+  //       console.error('Failed to insert blocks:', err);
+  //     }
+  //   }
+  // }, [editor, content]);
+
   useEffect(() => {
+    console.log('user from viewer: ', userId);
     if (
       editor &&
       content &&
       !hasPopulated.current &&
       editor.document.length === 1 &&
-      editor.document[0].type === 'paragraph' &&
-      editor.document[0].content.length === 0
+      editor.document[0]?.type === 'paragraph' &&
+      editor.document[0]?.content.length === 0
     ) {
       try {
-        console.log('Document is empty. Inserting cloned blocks...');
         const clonedContent = cloneBlocksWithNewIds(content);
-        editor.insertBlocks(clonedContent, editor.document[0], 'after');
+
+        // Extra safety check: make sure insert target is still valid
+        const targetBlock = editor.document[0];
+        if (!targetBlock) {
+          console.warn('Target block for insertion does not exist.');
+          return;
+        }
+        // editor.insertBlocks(clonedContent, targetBlock, 'after');
+
+        const insertPoint = editor.document.find((b) => b.type === 'paragraph');
+        if (insertPoint) {
+          editor.insertBlocks(clonedContent, insertPoint, 'after');
+        } else {
+          console.warn('No suitable block found for insertion');
+        }
+
         hasPopulated.current = true;
       } catch (err) {
         console.error('Failed to insert blocks:', err);
