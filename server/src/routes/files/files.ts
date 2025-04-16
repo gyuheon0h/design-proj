@@ -367,6 +367,11 @@ fileRouter.patch(
         return res.status(404).json({ message: 'File not found' });
       }
 
+      const isUnique = await isUniqueFileName(userId, fileId, parentFolderId);
+      if (!isUnique) {
+        return res.status(400).json({ message: 'File name already exists in the directory' });
+      }
+
       if (file?.parentFolder === parentFolderId) {
         console.error('User attempted to move to existing location');
         return res
@@ -562,9 +567,15 @@ fileRouter.patch(
     try {
       const { fileId } = req.params;
       const file = await FileModel.getByIdAll(fileId);
+      const userId = (req as any).user.userId;
 
       if (!file) {
         return res.status(404).json({ message: 'File not found' });
+      }
+
+      const isUnique = await isUniqueFileName(userId, fileId, file.parentFolder);
+      if (!isUnique) {
+        return res.status(400).json({ message: 'File name already exists in the directory' });
       }
 
       await FileModel.restore(fileId);

@@ -17,6 +17,7 @@ interface RenameDialogProps {
   resourceType: 'folder' | 'file';
   onClose: () => void;
   onSuccess: () => void;
+  initialErrorMessage?: string;
 }
 
 const RenameDialog: React.FC<RenameDialogProps> = ({
@@ -26,13 +27,14 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
   resourceType,
   onClose,
   onSuccess,
+  initialErrorMessage,
 }) => {
   const [baseName, setBaseName] = useState('');
   const [extension, setExtension] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    setErrorMessage(''); // Reset error on dialog open
+    setErrorMessage(initialErrorMessage || ''); // Reset error on dialog open
     if (resourceType === 'folder') {
       setBaseName(resourceName);
       setExtension('');
@@ -46,7 +48,7 @@ const RenameDialog: React.FC<RenameDialogProps> = ({
         setExtension(splitName.pop() || '');
       }
     }
-  }, [resourceName, resourceType]);
+  }, [resourceName, resourceType, initialErrorMessage]);
 
   const handleRename = async () => {
     if (baseName.trim()) {

@@ -396,9 +396,15 @@ folderRouter.patch(
     try {
       const { folderId } = req.params;
       const folder = await FolderModel.getByIdAll(folderId);
+      const userId = (req as any).user.userId;
 
       if (!folder) {
         return res.status(404).json({ message: 'Folder not found' });
+      }
+
+      const isUnique = await isUniqueFoldername(userId, folderId, folder.parentFolder);
+      if (!isUnique) {
+        return res.status(400).json({ message: 'File name already exists in the directory' });
       }
 
       await FolderModel.restore(folderId);
@@ -486,6 +492,11 @@ folderRouter.patch(
 
       if (!folder) {
         return res.status(404).json({ message: 'Folder not found' });
+      }
+
+      const isUnique = await isUniqueFoldername(userId, folderId, parentFolderId);
+      if (!isUnique) {
+        return res.status(400).json({ message: 'File name already exists in the directory' });
       }
 
       const fileMetadata = await FolderModel.updateFolderMetadata(folderId, {
