@@ -5,6 +5,8 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { theme } from './Styles';
 import App from './App';
 import { UserProvider } from './context/UserContext';
+import { StorageProvider } from './context/StorageContext';
+
 import './index.css';
 import './index.css';
 import { LiveblocksProvider } from '@liveblocks/react/suspense';

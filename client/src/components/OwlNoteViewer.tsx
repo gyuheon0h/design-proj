@@ -13,7 +13,11 @@ import { getYjsProviderForRoom } from '@liveblocks/yjs';
 import { useRoom } from '@liveblocks/react';
 import { useUser } from '../context/UserContext';
 import { useRef } from 'react';
-import { cloneBlocksWithNewIds } from '../utils/cloneBlocks';
+import {
+  sanitizeBlocks,
+  safeEditorReplaceBlocks,
+  cloneBlocksWithNewIds,
+} from '../utils/blockUtils';
 
 interface OwlNoteViewerProp {
   content: Block[];
@@ -36,14 +40,15 @@ const OwlNoteViewer: React.FC<OwlNoteViewerProp> = ({
   const provider = useMemo(() => getYjsProviderForRoom(room), [room]);
   const yDoc = provider.getYDoc();
 
-  // const editor = useCreateBlockNote({ initialContent: content });
+  // const editor = useCreateBlockNote({ initialContent: content }); // for non multi collab
   const editor = useCreateBlockNote({
+    // initialContent: cloneBlocksWithNewIds(content), // loads cleanly up front, prevents parse error
     collaboration: {
       provider,
       fragment: yDoc.getXmlFragment('default'),
       user: {
         name: userId,
-        color: '#ff5733', // any hex color you want for cursor
+        color: '#ff5733', // cursor color
       },
     },
   });

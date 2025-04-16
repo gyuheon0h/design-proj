@@ -6,25 +6,31 @@ import {
   ListItemButton,
   ListItemIcon,
   Typography,
-  Tooltip,
-  IconButton,
   Menu,
   MenuItem,
   Box,
   Avatar,
-  Fade,
+  IconButton,
 } from '@mui/material';
 import { Link, Navigate, useLocation } from 'react-router-dom';
-import HomeIcon from '@mui/icons-material/Home';
+import StorageIcon from '@mui/icons-material/Storage';
 import PeopleIcon from '@mui/icons-material/People';
 import StarIcon from '@mui/icons-material/Star';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
+import SettingsIcon from '@mui/icons-material/Settings';
+import CloudIcon from '@mui/icons-material/Cloud';
 import React, { useState } from 'react';
 import { useUser } from '../context/UserContext';
-import { Settings as SettingsIcon } from '@mui/icons-material';
-import { colors, drawerStyles, activePageStyles, typography } from '../Styles';
+import {
+  colors,
+  drawerStyles,
+  activePageStyles,
+  avatarStyles,
+} from '../Styles';
 import SettingsDialog from './SettingsDialog';
+import MenuIcon from '@mui/icons-material/Menu';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
 const AccountMenu = () => {
   const { username } = useUser();
@@ -33,7 +39,7 @@ const AccountMenu = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const open = Boolean(anchorEl);
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -56,22 +62,47 @@ const AccountMenu = () => {
     }
   };
 
+  const getInitials = (name: string) => {
+    return name ? name.charAt(0).toUpperCase() : '?';
+  };
+
   return (
     <React.Fragment>
-      <Tooltip title="Account settings">
-        <IconButton
-          onClick={handleClick}
-          size="small"
-          sx={{ ml: 2 }}
-          aria-controls={open ? 'account-menu' : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? 'true' : undefined}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '12px 16px',
+          cursor: 'pointer',
+          borderRadius: '8px',
+          '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' },
+        }}
+        onClick={handleClick}
+      >
+        <Avatar
+          sx={{
+            ...avatarStyles.standard,
+            bgcolor: colors.avatar,
+            color: colors.avatarText,
+            marginRight: 2,
+          }}
         >
-          <Avatar sx={{ width: 32, height: 32 }}>
-            {username ? username.charAt(0).toUpperCase() : '?'}
-          </Avatar>
-        </IconButton>
-      </Tooltip>
+          {getInitials(username)}
+        </Avatar>
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography
+            variant="body1"
+            sx={{ color: colors.sidebarText, fontWeight: 500 }}
+          >
+            {username || 'Guest'}
+          </Typography>
+        </Box>
+        <SettingsIcon
+          fontSize="small"
+          sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+        />
+      </Box>
+
       <Menu
         anchorEl={anchorEl}
         id="account-menu"
@@ -86,12 +117,6 @@ const AccountMenu = () => {
             Logged in as: {username || 'Guest'}
           </Typography>
         </MenuItem>
-        <MenuItem onClick={handleLogout} sx={{ color: 'red' }}>
-          <ListItemIcon>
-            <LogoutIcon fontSize="small" sx={{ color: 'red' }} />
-          </ListItemIcon>
-          Logout
-        </MenuItem>
         <MenuItem
           onClick={() => {
             handleClose();
@@ -103,6 +128,12 @@ const AccountMenu = () => {
           </ListItemIcon>
           Settings
         </MenuItem>
+        <MenuItem onClick={handleLogout} sx={{ color: 'red' }}>
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" sx={{ color: 'red' }} />
+          </ListItemIcon>
+          Logout
+        </MenuItem>
       </Menu>
 
       <SettingsDialog
@@ -110,140 +141,273 @@ const AccountMenu = () => {
         onClose={() => setSettingsOpen(false)}
       />
 
-      {isLoggingOut && (
-              <Fade in={true} timeout={500}>
-                <Navigate to="/home" />
-              </Fade>
-            )}
+      {isLoggingOut && <Navigate to="/home" />}
     </React.Fragment>
   );
 };
 
 const NavigationDrawer = () => {
   const location = useLocation();
+  const [storageUsed] = useState(5); // In GB
+  const [totalStorage] = useState(15); // In GB
+  const storagePercentage = (storageUsed / totalStorage) * 100;
+  const [drawerOpen, setDrawerOpen] = useState(true);
+  const toggleDrawer = () => setDrawerOpen(!drawerOpen);
 
   return (
     <Drawer
       variant="permanent"
-      anchor="left"
+      open={drawerOpen}
       sx={{
-        width: drawerStyles.width,
+        width: drawerOpen ? drawerStyles.width : 60,
         flexShrink: 0,
-        '& .MuiDrawer-paper': drawerStyles.paper,
+        '& .MuiDrawer-paper': {
+          ...drawerStyles.paper,
+          width: drawerOpen ? drawerStyles.width : 60,
+          transition: 'width 0.3s',
+          overflowX: 'hidden',
+        },
       }}
     >
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: drawerOpen ? 'flex-end' : 'center',
+          p: 1,
+        }}
+      >
+        <IconButton onClick={toggleDrawer}>
+          {drawerOpen ? (
+            <ChevronLeftIcon sx={{ color: 'white' }} />
+          ) : (
+            <MenuIcon sx={{ color: 'white' }} />
+          )}
+        </IconButton>
+      </Box>
+
       {/* Logo Section */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-start',
-          padding: '15px 0px',
-          gap: 1,
+          justifyContent: drawerOpen ? 'flex-start' : 'center',
+          padding: '24px 16px',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
         }}
       >
         <Box
           component="img"
           src="/owl_icon.png"
           alt="Owl Logo"
-          sx={{ width: 64, height: 64 }}
+          sx={{ width: 32, height: 32 }}
         />
-        <Typography variant="h1" sx={{ fontFamily: typography.fontFamily }}>
-          Owl Share
-        </Typography>
+        {drawerOpen && (
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 600,
+              color: colors.sidebarText,
+              marginLeft: '12px',
+              transition: 'opacity 0.3s',
+            }}
+          >
+            Owl Share
+          </Typography>
+        )}
       </Box>
 
       {/* Navigation List */}
-      <List>
-        {/* Home */}
-        <ListItem disablePadding>
+      <List sx={{ padding: '16px' }}>
+        {/* Storage */}
+        <ListItem disablePadding sx={{ mb: 1 }}>
           <ListItemButton
             component={Link}
             to="/home"
             sx={{
-              border: `2px solid ${colors.lightBlue}`,
-              borderRadius: '10px',
-              padding: '10px 16px',
-              marginBottom: '10px',
-              '&:hover': { backgroundColor: colors.hover },
+              borderRadius: '8px',
+              padding: drawerOpen ? '10px 16px' : '10px 0',
+              color: colors.sidebarText,
+              justifyContent: drawerOpen ? 'flex-start' : 'center',
               ...(location.pathname === '/home' ? activePageStyles : {}),
+              '&:hover': {
+                backgroundColor: colors.sidebarHover,
+              },
             }}
           >
-            <ListItemIcon>
-              <HomeIcon sx={{ color: colors.darkBlue }} />
+            <ListItemIcon
+              sx={{
+                minWidth: drawerOpen ? 40 : 'auto',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <StorageIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText primary="Home" />
+            {drawerOpen && (
+              <ListItemText
+                primary="Storage"
+                sx={{ transition: 'opacity 0.3s' }}
+              />
+            )}
           </ListItemButton>
         </ListItem>
 
         {/* Favorites */}
-        <ListItem disablePadding>
+        <ListItem disablePadding sx={{ mb: 1 }}>
           <ListItemButton
             component={Link}
             to="/favorites"
             sx={{
-              border: `2px solid ${colors.lightBlue}`,
-              borderRadius: '10px',
-              padding: '10px 16px',
-              marginBottom: '10px',
-              '&:hover': { backgroundColor: colors.hover },
+              borderRadius: '8px',
+              padding: drawerOpen ? '10px 16px' : '10px 0',
+              color: colors.sidebarText,
+              justifyContent: drawerOpen ? 'flex-start' : 'center',
               ...(location.pathname === '/favorites' ? activePageStyles : {}),
+              '&:hover': {
+                backgroundColor: colors.sidebarHover,
+              },
             }}
           >
-            <ListItemIcon>
-              <StarIcon sx={{ color: colors.darkBlue }} />
+            <ListItemIcon
+              sx={{
+                minWidth: drawerOpen ? 40 : 'auto',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <StarIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText primary="Favorites" />
+            {drawerOpen && (
+              <ListItemText
+                primary="Favorites"
+                sx={{ transition: 'opacity 0.3s' }}
+              />
+            )}
           </ListItemButton>
         </ListItem>
 
         {/* Shared With Me */}
-        <ListItem disablePadding>
+        <ListItem disablePadding sx={{ mb: 1 }}>
           <ListItemButton
             component={Link}
             to="/shared"
             sx={{
-              border: `2px solid ${colors.lightBlue}`,
-              borderRadius: '10px',
-              padding: '10px 16px',
-              marginBottom: '10px',
-              '&:hover': { backgroundColor: colors.hover },
+              borderRadius: '8px',
+              padding: drawerOpen ? '10px 16px' : '10px 0',
+              color: colors.sidebarText,
+              justifyContent: drawerOpen ? 'flex-start' : 'center',
               ...(location.pathname === '/shared' ? activePageStyles : {}),
+              '&:hover': {
+                backgroundColor: colors.sidebarHover,
+              },
             }}
           >
-            <ListItemIcon>
-              <PeopleIcon sx={{ color: colors.darkBlue }} />
+            <ListItemIcon
+              sx={{
+                minWidth: drawerOpen ? 40 : 'auto',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <PeopleIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText primary="Shared With Me" />
+            {drawerOpen && (
+              <ListItemText
+                primary="Shared With Me"
+                sx={{ transition: 'opacity 0.3s' }}
+              />
+            )}
           </ListItemButton>
         </ListItem>
 
         {/* Trash */}
-        <ListItem disablePadding>
+        <ListItem disablePadding sx={{ mb: 1 }}>
           <ListItemButton
             component={Link}
             to="/trash"
             sx={{
-              border: `2px solid ${colors.lightBlue}`,
-              borderRadius: '10px',
-              padding: '10px 16px',
-              marginBottom: '10px',
-              '&:hover': { backgroundColor: colors.hover },
+              borderRadius: '8px',
+              padding: drawerOpen ? '10px 16px' : '10px 0',
+              color: colors.sidebarText,
+              justifyContent: drawerOpen ? 'flex-start' : 'center',
               ...(location.pathname === '/trash' ? activePageStyles : {}),
+              '&:hover': {
+                backgroundColor: colors.sidebarHover,
+              },
             }}
           >
-            <ListItemIcon>
-              <DeleteIcon sx={{ color: colors.darkBlue }} />
+            <ListItemIcon
+              sx={{
+                minWidth: drawerOpen ? 40 : 'auto',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <DeleteIcon sx={{ color: colors.sidebarText }} />
             </ListItemIcon>
-            <ListItemText primary="Trash" />
+            {drawerOpen && (
+              <ListItemText
+                primary="Trash"
+                sx={{ transition: 'opacity 0.3s' }}
+              />
+            )}
           </ListItemButton>
         </ListItem>
       </List>
 
-      {/* Avatar with logout functionality */}
-      <Box sx={{ mt: 'auto', padding: '10px' }}>
-        <AccountMenu />
+      {/* Storage Info */}
+      <Box sx={{ mt: 'auto', padding: '16px' }}>
+        {drawerOpen && (
+          <Box
+            sx={{
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '10px',
+              padding: '16px',
+              marginBottom: '16px',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <CloudIcon
+                sx={{ color: colors.sidebarText, mr: 1, fontSize: 20 }}
+              />
+              <Typography
+                variant="body2"
+                sx={{ color: colors.sidebarText, fontWeight: 500 }}
+              >
+                My Storage
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                width: '100%',
+                bgcolor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: 5,
+                height: 4,
+                mb: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  width: `${storagePercentage}%`,
+                  bgcolor: '#3B82F6',
+                  borderRadius: 5,
+                  height: '100%',
+                }}
+              />
+            </Box>
+
+            <Typography
+              variant="caption"
+              sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+            >
+              You have used {storageUsed} GB out of {totalStorage} GB.
+            </Typography>
+          </Box>
+        )}
       </Box>
+      {/* Account Section */}
+      <AccountMenu />
     </Drawer>
   );
 };
