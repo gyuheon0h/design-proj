@@ -30,11 +30,6 @@ export const StorageAnalytics = () => {
   const normalizedStorageUsed = Number(storageUsed); // make sure it's a clean number
   const percentageUsed = (normalizedStorageUsed / STORAGE_LIMIT) * 100;
   const storageUsedGB = (normalizedStorageUsed / 1024 / 1024 / 1024).toFixed(2);
-  console.log(normalizedStorageUsed, percentageUsed, storageUsedGB);
-  console.log('normalizedStorageUsed', normalizedStorageUsed);
-  console.log('storageUsedGB', storageUsedGB);
-
-  console.log('storageUsed:', normalizedStorageUsed); // for debugging
 
   return (
     <Box sx={{ mt: 'auto', padding: '16px' }}>
