@@ -31,6 +31,7 @@ import {
 import SettingsDialog from './SettingsDialog';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import StorageAnalytics from './StorageAnalytics';
 
 const AccountMenu = () => {
   const { username } = useUser();
@@ -355,57 +356,7 @@ const NavigationDrawer = () => {
         </ListItem>
       </List>
 
-      {/* Storage Info */}
-      <Box sx={{ mt: 'auto', padding: '16px' }}>
-        {drawerOpen && (
-          <Box
-            sx={{
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '10px',
-              padding: '16px',
-              marginBottom: '16px',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <CloudIcon
-                sx={{ color: colors.sidebarText, mr: 1, fontSize: 20 }}
-              />
-              <Typography
-                variant="body2"
-                sx={{ color: colors.sidebarText, fontWeight: 500 }}
-              >
-                My Storage
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                width: '100%',
-                bgcolor: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: 5,
-                height: 4,
-                mb: 1,
-              }}
-            >
-              <Box
-                sx={{
-                  width: `${storagePercentage}%`,
-                  bgcolor: '#3B82F6',
-                  borderRadius: 5,
-                  height: '100%',
-                }}
-              />
-            </Box>
-
-            <Typography
-              variant="caption"
-              sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
-            >
-              You have used {storageUsed} GB out of {totalStorage} GB.
-            </Typography>
-          </Box>
-        )}
-      </Box>
+      {drawerOpen && <StorageAnalytics />}
       {/* Account Section */}
       <AccountMenu />
     </Drawer>
