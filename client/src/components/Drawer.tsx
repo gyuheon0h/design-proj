@@ -19,7 +19,6 @@ import StarIcon from '@mui/icons-material/Star';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
-import CloudIcon from '@mui/icons-material/Cloud';
 import React, { useState } from 'react';
 import { useUser } from '../context/UserContext';
 import {
@@ -149,9 +148,6 @@ const AccountMenu = () => {
 
 const NavigationDrawer = () => {
   const location = useLocation();
-  const [storageUsed] = useState(5); // In GB
-  const [totalStorage] = useState(15); // In GB
-  const storagePercentage = (storageUsed / totalStorage) * 100;
   const [drawerOpen, setDrawerOpen] = useState(true);
   const toggleDrawer = () => setDrawerOpen(!drawerOpen);
 

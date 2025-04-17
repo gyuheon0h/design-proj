@@ -51,6 +51,7 @@ import TextEditor from './TextEditor';
 import { Permission } from '../interfaces/Permission';
 import OwlNoteEditorDialog from './OwlNoteEditorDialog';
 import { useStorage } from '../context/StorageContext';
+import { DriveFileMove } from '@mui/icons-material';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -262,7 +263,7 @@ const FileComponent = (props: FileComponentProps) => {
     if (props.page !== 'favorites') {
       menuItems.push(
         <MenuItem key="move" onClick={handleMoveClick}>
-          <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
+          <DriveFileMove sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
         </MenuItem>,
       );
     }
