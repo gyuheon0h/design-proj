@@ -166,7 +166,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
   fileId,
   folderId,
 }) => {
-  const { userId } = useUser();
+  useUser();
   const [users, setUsers] = useState<User[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
