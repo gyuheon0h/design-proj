@@ -32,6 +32,9 @@ const FileContainer: React.FC<FileContainerProps> = ({
   const [filteredFiles, setFilteredFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // Only show Location column in favorites and trash views
+  const showLocationColumn = page === 'favorites' || page === 'trash';
+
   useEffect(() => {
     // Filter files based on search query
     const updatedFilteredFiles = files.filter((file: File) =>
@@ -59,16 +62,21 @@ const FileContainer: React.FC<FileContainerProps> = ({
       <Table sx={{ tableLayout: 'fixed' }}>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ width: '35%', fontWeight: 'bold' }}>
+            <TableCell sx={{ width: showLocationColumn ? '25%' : '35%', fontWeight: 'bold' }}>
               Name
             </TableCell>
+            {showLocationColumn && (
+              <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>
+                Location
+              </TableCell>
+            )}
             <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>
               Created
             </TableCell>
-            <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>
+            <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>
               Owner
             </TableCell>
-            <TableCell sx={{ width: '20%', fontWeight: 'bold' }}>
+            <TableCell sx={{ width: showLocationColumn ? '15%' : '20%', fontWeight: 'bold' }}>
               Last Modified
             </TableCell>
             <TableCell sx={{ width: '10%' }}></TableCell>
@@ -81,6 +89,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
               page={page}
               file={file}
               refreshFiles={refreshFiles}
+              showLocation={showLocationColumn}
             />
           ))}
         </TableBody>

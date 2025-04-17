@@ -28,6 +28,8 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import FolderIcon from '@mui/icons-material/Folder';
+import HomeIcon from '@mui/icons-material/Home';
 import RenameDialog from './RenameDialog';
 import {
   getUsernameById,
@@ -57,6 +59,7 @@ export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
   file: File;
   refreshFiles: (folderId: string | null) => void;
+  showLocation?: boolean; // New prop to control location display
 }
 
 // Array of avatar colors to use
@@ -194,6 +197,50 @@ const getFileIcon = (fileType: string) => {
   }
 };
 
+// Location icon for folder
+const getFolderLocationIcon = (isHome: boolean) => {
+  if (isHome) {
+    return (
+      <HomeIcon 
+        sx={{ 
+          color: colors.fileGray, 
+          fontSize: 20, 
+          marginRight: 1 
+        }} 
+      />
+    );
+  }
+  
+  return (
+    <FolderIcon 
+      sx={{ 
+        color: colors.fileGray, 
+        fontSize: 20, 
+        marginRight: 1 
+      }} 
+    />
+  );
+};
+
+// Helper function to get folder name by ID - this function will make an API call
+const getFolderNameById = async (folderId: string): Promise<string> => {
+  try {
+    const response = await axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}`,
+      { withCredentials: true }
+    );
+    
+    if (response.data && response.data.name) {
+      return response.data.name;
+    }
+    
+    return 'Unknown folder';
+  } catch (error) {
+    console.error('Error fetching folder name:', error);
+    return 'Unknown folder';
+  }
+};
+
 const FileComponent = (props: FileComponentProps) => {
   const { userId } = useUser(); // Add this to get the current user ID
   const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
@@ -207,6 +254,10 @@ const FileComponent = (props: FileComponentProps) => {
   const [isFavorited, setIsFavorited] = useState(false);
   const { fetchStorageUsed } = useStorage();
   const [isShared, setIsShared] = useState(false);
+  
+  // State for the parent folder name (for location column)
+  const [folderName, setFolderName] = useState<string>('Home');
+  const [isLoadingFolderName, setIsLoadingFolderName] = useState(false);
 
   // For the image viewer
   const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
@@ -217,6 +268,31 @@ const FileComponent = (props: FileComponentProps) => {
   const isEditSupported = isSupportedFileTypeText(props.file.fileType);
 
   const [, setCurrentPermission] = useState<Permission | null>(null);
+
+  // Fetch parent folder name if showing location
+  useEffect(() => {
+    if (!props.showLocation) return;
+    
+    const fetchFolderName = async () => {
+      if (!props.file.parentFolder) {
+        setFolderName('Home');
+        return;
+      }
+      
+      setIsLoadingFolderName(true);
+      try {
+        const name = await getFolderNameById(props.file.parentFolder);
+        setFolderName(name || 'Unknown folder');
+      } catch (err) {
+        console.error('Error fetching folder name:', err);
+        setFolderName('Unknown folder');
+      } finally {
+        setIsLoadingFolderName(false);
+      }
+    };
+
+    fetchFolderName();
+  }, [props.file.parentFolder, props.showLocation]);
 
   // Check if the file is shared with others
   useEffect(() => {
@@ -653,6 +729,34 @@ const FileComponent = (props: FileComponentProps) => {
             </Typography>
           </Tooltip>
         </TableCell>
+
+        {/* Location Column - Only shown when showLocation is true */}
+        {props.showLocation && (
+          <TableCell
+            sx={{
+              padding: '12px 16px',
+              borderBottom: 'none',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              {getFolderLocationIcon(folderName === 'Home')}
+              <Tooltip title={folderName} arrow>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    maxWidth: '150px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {isLoadingFolderName ? 'Loading...' : folderName}
+                </Typography>
+              </Tooltip>
+            </Box>
+          </TableCell>
+        )}
 
         {/* Created Date */}
         <TableCell sx={{ borderBottom: 'none' }}>
