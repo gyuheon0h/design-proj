@@ -55,7 +55,6 @@ async function runCleanup() {
   } catch (err) {
     console.error('Error during cleanup:', err);
   } finally {
-    // Ensure DB pool closes cleanly
     await pool.end();
   }
 }
