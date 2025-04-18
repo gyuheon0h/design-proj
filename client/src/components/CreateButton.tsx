@@ -5,16 +5,21 @@ import UploadDialog from './CreateFileDialog';
 import FolderDialog from './CreateFolderDialog';
 import AddIcon from '@mui/icons-material/Add';
 import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
-import UploadProgressToast from './UploadProgress';
 import { useUser } from '../context/UserContext';
 import OwlNoteEditorDialog from './OwlNoteEditorDialog';
-import { v4 as uuidv4 } from 'uuid';
+import { UploadSharp } from '@mui/icons-material';
 
 interface CreateButtonProps {
   currentFolderId: string | null;
   refreshFiles: (folderId: string | null) => void;
   refreshFolders: (folderId: string | null) => void;
   refreshStorage: () => Promise<void>;
+  onBatchUpload: (uploads: {
+    file: File;
+    relativePath: string;
+  }[],
+    parentFolder: string | null, 
+  ) => Promise<void>;
 }
 
 const CreateButton: React.FC<CreateButtonProps> = ({
@@ -22,6 +27,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   refreshFiles,
   refreshFolders,
   refreshStorage,
+  onBatchUpload,
 }) => {
   const nodeRef = useRef<HTMLDivElement>(null);
   const userContext = useUser();
@@ -64,21 +70,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
     }
   };
 
-  const [uploadsInProgress, setUploadsInProgress] = useState<
-    { file: File; id: string }[]
-  >([]);
 
-  const handleBatchFileUpload = async (
-    uploads: { file: File; relativePath: string }[],
-  ) => {
-    const newUploads = uploads.map(({ file, relativePath }) => ({
-      file: new File([file], relativePath),
-      id: uuidv4(),
-    }));
-
-    setUploadsInProgress((prev) => [...prev, ...newUploads]);
-    setUploadDialogOpen(false);
-  };
 
   const handleCreateOwlNote = async (
     fileName: string,
@@ -166,25 +158,9 @@ const CreateButton: React.FC<CreateButtonProps> = ({
       <UploadDialog
         open={uploadDialogOpen}
         onClose={closeUploadDialog}
-        onBatchUpload={handleBatchFileUpload}
+        onBatchUpload={(uploads) => onBatchUpload(uploads, currentFolderId)}
         currentFolderId={currentFolderId}
       />
-
-      {uploadsInProgress.map(({ file, id }, index) => (
-        <UploadProgressToast
-          key={id}
-          file={file}
-          fileId={id}
-          userId={userId}
-          parentFolder={currentFolderId}
-          onClose={() =>
-            setUploadsInProgress((prev) => prev.filter((u) => u.id !== id))
-          }
-          refreshFiles={refreshFiles}
-          refreshStorage={refreshStorage}
-          offset={index}
-        />
-      ))}
 
       <OwlNoteEditorDialog
         // fileName="file1" //TODO: hardcode filename for now, fix later

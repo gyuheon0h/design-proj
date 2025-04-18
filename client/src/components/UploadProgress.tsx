@@ -13,6 +13,7 @@ import { useSSEUploadProgress } from '../utils/uploadHook';
 interface UploadProgressToastProps {
   file: File;
   fileId: string;
+  relativePath: string;
   parentFolder: string | null;
   userId: string;
   onClose: () => void;
@@ -23,6 +24,7 @@ interface UploadProgressToastProps {
 
 const UploadProgressToast: React.FC<UploadProgressToastProps> = ({
   file,
+  relativePath,
   parentFolder,
   userId,
   fileId,

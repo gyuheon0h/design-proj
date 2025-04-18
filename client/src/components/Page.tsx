@@ -9,7 +9,7 @@ import {
 } from '../utils/helperRequests';
 import { useNavigate } from 'react-router-dom';
 // import { useUser } from '../context/UserContext';
-import { File } from '../interfaces/File';
+import { File as AppFile } from '../interfaces/File';
 import { Box, Divider, Typography } from '@mui/material';
 import { typography } from '../Styles';
 import SearchBar from './SearchBar';
@@ -17,6 +17,8 @@ import CreateButton from './CreateButton';
 import FileContainer from './FileContainer';
 import FolderContainer from './FolderContainer';
 import { useStorage } from '../context/StorageContext';
+import UploadProgressToast from './UploadProgress';
+import { v4 as uuidv4 } from 'uuid';
 
 interface PageComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -34,10 +36,26 @@ const PageComponent: React.FC<PageComponentProps> = ({
   const { folderPath, currentFolderId } = useFolderPath(`/${page}`);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<AppFile[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [folderNames, setFolderNames] = useState<{ [key: string]: string }>({});
+  const [uploadsInProgress, setUploadsInProgress] = useState<
+    { file: File; relativePath: string; id: string }[]
+  >([])
 
+  const handleBatchFileUpload = async (
+    uploads: { file: File; relativePath: string; }[],
+    parentFolder: string | null,
+  ) => {
+    const newUploads = uploads.map(({ file, relativePath }) => ({
+      file: new File([file], relativePath),
+      relativePath,
+      id: uuidv4(),
+    }));
+  
+    setUploadsInProgress((prev) => [...prev, ...newUploads]);
+  };
+  
   const { fetchStorageUsed } = useStorage();
 
   const {
@@ -257,8 +275,26 @@ const PageComponent: React.FC<PageComponentProps> = ({
           refreshFiles={fetchFileData}
           refreshFolders={fetchFolderData}
           refreshStorage={fetchStorageUsed}
+          onBatchUpload={handleBatchFileUpload}
         ></CreateButton>
       )}
+
+      {uploadsInProgress.map(({ file, id, relativePath }, index) => (
+        <UploadProgressToast
+          key={id}
+          file={file}
+          fileId={id}
+          relativePath={relativePath}
+          userId={userId}
+          parentFolder={currentFolderId}
+          onClose={() =>
+            setUploadsInProgress((prev) => prev.filter((u) => u.id !== id))
+          }
+          refreshFiles={fetchFileData}
+          refreshStorage={fetchStorageUsed}
+          offset={index}
+        />
+      ))}
     </Box>
   );
 };
