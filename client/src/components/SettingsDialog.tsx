@@ -23,7 +23,6 @@ interface SettingsDialogProps {
 }
 
 const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
-  const userContext = useUser();
   const { username: contextUsername, setUsername: updateContextUsername } =
     useUser();
   const navigate = useNavigate();
@@ -67,7 +66,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
     try {
       const hashedPassword = SHA256(password).toString();
       const response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/auth/verify-password`,
+        'http://localhost:5001/api/settings/verify-password',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -117,7 +116,7 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
         }
 
         const response = await fetch(
-          `${process.env.REACT_APP_API_BASE_URL}/api/user/${userContext.userId}/update-profile`,
+          'http://localhost:5001/api/settings/update-profile',
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -163,16 +162,14 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({ open, onClose }) => {
       ) {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_API_BASE_URL}/api/user/${userContext.userId}/delete-account`,
+            'http://localhost:5001/api/settings/delete-account',
             {
               method: 'DELETE',
               credentials: 'include',
             },
           );
+
           if (response.ok) {
-            navigate('/');
-          } else {
-            console.error('Error deleting account:');
             navigate('/');
           }
         } catch (error) {
