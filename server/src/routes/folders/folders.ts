@@ -3,6 +3,7 @@ import { authorizeUser } from '../../middleware/authorizeUser';
 import FolderModel from '../../db_models/FolderModel';
 import { AuthenticatedRequest } from '../../middleware/authorizeUser';
 import PermissionModel from '../../db_models/PermissionModel';
+import { isUniqueFoldername } from '../folders/folderHelpers';
 import { checkPermission } from '../../middleware/checkPermission';
 import { bubbleUpResource } from '../helper';
 import { recursiveDeletePermissions } from '../../db_models/ModelHelpers';
@@ -65,6 +66,14 @@ folderRouter.post(
       // Validate required fields
       if (!name) {
         return res.status(400).json({ error: 'Name is required' });
+      }
+
+      // Check for duplicate file name in the folder
+      const isUnique = await isUniqueFoldername(owner, name, parentFolder);
+      if (!isUnique) {
+        return res
+          .status(400)
+          .json({ message: 'File name already exists in the directory' });
       }
 
       const newFolder = await FolderModel.createFolder({
@@ -389,9 +398,21 @@ folderRouter.patch(
     try {
       const { folderId } = req.params;
       const folder = await FolderModel.getByIdAll(folderId);
+      const userId = (req as any).user.userId;
 
       if (!folder) {
         return res.status(404).json({ message: 'Folder not found' });
+      }
+
+      const isUnique = await isUniqueFoldername(
+        userId,
+        folderId,
+        folder.parentFolder,
+      );
+      if (!isUnique) {
+        return res
+          .status(400)
+          .json({ message: 'File name already exists in the directory' });
       }
 
       await FolderModel.restore(folderId);
@@ -426,6 +447,18 @@ folderRouter.patch(
       // if (userId !== folder.owner) {
       //   return res.status(403).json({ message: 'Unauthorized' });
       // }
+
+      // Check if the new name is unique in the same directory
+      const isUnique = await isUniqueFoldername(
+        userId,
+        resourceName,
+        folder.parentFolder,
+      );
+      if (!isUnique) {
+        return res
+          .status(400)
+          .json({ message: 'File name already exists in the directory' });
+      }
 
       const updatedFolder = await FolderModel.updateFolderMetadata(folderId, {
         name: resourceName,
@@ -473,6 +506,17 @@ folderRouter.patch(
 
       if (!folder) {
         return res.status(404).json({ message: 'Folder not found' });
+      }
+
+      const isUnique = await isUniqueFoldername(
+        userId,
+        folderId,
+        parentFolderId,
+      );
+      if (!isUnique) {
+        return res
+          .status(400)
+          .json({ message: 'File name already exists in the directory' });
       }
 
       const fileMetadata = await FolderModel.updateFolderMetadata(folderId, {

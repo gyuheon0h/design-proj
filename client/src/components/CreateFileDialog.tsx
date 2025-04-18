@@ -7,17 +7,21 @@ import {
   Button,
   List,
   ListItem,
+  Input,
   Typography,
   Box,
   Paper,
 } from '@mui/material';
 import { typography } from '../Styles';
 import DeleteIcon from '@mui/icons-material/Delete';
+import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
+import axios from 'axios';
 
 interface UploadDialogProps {
   open: boolean;
   onClose: () => void;
+  currentFolderId: string | null;
   onBatchUpload: (
     uploads: { file: File; relativePath: string }[],
   ) => Promise<void>;
@@ -32,16 +36,70 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
   open,
   onClose,
   onBatchUpload,
+  currentFolderId,
 }) => {
   const [files, setFiles] = useState<UploadFile[]>([]);
+  const [errorMessage, setErrorMessage] = useState('');
   const dropRef = useRef<HTMLDivElement>(null);
 
-  const addFiles = (newFiles: File[], getPath: (file: File) => string) => {
-    const wrapped = newFiles.map((file) => ({
-      file,
-      relativePath: getPath(file),
-    }));
-    setFiles((prev) => [...prev, ...wrapped]);
+  const addFiles = async (
+    newFiles: File[],
+    getPath: (file: File) => string,
+  ) => {
+    const okUploads: UploadFile[] = [];
+    const failedPaths: string[] = [];
+
+    const existingPaths = new Set(files.map((f) => f.relativePath));
+    const batchPaths = new Set<string>();
+
+    for (const file of newFiles) {
+      const relativePath = getPath(file);
+
+      if (existingPaths.has(relativePath) || batchPaths.has(relativePath)) {
+        continue;
+      }
+
+      try {
+        // call your uniqueness endpoint
+        await axios.get(
+          `${process.env.REACT_APP_API_BASE_URL}/api/file/upload/${file.name}/unique`,
+          {
+            params: { parentFolder: currentFolderId },
+            withCredentials: true,
+          },
+        );
+
+        // if no error, it’s unique—queue it for upload
+        okUploads.push({ file, relativePath });
+      } catch (err: any) {
+        // if the backend tells us “already exists”, collect it
+        if (
+          err.response?.status === 400 &&
+          err.response.data?.message ===
+            'File name already exists in the directory'
+        ) {
+          failedPaths.push(relativePath);
+        } else {
+          // any other error—log it and also treat it as “failed”
+          console.error('Error checking file uniqueness', err);
+          failedPaths.push(relativePath);
+        }
+      }
+    }
+
+    // if any failed, show them
+    if (failedPaths.length > 0) {
+      setErrorMessage(
+        `These files already exist and were not added: ${failedPaths.join(
+          ', ',
+        )}`,
+      );
+    } else {
+      setErrorMessage('');
+    }
+
+    // finally, add only the unique files into your dialog
+    setFiles((prev) => [...prev, ...okUploads]);
   };
 
   const removeFileAtIndex = (index: number) => {
@@ -142,6 +200,16 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
         Upload Files or Folders
       </DialogTitle>
       <DialogContent>
+        {errorMessage && (
+          <Alert
+            severity="error"
+            onClose={() => setErrorMessage('')}
+            sx={{ mb: 2 }}
+          >
+            {errorMessage}. Please rename and try again.
+          </Alert>
+        )}
+
         <Box display="flex" gap={2} my={2}>
           <Button
             fullWidth

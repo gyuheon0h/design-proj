@@ -1,4 +1,5 @@
 // WIP FILE IGNORE
+import FileModel from '../../db_models/FileModel';
 import FolderModel from '../../db_models/FolderModel';
 import PermissionModel from '../../db_models/PermissionModel';
 
@@ -83,4 +84,23 @@ export async function isNestedSharedFile(
   }
 
   return false; // No shared parent folder found
+}
+
+export async function isUniqueFileName(
+  userId: string,
+  newFileName: string,
+  parentFolderId: string | null,
+): Promise<boolean> {
+  console.log(userId, newFileName, parentFolderId);
+  if (parentFolderId === null) {
+    // Get all files in the home directory
+    const filesInHome = await FileModel.getFilesByOwnerAndFolder(userId, null);
+    return !filesInHome.some((file) => file.name === newFileName);
+  } else {
+    // Get all files in the folder
+    const filesInFolder = await FileModel.getFilesByFolder(parentFolderId);
+    console.log('filesInFolder:', filesInFolder);
+    console.log(newFileName);
+    return !filesInFolder.some((file) => file.name === newFileName);
+  }
 }
