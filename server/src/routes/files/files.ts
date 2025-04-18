@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import StorageService from '../../storage';
 import FileModel from '../../db_models/FileModel';
 import PermissionModel from '../../db_models/PermissionModel';
-import { inferMimeType } from './fileHelpers';
+import { inferMimeType, isUniqueFileName } from './fileHelpers';
 import { checkPermission } from '../../middleware/checkPermission';
 
 const fileRouter = Router();
@@ -74,6 +74,37 @@ fileRouter.post('/upload/cancel/:userId', authorizeUser, (req, res) => {
     return res.status(404).json({ error: 'No active upload for this user' });
   }
 });
+
+fileRouter.get('/upload/:fileName/unique', authorizeUser, async (req, res) => {
+  const rawParent = req.query.parentFolder;
+
+  const parentFolder: string | null =
+    typeof rawParent === 'string'
+      ? rawParent
+      : Array.isArray(rawParent) && typeof rawParent[0] === 'string'
+        ? rawParent[0]
+        : null;
+
+  const { fileName } = req.params;
+
+  if (!fileName) {
+    return res.status(400).json({ message: 'No file name provided' });
+  }
+
+  const userId = (req as any).user.userId;
+
+  // Check for duplicate file name in the folder
+  const isUnique = await isUniqueFileName(userId, fileName, parentFolder);
+  if (!isUnique) {
+    return res
+      .status(400)
+      .json({ message: 'File name already exists in the directory' });
+  }
+  return res.status(200).json({
+    message: 'File name is unique',
+  });
+});
+
 /**
  * POST /api/files/upload
  * Route to upload a file
@@ -392,9 +423,21 @@ fileRouter.patch(
         return res.status(404).json({ message: 'File not found' });
       }
 
+      // Check if the new name is unique in the same directory
+      const isUnique = await isUniqueFileName(
+        userId,
+        resourceName,
+        file.parentFolder,
+      );
+      if (!isUnique) {
+        return res
+          .status(400)
+          .json({ message: 'File name already exists in the directory' });
+      }
+
       const fileMetadata = await FileModel.updateFileMetadata(fileId, {
         name: resourceName,
-        lastModifiedBy: userId, //TODO: may need to get userName thru userId
+        lastModifiedBy: userId,
         lastModifiedAt: new Date(),
       });
 
@@ -432,6 +475,13 @@ fileRouter.patch(
 
       if (!file) {
         return res.status(404).json({ message: 'File not found' });
+      }
+
+      const isUnique = await isUniqueFileName(userId, fileId, parentFolderId);
+      if (!isUnique) {
+        return res
+          .status(400)
+          .json({ message: 'File name already exists in the directory' });
       }
 
       if (file?.parentFolder === parentFolderId) {
@@ -629,9 +679,21 @@ fileRouter.patch(
     try {
       const { fileId } = req.params;
       const file = await FileModel.getByIdAll(fileId);
+      const userId = (req as any).user.userId;
 
       if (!file) {
         return res.status(404).json({ message: 'File not found' });
+      }
+
+      const isUnique = await isUniqueFileName(
+        userId,
+        fileId,
+        file.parentFolder,
+      );
+      if (!isUnique) {
+        return res
+          .status(400)
+          .json({ message: 'File name already exists in the directory' });
       }
 
       await FileModel.restore(fileId);

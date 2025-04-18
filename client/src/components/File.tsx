@@ -420,7 +420,12 @@ const FileComponent = (props: FileComponentProps) => {
     event.stopPropagation();
     await handleRestoreFile(props.file.id, props.file.owner);
     setAnchorEl(null);
-    props.refreshFiles(props.file.parentFolder);
+
+    if (props.page === 'trash') {
+      props.refreshFiles(null);
+    } else {
+      props.refreshFiles(props.file.parentFolder);
+    }
   };
 
   const handleRestoreFile = async (fileId: string, owner: string) => {

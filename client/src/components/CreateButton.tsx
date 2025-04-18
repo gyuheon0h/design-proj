@@ -167,6 +167,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         open={uploadDialogOpen}
         onClose={closeUploadDialog}
         onBatchUpload={handleBatchFileUpload}
+        currentFolderId={currentFolderId}
       />
 
       {uploadsInProgress.map(({ file, id }, index) => (
