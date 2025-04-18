@@ -8,7 +8,11 @@ import {
   CircularProgress,
   Box,
   TextField,
+  IconButton,
+  Typography,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 import '@blocknote/core/fonts/inter.css';
 import '@blocknote/mantine/style.css';
@@ -132,13 +136,39 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-        <DialogTitle>
-          {initialContent.length > 0
-            ? 'Edit OwlNote File'
-            : 'Create OwlNote File'}
+      <Dialog 
+        open={open} 
+        onClose={onClose} 
+        fullWidth 
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            overflow: 'hidden',
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '16px 24px',
+            backgroundColor: '#f8f9fa',
+            borderBottom: '1px solid #eee',
+          }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            {initialContent.length > 0
+              ? 'Edit OwlNote File'
+              : 'Create OwlNote File'}
+          </Typography>
+          <IconButton onClick={onClose} size="small" sx={{ color: 'text.secondary' }}>
+            <CloseIcon />
+          </IconButton>
         </DialogTitle>
-        <DialogContent>
+        
+        <DialogContent sx={{ padding: '16px 24px', height: '70vh' }}>
           {loading ? (
             <Box
               sx={{
@@ -148,7 +178,7 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
                 minHeight: '200px',
               }}
             >
-              <CircularProgress />
+              <CircularProgress sx={{ color: '#4286f5' }} />
             </Box>
           ) : (
             <OwlNoteViewer
@@ -160,8 +190,35 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
             />
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleSave}>Save</Button>
+        
+        <DialogActions sx={{ padding: '16px 24px', backgroundColor: '#f8f9fa', borderTop: '1px solid #eee', justifyContent: 'space-between' }}>
+          <Button 
+            onClick={onClose}
+            sx={{ 
+              borderRadius: '8px', 
+              textTransform: 'none',
+              color: '#666',
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSave}
+            variant="contained"
+            startIcon={<CheckCircleOutlineIcon />}
+            sx={{ 
+              borderRadius: '8px', 
+              textTransform: 'none',
+              boxShadow: 'none',
+              backgroundColor: '#4286f5',
+              '&:hover': {
+                backgroundColor: '#3a76d8',
+                boxShadow: 'none',
+              }
+            }}
+          >
+            Save
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -170,27 +227,86 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
         <Dialog
           open={isFileNameDialogOpen}
           onClose={() => setIsFileNameDialogOpen(false)}
+          PaperProps={{
+            sx: {
+              borderRadius: '12px',
+              overflow: 'hidden',
+            }
+          }}
         >
-          <DialogTitle>Enter a File Name</DialogTitle>
-          <DialogContent>
+          <DialogTitle
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '16px 24px',
+              backgroundColor: '#f8f9fa',
+              borderBottom: '1px solid #eee',
+            }}
+          >
+            <Typography variant="h6" fontWeight={600}>
+              Enter a File Name
+            </Typography>
+            <IconButton 
+              onClick={() => setIsFileNameDialogOpen(false)} 
+              size="small" 
+              sx={{ color: 'text.secondary' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          
+          <DialogContent sx={{ padding: '24px' }}>
             <TextField
               autoFocus
               margin="dense"
               label="File Name"
               type="text"
               fullWidth
-              variant="standard"
+              variant="outlined"
               value={newFileName}
               onChange={(e) => setNewFileName(e.target.value)}
               error={!isFileNameValid}
               helperText={!isFileNameValid ? 'File name is required.' : ''}
+              sx={{ 
+                '& .MuiOutlinedInput-root': { 
+                  borderRadius: '8px' 
+                } 
+              }}
             />
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setIsFileNameDialogOpen(false)}>
+          
+          <DialogActions sx={{ padding: '16px 24px', backgroundColor: '#f8f9fa', borderTop: '1px solid #eee' }}>
+            <Button 
+              onClick={() => setIsFileNameDialogOpen(false)}
+              sx={{ 
+                borderRadius: '8px', 
+                textTransform: 'none',
+                color: '#666',
+              }}
+            >
               Cancel
             </Button>
-            <Button onClick={handleConfirmFileName} disabled={!isFileNameValid}>
+            <Button 
+              onClick={handleConfirmFileName} 
+              disabled={!isFileNameValid}
+              variant="contained"
+              startIcon={<CheckCircleOutlineIcon />}
+              sx={{ 
+                borderRadius: '8px', 
+                textTransform: 'none',
+                boxShadow: 'none',
+                backgroundColor: '#4286f5',
+                '&:hover': {
+                  backgroundColor: '#3a76d8',
+                  boxShadow: 'none',
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: '#f5f5f5',
+                  color: '#bdbdbd',
+                }
+              }}
+            >
               Confirm
             </Button>
           </DialogActions>

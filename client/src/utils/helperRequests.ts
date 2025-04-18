@@ -45,6 +45,29 @@ export async function getUsernameById(id: string): Promise<string> {
   }
 }
 
+/**
+ * Get folder name by folder ID
+ * @param folderId - ID of the folder
+ * @returns Promise with folder name or 'Unknown folder' if not found
+ */
+export async function getFolderNameById(folderId: string): Promise<string> {
+  try {
+    const response = await axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}`,
+      { withCredentials: true }
+    );
+    
+    if (response.data && response.data.name) {
+      return response.data.name;
+    }
+    
+    return 'Unknown folder';
+  } catch (error) {
+    console.error('Error fetching folder name:', error);
+    return 'Unknown folder';
+  }
+}
+
 export async function getIsFavoritedByFileId(fileId: string): Promise<boolean> {
   try {
     const response = await axios.get(

@@ -1,6 +1,6 @@
 // BlockNoteViewer.tsx
 import React, { useEffect } from 'react';
-import { Box, Button } from '@mui/material';
+import { Box, Button, Stack } from '@mui/material';
 import { BlockNoteView } from '@blocknote/mantine';
 import { useCreateBlockNote } from '@blocknote/react';
 import { Block } from '@blocknote/core';
@@ -9,6 +9,7 @@ import {
   pdfDefaultSchemaMappings,
 } from '@blocknote/xl-pdf-exporter';
 import * as ReactPDF from '@react-pdf/renderer';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
 interface OwlNoteViewerProp {
   content: Block[];
@@ -72,9 +73,31 @@ const OwlNoteViewer: React.FC<OwlNoteViewerProp> = ({
   };
 
   return (
-    <Box sx={{ width: '100%', height: '100%', overflow: 'auto' }}>
-      <BlockNoteView editor={editor} editable={editable} theme={'light'} />
-      <Button onClick={handleExportPdf}>EXPORT PDF</Button>
+    <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ flexGrow: 1, overflow: 'auto', mb: 2 }}>
+        <BlockNoteView editor={editor} editable={editable} />
+      </Box>
+      
+      <Stack direction="row" spacing={2} justifyContent="flex-start" sx={{ padding: '8px 0' }}>
+        <Button 
+          variant="outlined" 
+          onClick={handleExportPdf}
+          startIcon={<PictureAsPdfIcon />}
+          sx={{
+            borderRadius: '8px',
+            color: '#4286f5',
+            borderColor: '#4286f5',
+            '&:hover': {
+              backgroundColor: 'rgba(66, 134, 245, 0.04)',
+              borderColor: '#3a76d8',
+            },
+            textTransform: 'none',
+            fontWeight: 500,
+          }}
+        >
+          Export PDF
+        </Button>
+      </Stack>
     </Box>
   );
 };
