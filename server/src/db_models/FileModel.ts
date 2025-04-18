@@ -1,7 +1,7 @@
 import BaseModel from './baseModel';
 import { recursiveDeletePermissions } from './ModelHelpers';
 
-interface File {
+export interface File {
   id: string;
   name: string;
   owner: string;
@@ -15,7 +15,7 @@ interface File {
   deletedAt: Date | null;
 }
 
-class FileModel extends BaseModel<File> {
+export class FileModel extends BaseModel<File> {
   constructor() {
     super('File');
   }

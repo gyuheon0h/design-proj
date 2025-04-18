@@ -54,6 +54,7 @@ import { Permission } from '../interfaces/Permission';
 import OwlNoteEditorDialog from './OwlNoteEditorDialog';
 import { useStorage } from '../context/StorageContext';
 import { useUser } from '../context/UserContext';
+import { DriveFileMove } from '@mui/icons-material';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -401,7 +402,7 @@ const FileComponent = (props: FileComponentProps) => {
     if (props.page !== 'favorites') {
       menuItems.push(
         <MenuItem key="move" onClick={handleMoveClick}>
-          <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
+          <DriveFileMove sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
         </MenuItem>,
       );
     }
@@ -568,7 +569,12 @@ const FileComponent = (props: FileComponentProps) => {
     event.stopPropagation();
     await handleRestoreFile(props.file.id, props.file.owner);
     setAnchorEl(null);
-    props.refreshFiles(props.file.parentFolder);
+
+    if (props.page === 'trash') {
+      props.refreshFiles(null);
+    } else {
+      props.refreshFiles(props.file.parentFolder);
+    }
   };
 
   const handleRestoreFile = async (fileId: string, owner: string) => {

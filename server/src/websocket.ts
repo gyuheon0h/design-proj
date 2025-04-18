@@ -1,4 +1,3 @@
-// WebSocketServer.ts - Server-side implementation with improved revision tracking
 import { Server as WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import StorageService from './storage';
