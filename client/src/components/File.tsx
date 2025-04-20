@@ -28,6 +28,8 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import FolderIcon from '@mui/icons-material/Folder';
+import HomeIcon from '@mui/icons-material/Home';
 import RenameDialog from './RenameDialog';
 import {
   getUsernameById,
@@ -51,13 +53,48 @@ import TextEditor from './TextEditor';
 import { Permission } from '../interfaces/Permission';
 import OwlNoteEditorDialog from './OwlNoteEditorDialog';
 import { useStorage } from '../context/StorageContext';
+import { useUser } from '../context/UserContext';
 import { DriveFileMove } from '@mui/icons-material';
 
 export interface FileComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
   file: File;
   refreshFiles: (folderId: string | null) => void;
+  showLocation?: boolean; // New prop to control location display
 }
+
+// Array of avatar colors to use
+const AVATAR_COLORS = [
+  '#F44336', // Red
+  '#673AB7', // Deep Purple
+  '#2196F3', // Blue
+  '#4CAF50', // Green
+  '#FF9800', // Orange
+  '#607D8B', // Blue Grey
+  '#9C27B0', // Purple
+  '#00BCD4', // Cyan
+  '#009688', // Teal
+  '#E91E63', // Pink
+];
+
+// Function to get a consistent color based on the username
+const getAvatarColor = (username: string): string => {
+  if (!username || username === 'N/A' || username === 'Unknown') {
+    return '#9E9E9E'; // Default gray for unknown/NA users
+  }
+  
+  // Get the first character of the username (case-insensitive)
+  const firstChar = username.trim().charAt(0).toLowerCase();
+  
+  // Convert character to a number (a=0, b=1, etc)
+  const charCode = firstChar.charCodeAt(0);
+  
+  // Use modulo to get an index within our color array
+  const colorIndex = charCode % AVATAR_COLORS.length;
+  
+  // Return the color at that index
+  return AVATAR_COLORS[colorIndex];
+};
 
 const getFileIcon = (fileType: string) => {
   const lowerCaseType = fileType.trim().toLowerCase();
@@ -161,9 +198,54 @@ const getFileIcon = (fileType: string) => {
   }
 };
 
+// Location icon for folder
+const getFolderLocationIcon = (isHome: boolean) => {
+  if (isHome) {
+    return (
+      <HomeIcon 
+        sx={{ 
+          color: colors.fileGray, 
+          fontSize: 20, 
+          marginRight: 1 
+        }} 
+      />
+    );
+  }
+  
+  return (
+    <FolderIcon 
+      sx={{ 
+        color: colors.fileGray, 
+        fontSize: 20, 
+        marginRight: 1 
+      }} 
+    />
+  );
+};
+
+// Helper function to get folder name by ID - this function will make an API call
+const getFolderNameById = async (folderId: string): Promise<string> => {
+  try {
+    const response = await axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}`,
+      { withCredentials: true }
+    );
+    
+    if (response.data && response.data.name) {
+      return response.data.name;
+    }
+    
+    return 'Unknown folder';
+  } catch (error) {
+    console.error('Error fetching folder name:', error);
+    return 'Unknown folder';
+  }
+};
+
 const FileComponent = (props: FileComponentProps) => {
+  const { userId } = useUser(); // Add this to get the current user ID
   const [ownerUserName, setOwnerUserName] = useState<string>('Loading...');
-  const [, setModifiedByName] = useState<string>('Loading...');
+  const [modifiedByName, setModifiedByName] = useState<string>('N/A');
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
@@ -172,6 +254,11 @@ const FileComponent = (props: FileComponentProps) => {
   const fileCache = useRef(new Map<string, string>());
   const [isFavorited, setIsFavorited] = useState(false);
   const { fetchStorageUsed } = useStorage();
+  const [isShared, setIsShared] = useState(false);
+  
+  // State for the parent folder name (for location column)
+  const [folderName, setFolderName] = useState<string>('Home');
+  const [isLoadingFolderName, setIsLoadingFolderName] = useState(false);
 
   // For the image viewer
   const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
@@ -182,6 +269,58 @@ const FileComponent = (props: FileComponentProps) => {
   const isEditSupported = isSupportedFileTypeText(props.file.fileType);
 
   const [, setCurrentPermission] = useState<Permission | null>(null);
+
+  // Fetch parent folder name if showing location
+  useEffect(() => {
+    if (!props.showLocation) return;
+    
+    const fetchFolderName = async () => {
+      if (!props.file.parentFolder) {
+        setFolderName('Home');
+        return;
+      }
+      
+      setIsLoadingFolderName(true);
+      try {
+        const name = await getFolderNameById(props.file.parentFolder);
+        setFolderName(name || 'Unknown folder');
+      } catch (err) {
+        console.error('Error fetching folder name:', err);
+        setFolderName('Unknown folder');
+      } finally {
+        setIsLoadingFolderName(false);
+      }
+    };
+
+    fetchFolderName();
+  }, [props.file.parentFolder, props.showLocation]);
+
+  // Check if the file is shared with others
+  useEffect(() => {
+    const checkIfShared = async () => {
+      try {
+        const permissions = await axios.get(
+          `${process.env.REACT_APP_API_BASE_URL}/api/file/${props.file.id}/permissions`,
+          { withCredentials: true }
+        );
+        
+        // If there are permissions for other users, the file is shared
+        const sharedWithOthers = Array.isArray(permissions.data) && permissions.data.some(
+          (perm) => perm.userId !== userId && !perm.deletedAt
+        );
+        
+        setIsShared(sharedWithOthers);
+      } catch (error) {
+        console.error('Error checking if file is shared:', error);
+        setIsShared(false);
+      }
+    };
+
+    // Only check if this is the user's own file
+    if (props.file.owner === userId && props.page !== 'shared') {
+      checkIfShared();
+    }
+  }, [props.file.id, props.file.owner, userId, props.page]);
 
   useEffect(() => {
     const fetchPermission = async () => {
@@ -288,20 +427,30 @@ const FileComponent = (props: FileComponentProps) => {
 
   useEffect(() => {
     const fetchModifiedByName = async () => {
-      if (props.file.lastModifiedBy) {
-        try {
-          const username = await getUsernameById(props.file.lastModifiedBy);
-          setModifiedByName(username || 'Unknown');
-        } catch (error) {
-          console.error('Error fetching username:', error);
-          setError('Error fetching username');
-          setModifiedByName('Unknown');
-        }
+      // If this is the user's own file and not shared, set the modifier to the owner
+      if (props.file.owner === userId && !isShared) {
+        setModifiedByName(ownerUserName);
+        return;
+      }
+      
+      // Otherwise, proceed with normal logic
+      if (!props.file.lastModifiedBy) {
+        setModifiedByName('N/A');
+        return;
+      }
+
+      try {
+        const username = await getUsernameById(props.file.lastModifiedBy);
+        setModifiedByName(username || 'Unknown');
+      } catch (error) {
+        console.error('Error fetching modified by username:', error);
+        setError('Error fetching modified by username');
+        setModifiedByName('Unknown');
       }
     };
 
     fetchModifiedByName();
-  }, [props.file.lastModifiedBy]);
+  }, [props.file.lastModifiedBy, userId, props.file.owner, ownerUserName, isShared]);
 
   useEffect(() => {
     const fetchIsFavorited = async () => {
@@ -498,8 +647,54 @@ const FileComponent = (props: FileComponentProps) => {
     }
   };
 
+  // Helper function to format time as HH:MM AM/PM
+  const formatTimeStamp = (dateString: string | Date) => {
+    const date = new Date(dateString);
+    
+    if (isNaN(date.getTime())) {
+      return '00:00';
+    }
+    
+    let hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    
+    // Convert to 12 hour format
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    
+    return `${hours}:${minutes} ${ampm}`;
+  };
+
   const lastModifiedDate = formatDate(props.file.lastModifiedAt);
   const createdDate = formatDate(props.file.createdAt);
+
+  // Helper function to render the avatar
+  const renderAvatar = (name: string) => {
+    // Get avatar color dynamically based on name
+    const avatarColor = getAvatarColor(name);
+    
+    // For N/A case, show a different placeholder
+    if (name === 'N/A') {
+      return (
+        <Avatar sx={{ ...avatarStyles.small, bgcolor: '#9E9E9E', marginRight: 1 }}>
+          -
+        </Avatar>
+      );
+    }
+    
+    return (
+      <Avatar
+        sx={{
+          ...avatarStyles.small,
+          bgcolor: avatarColor,
+          marginRight: 1,
+        }}
+      >
+        {name.charAt(0).toUpperCase()}
+      </Avatar>
+    );
+  };
 
   return (
     <>
@@ -541,6 +736,34 @@ const FileComponent = (props: FileComponentProps) => {
           </Tooltip>
         </TableCell>
 
+        {/* Location Column - Only shown when showLocation is true */}
+        {props.showLocation && (
+          <TableCell
+            sx={{
+              padding: '12px 16px',
+              borderBottom: 'none',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              {getFolderLocationIcon(folderName === 'Home')}
+              <Tooltip title={folderName} arrow>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    maxWidth: '150px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {isLoadingFolderName ? 'Loading...' : folderName}
+                </Typography>
+              </Tooltip>
+            </Box>
+          </TableCell>
+        )}
+
         {/* Created Date */}
         <TableCell sx={{ borderBottom: 'none' }}>
           <Typography variant="body2" color="text.secondary">
@@ -551,36 +774,19 @@ const FileComponent = (props: FileComponentProps) => {
         {/* Owner */}
         <TableCell sx={{ borderBottom: 'none' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Avatar
-              sx={{
-                ...avatarStyles.small,
-                bgcolor:
-                  ownerUserName === 'Sarah Luan'
-                    ? '#F44336'
-                    : ownerUserName === 'Emily Yang'
-                      ? '#673AB7'
-                      : ownerUserName === 'Jake Lehrman'
-                        ? '#FF9800'
-                        : ownerUserName === 'Ethan Hsu'
-                          ? '#607D8B'
-                          : ownerUserName === 'Henry Pu'
-                            ? '#FF9800'
-                            : colors.avatar,
-                marginRight: 1,
-              }}
-            >
-              {ownerUserName.charAt(0).toUpperCase()}
-            </Avatar>
+            {renderAvatar(ownerUserName)}
             <Typography variant="body2" color="text.secondary">
               {ownerUserName}
             </Typography>
           </Box>
         </TableCell>
 
-        {/* Last Modified */}
+        {/* Combined Last Modified and Modified By - without avatar */}
         <TableCell sx={{ borderBottom: 'none' }}>
           <Typography variant="body2" color="text.secondary">
-            {lastModifiedDate}
+            {lastModifiedDate === 'Today' 
+              ? `Today at ${formatTimeStamp(props.file.lastModifiedAt)} by ${modifiedByName}`
+              : `${lastModifiedDate} by ${modifiedByName}`}
           </Typography>
         </TableCell>
 
