@@ -402,6 +402,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
           fileId,
           mimeType,
           gcsKey,
+          userId,
         }),
       );
     }

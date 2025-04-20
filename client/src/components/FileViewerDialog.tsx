@@ -6,11 +6,17 @@ import {
 } from '../utils/fileTypeHelpers';
 import TextPreview from './TextPreview';
 
+import '@blocknote/core/fonts/inter.css';
+import '@blocknote/mantine/style.css';
+import { Block } from '@blocknote/core';
+import OwlNoteViewer from './OwlNoteViewer';
+
 interface FileViewerDialogProps {
   open: boolean;
   onClose: () => void;
   src: string;
   fileType: string;
+  fileName: string;
 }
 
 const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
@@ -18,45 +24,61 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
   onClose,
   src,
   fileType,
+  fileName,
 }) => {
   const [loading, setLoading] = useState(true);
   const [textContent, setTextContent] = useState<string | null>(null);
+  const [blocknoteContent, setBlocknoteContent] = useState<Block[] | null>(
+    null,
+  );
 
   const isImage = fileType.startsWith('image/');
   const isVideo = isSupportedFileTypeVideo(fileType);
   const isPDF = fileType === 'application/pdf';
   const isText = isSupportedFileTypeText(fileType);
   const isAudio = fileType.startsWith('audio/');
+  const isOwlNote = fileType === 'text/owlnote';
 
   useEffect(() => {
     if (open && src && !src.startsWith('about:blank')) {
       setLoading(true);
       setTextContent(null);
+      setBlocknoteContent(null);
+      console.log('fileType', fileType);
 
-      if (isSupportedFileTypeText(fileType) && !isPDF) {
+      if (isOwlNote || (isSupportedFileTypeText(fileType) && !isPDF)) {
         fetch(src)
           .then((response) => {
-            if (
-              !response.ok ||
-              (response.headers.get('content-type')?.includes('text/html') &&
-                !(fileType === 'text/html'))
-            ) {
-              throw new Error('Invalid file source');
-            }
+            if (!response.ok) throw new Error('Invalid file source');
             return response.text();
           })
           .then((text) => {
-            setTextContent(text);
+            if (isOwlNote) {
+              try {
+                console.log(text);
+
+                const parsed = JSON.parse(text);
+                console.log('PARSED:', parsed);
+
+                setBlocknoteContent(parsed);
+              } catch (err) {
+                console.error('Invalid BlockNote format');
+              }
+            } else {
+              setTextContent(text);
+            }
             setLoading(false);
+            // console.log('blocknote content 2', blocknoteContent);
           })
           .catch((error) => {
-            console.error('Error fetching text file:', error);
+            console.error('Error fetching file:', error);
             setTextContent(null);
+            setBlocknoteContent(null);
             setLoading(false);
           });
       }
     }
-  }, [open, src, fileType, isPDF]);
+  }, [open, src, fileType, isPDF, isOwlNote]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -132,6 +154,9 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
             onLoad={() => setLoading(false)}
           />
         )}
+        {isOwlNote && blocknoteContent && (
+          <OwlNoteViewer content={blocknoteContent} fileName={fileName} />
+        )}
 
         {isText && textContent && (
           <TextPreview content={textContent} fileType={fileType} />
@@ -153,9 +178,13 @@ const FileViewerDialog: React.FC<FileViewerDialogProps> = ({
           </audio>
         )}
 
-        {!isImage && !isVideo && !isPDF && !isText && !isAudio && !loading && (
-          <p>Unsupported file type</p>
-        )}
+        {!isImage &&
+          !isVideo &&
+          !isPDF &&
+          !isText &&
+          !isAudio &&
+          !isOwlNote &&
+          !loading && <p>Unsupported file type</p>}
       </DialogContent>
     </Dialog>
   );

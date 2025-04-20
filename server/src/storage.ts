@@ -55,7 +55,7 @@ const StorageService = {
   },
 
   /**
-   *
+   * Saves a file
    * @param fileId - The path of the file in the bucket
    * @param content  - the string content for that file
    */
@@ -89,6 +89,97 @@ const StorageService = {
       stream.on('error', reject);
       stream.on('finish', resolve);
       stream.end(buffer);
+    });
+  },
+
+  /**
+   * This function seeks to upload a file more gradually than dumping the entire file.
+   * @param filePath The path of the file that we are attempting to upload.
+   * @param buffer The size of the element that we've buffered.
+   * @param mimeType the type of the file that we're working with.
+   * @param onProgress The percent to update frontend with.
+   * @param abortSignal Optional signal if aborted to cancel GCS operation.
+   * @returns
+   */
+  uploadFileWithProgress: async (
+    filePath: string,
+    buffer: Buffer,
+    mimeType: string,
+    onProgress?: (percent: number) => void,
+    abortSignal?: AbortSignal,
+  ) => {
+    const file = bucket.file(filePath);
+    const stream = file.createWriteStream({
+      metadata: { contentType: mimeType },
+    });
+
+    // Prevent MaxListenersExceededWarning
+    stream.setMaxListeners(30);
+
+    // Handle aborts
+    if (abortSignal) {
+      abortSignal.addEventListener('abort', () => {
+        stream.destroy(new Error('Upload aborted by user'));
+      });
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      let lastSentPercent = -1;
+
+      const chunkSize = 1024 * 64; // 64 KB chunks
+      let offset = 0;
+      const totalSize = buffer.length;
+
+      const onError = (err: Error) => {
+        cleanup();
+        reject(err);
+      };
+
+      const onFinish = () => {
+        cleanup();
+        resolve();
+      };
+
+      const onDrain = () => {
+        writeNextChunk();
+      };
+
+      function cleanup() {
+        stream.removeListener('error', onError);
+        stream.removeListener('finish', onFinish);
+        stream.removeListener('drain', onDrain);
+      }
+
+      function writeNextChunk() {
+        if (offset >= totalSize) {
+          stream.end(); // wait for finish
+          return;
+        }
+
+        const end = Math.min(offset + chunkSize, totalSize);
+        const chunk = buffer.slice(offset, end);
+
+        const canContinue = stream.write(chunk, () => {
+          offset = end;
+          const percent = Math.round((offset / totalSize) * 100);
+
+          if (onProgress && percent !== lastSentPercent) {
+            onProgress(percent);
+            lastSentPercent = percent;
+          }
+
+          writeNextChunk(); // schedule next chunk
+        });
+
+        if (!canContinue) {
+          stream.once('drain', onDrain);
+        }
+      }
+
+      stream.on('error', onError);
+      stream.on('finish', onFinish);
+
+      writeNextChunk();
     });
   },
 

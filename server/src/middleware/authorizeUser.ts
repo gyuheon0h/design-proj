@@ -3,11 +3,12 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
 export interface AuthenticatedRequest extends Request {
   user?: { userId: string; username: string };
 }
 
-export const authorize = (
+export const authorizeUser = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction,
@@ -16,6 +17,7 @@ export const authorize = (
     // Get token from cookies
     const token = req.cookies?.authToken;
     if (!token) {
+      console.log('This is an issue'); // apparnetly there isn't a toekn being passed into some requests.
       return res
         .status(401)
         .json({ message: 'Unauthorized: No token provided' });
@@ -26,8 +28,8 @@ export const authorize = (
       userId: string;
       username: string;
     };
-    req.user = decoded; // Set the user on the request object
 
+    req.user = decoded; // Set the user on the request object
     next(); // Proceed to the next handler
   } catch (error) {
     console.error('Authorization error:', error);

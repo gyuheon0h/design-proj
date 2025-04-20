@@ -1,7 +1,7 @@
-// WebSocketServer.ts - Server-side implementation with improved revision tracking
 import { Server as WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import StorageService from './storage';
+import FileModel from './db_models/FileModel';
 
 // operation types
 interface InsertOperation {
@@ -292,7 +292,7 @@ export default function setupWebSocketServer(server: Server) {
     ws.on('message', async (message: string) => {
       try {
         const data = JSON.parse(message.toString());
-        const { type, fileId, mimeType, gcsKey } = data;
+        const { type, fileId, mimeType, gcsKey, userId } = data;
 
         switch (type) {
           case 'join-document': {
@@ -467,6 +467,10 @@ export default function setupWebSocketServer(server: Server) {
             if (doc) {
               try {
                 await StorageService.saveToGCS(gcsKey, doc.content, mimeType);
+                await FileModel.updateFileMetadata(fileId, {
+                  lastModifiedBy: userId,
+                  lastModifiedAt: new Date(),
+                });
                 ws.send(
                   JSON.stringify({
                     type: 'save-success',
