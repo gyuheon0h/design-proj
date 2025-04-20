@@ -244,6 +244,17 @@ fileRouter.post('/create/owlnote', authorizeUser, async (req, res) => {
       finalFileName += '.owlnote';
     }
 
+    const isUnique = await isUniqueFileName(
+      userId,
+      finalFileName,
+      parentFolder,
+    );
+    if (!isUnique) {
+      return res
+        .status(400)
+        .json({ message: 'File name already exists in the directory' });
+    }
+
     const buffer = Buffer.from(content, 'utf-8');
     const mimeType = 'text/owlnote';
 
