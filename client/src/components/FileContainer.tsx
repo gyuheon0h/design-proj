@@ -53,7 +53,7 @@ const FileContainer: React.FC<FileContainerProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           marginBottom: '15px',
-          borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+          // borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
         }}
       >
         <Typography variant="h2">Files</Typography>
@@ -62,7 +62,12 @@ const FileContainer: React.FC<FileContainerProps> = ({
       <Table sx={{ tableLayout: 'fixed' }}>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ width: showLocationColumn ? '25%' : '35%', fontWeight: 'bold' }}>
+            <TableCell
+              sx={{
+                width: showLocationColumn ? '25%' : '35%',
+                fontWeight: 'bold',
+              }}
+            >
               Name
             </TableCell>
             {showLocationColumn && (
@@ -76,7 +81,12 @@ const FileContainer: React.FC<FileContainerProps> = ({
             <TableCell sx={{ width: '15%', fontWeight: 'bold' }}>
               Owner
             </TableCell>
-            <TableCell sx={{ width: showLocationColumn ? '15%' : '20%', fontWeight: 'bold' }}>
+            <TableCell
+              sx={{
+                width: showLocationColumn ? '15%' : '20%',
+                fontWeight: 'bold',
+              }}
+            >
               Last Modified
             </TableCell>
             <TableCell sx={{ width: '10%' }}></TableCell>
