@@ -17,7 +17,7 @@ import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
 import axios from 'axios';
 
-interface UploadDialogProps {
+interface UploadFileDialogProps {
   open: boolean;
   onClose: () => void;
   currentFolderId: string | null;
@@ -31,7 +31,7 @@ type UploadFile = {
   relativePath: string;
 };
 
-const UploadDialog: React.FC<UploadDialogProps> = ({
+const UploadFileDialog: React.FC<UploadFileDialogProps> = ({
   open,
   onClose,
   onBatchUpload,
@@ -308,4 +308,4 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
   );
 };
 
-export default UploadDialog;
+export default UploadFileDialog;

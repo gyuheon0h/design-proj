@@ -99,6 +99,53 @@ folderRouter.post(
 );
 
 /**
+ * POST /api/folders/upload
+ * Protected route to upload a  folder.
+ */
+folderRouter.post(
+  '/upload',
+  authorizeUser,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      // extract uploadFile[] and file bytes from req body
+      const { rootFolderName, parentFolder } = req.body;
+
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const owner = req.user?.userId;
+
+      // cloning folder hierarchy phase
+
+      // create the root folder being uploaded
+      const newFolder = await FolderModel.createFolder({
+        name: rootFolderName || 'uploadedRootName',
+        owner,
+        createdAt: new Date(),
+        parentFolder: parentFolder || null,
+        deletedAt: null,
+      });
+
+      await PermissionModel.createPermission({
+        fileId: newFolder.id,
+        userId: owner,
+        role: 'owner',
+      });
+
+      // create any nested folders within root folder/other nested folders
+
+      // uploading all uploadFile to correpsonding cloned folder phase
+
+      return res.status(201).json(newFolder);
+    } catch (error) {
+      console.error('Error uploading folder:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
+/**
  * GET /api/folder/foldername/:folderId
  * Get the name of a folder by id
  */

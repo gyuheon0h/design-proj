@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Fab, Menu, MenuItem } from '@mui/material';
 import axios from 'axios';
-import UploadDialog from './CreateFileDialog';
+import UploadFileDialog from './UploadFileDialog';
 import FolderDialog from './CreateFolderDialog';
 import AddIcon from '@mui/icons-material/Add';
 import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
@@ -9,6 +9,7 @@ import UploadProgressToast from './UploadProgress';
 import { useUser } from '../context/UserContext';
 import OwlNoteEditorDialog from './OwlNoteEditorDialog';
 import { v4 as uuidv4 } from 'uuid';
+import { UploadFolderDialog } from './UploadFolderDialog';
 
 interface CreateButtonProps {
   currentFolderId: string | null;
@@ -28,7 +29,8 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   const userId = userContext.userId;
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [uploadFileDialogOpen, setUploadFileDialogOpen] = useState(false);
+  const [uploadFolderDialogOpen, setUploadFolderDialogOpen] = useState(false);
   const [blockNoteOpen, setBlockNoteOpen] = useState(false);
   // Drag detection
   const [didDrag, setDidDrag] = useState(false);
@@ -36,10 +38,12 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   const menuOpen = Boolean(anchorEl);
 
   const handleMenuClose = () => setAnchorEl(null);
-  const openFolderDialog = () => setFolderDialogOpen(true);
+  const openCreateFolderDialog = () => setFolderDialogOpen(true);
   const closeFolderDialog = () => setFolderDialogOpen(false);
-  const openUploadDialog = () => setUploadDialogOpen(true);
-  const closeUploadDialog = () => setUploadDialogOpen(false);
+  const openUploadFileDialog = () => setUploadFileDialogOpen(true);
+  const openUploadFolderDialog = () => setUploadFolderDialogOpen(true);
+  const closeUploadFileDialog = () => setUploadFileDialogOpen(false);
+  const closeUploadFolderDialog = () => setUploadFolderDialogOpen(false);
 
   const handleDragStart = () => setDidDrag(false);
   const handleDrag = (e: DraggableEvent, data: DraggableData) =>
@@ -77,7 +81,18 @@ const CreateButton: React.FC<CreateButtonProps> = ({
     }));
 
     setUploadsInProgress((prev) => [...prev, ...newUploads]);
-    setUploadDialogOpen(false);
+    setUploadFileDialogOpen(false);
+  };
+
+  const handleFolderUpload = async (
+    uploads: { file: File; relativePath: string }[],
+  ) => {
+    // const newUploads = uploads.map(({ file, relativePath }) => ({
+    //   file: new File([file], relativePath),
+    //   id: uuidv4(),
+    // }));
+    // setUploadsInProgress((prev) => [...prev, ...newUploads]);
+    // setUploadFileDialogOpen(false);
   };
 
   const handleCreateOwlNote = async (
@@ -133,7 +148,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            openFolderDialog();
+            openCreateFolderDialog();
           }}
         >
           Create a Folder
@@ -141,10 +156,18 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            openUploadDialog();
+            openUploadFileDialog();
           }}
         >
-          Upload a File
+          Upload File(s)
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            openUploadFolderDialog();
+          }}
+        >
+          Upload a Folder
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -163,10 +186,17 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         onFolderCreate={handleCreateFolder}
       />
 
-      <UploadDialog
-        open={uploadDialogOpen}
-        onClose={closeUploadDialog}
+      <UploadFileDialog
+        open={uploadFileDialogOpen}
+        onClose={closeUploadFileDialog}
         onBatchUpload={handleBatchFileUpload}
+        currentFolderId={currentFolderId}
+      />
+
+      <UploadFolderDialog
+        open={uploadFolderDialogOpen}
+        onClose={closeUploadFolderDialog}
+        // onBatchUpload={handleBatchFolderUpload}
         currentFolderId={currentFolderId}
       />
 
