@@ -78,7 +78,8 @@ const UploadProgressToast: React.FC<UploadProgressToastProps> = ({
       refreshStorage();
       setTimeout(onClose, 4000);
     }
-  }, [cancelled, done, onClose, parentFolder, refreshFiles, refreshStorage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [done, cancelled]);
 
   const handleCancel = () => {
     abortController.current?.abort();
