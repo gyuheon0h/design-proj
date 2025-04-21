@@ -101,12 +101,11 @@ const getFileIcon = (fileType: string) => {
     case 'text':
       if (extension === 'owlnote')
         return (
-            <Typography sx={{ fontSize: 30, marginRight: '10px' }}>
-              🦉
-            </Typography>
-          );
-      else return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
-        
+          <Typography sx={{ fontSize: 30, marginRight: '10px' }}>🦉</Typography>
+        );
+      else
+        return <DescriptionIcon sx={{ fontSize: 30, marginRight: '10px' }} />;
+
     case 'application':
       if (extension === 'pdf')
         return (
@@ -271,7 +270,10 @@ const FileComponent = (props: FileComponentProps) => {
           props.file.id,
         );
         const objectUrl = URL.createObjectURL(blob);
-        if (!isSupportedFileTypeText(props.file.fileType)) {
+        if (
+          !isSupportedFileTypeText(props.file.fileType) ||
+          !(props.file.fileType === 'text/owlnote')
+        ) {
           fileCache.current.set(props.file.gcsKey, objectUrl);
         }
         setFileSrc(objectUrl);
