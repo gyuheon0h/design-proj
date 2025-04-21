@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+// ==== UploadFolderDialog.tsx ====
+import React, { useState } from 'react';
 import axios from 'axios';
 import {
   Dialog,
@@ -10,10 +11,9 @@ import {
   ListItem,
   Typography,
   IconButton,
-  Box,
-  LinearProgress,
   Alert,
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export type UploadFile = { file: File; relativePath: string };
 
@@ -21,129 +21,147 @@ interface UploadFolderDialogProps {
   open: boolean;
   onClose: () => void;
   currentFolderId: string | null;
+  onBatchUpload: (
+    uploads: UploadFile[],
+    folderPathToFolderId?: Map<string, string>,
+  ) => Promise<void>;
 }
 
 export const UploadFolderDialog: React.FC<UploadFolderDialogProps> = ({
   open,
   onClose,
   currentFolderId,
+  onBatchUpload,
 }) => {
   const [files, setFiles] = useState<UploadFile[]>([]);
-  const [uploadId, setUploadId] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const abortController = useRef<AbortController | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
-  const addFiles = (newFiles: File[]) => {
-    const existing = new Set(files.map((f) => f.relativePath));
-    const batch: UploadFile[] = [];
-
-    newFiles.forEach((file) => {
-      const relativePath = file.webkitRelativePath || file.name;
-      if (
-        !relativePath.split('/').some((seg) => seg.startsWith('.')) &&
-        !existing.has(relativePath)
-      ) {
-        batch.push({ file, relativePath });
-      }
-    });
-
-    setFiles((prev) => [...prev, ...batch]);
-  };
-
+  // handle folder selection and build the list of files with relative paths
   const handleFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = Array.from(e.target.files || []);
-    if (selected.length) addFiles(selected);
+    const selectedFiles = Array.from(e.target.files || []);
+    const uploads: UploadFile[] = selectedFiles
+      .filter((file) => {
+        const path = file.webkitRelativePath || file.name;
+        return !path.split('/').some((seg) => seg.startsWith('.'));
+      })
+      .map((file) => ({
+        file,
+        relativePath: file.webkitRelativePath || file.name,
+      }));
+
+    setFiles(uploads);
+    setErrorMessage('');
     e.target.value = '';
   };
 
-  // SSE subscription
-  useEffect(() => {
-    if (!uploadId) return;
-    const es = new EventSource(
-      `${process.env.REACT_APP_API_BASE_URL}/api/upload-folder/progress/${uploadId}`,
-      { withCredentials: true },
-    );
-    es.onmessage = (e) => {
-      try {
-        // const msg = JSON.parse(e.data);
-        // if (msg.type === 'folder-progress') {
-        //   setProgress(msg.percent);
-        // } else if (msg.type === 'complete') {
-        //   setDone(true);
-        //   es.close();
-        // }
-      } catch (err) {
-        console.error('SSE parse error', err);
-      }
-    };
-    es.onerror = (err) => {
-      console.error('SSE error', err);
-      setUploadError('Progress stream failed');
-      es.close();
-    };
-    return () => es.close();
-  }, [uploadId]);
+  const removeFileAtIndex = (idx: number) =>
+    setFiles((prev) => prev.filter((_, i) => i !== idx));
+
+  const clearFiles = () => setFiles([]);
 
   const handleUpload = async () => {
+    if (!files.length) return;
     try {
-      // start session
-      // const {
-      //   data: { uploadId: id },
-      // } = await axios.post(
-      //   `${process.env.REACT_APP_API_BASE_URL}/api/upload-folder/start`,
-      //   { parentFolder: currentFolderId },
-      //   { withCredentials: true },
-      // );
-      // setUploadId(id);
+      // determine root folder name (first segment of any file path)
+      const rootFolderName = files[0].relativePath.split('/')[0];
 
-      const formData = new FormData();
-      files.forEach(({ file, relativePath }) => {
-        formData.append('files', file, relativePath);
-      });
-      // formData.append('uploadId', id);
-      abortController.current = new AbortController();
-      await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/folder/upload`,
-        formData,
-        {
-          withCredentials: true,
-          headers: { 'Content-Type': 'multipart/form-data' },
-          signal: abortController.current.signal,
-        },
+      // create root folder in metadata
+      const { data: createRes } = await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/folder/create`,
+        { name: rootFolderName, parentFolder: currentFolderId },
+        { withCredentials: true },
       );
+      const rootFolderId: string = createRes.id;
+
+      // collect unique subfolder paths relative to root
+      const folderPathSet = new Set<string>();
+      files.forEach(({ relativePath }) => {
+        const segments = relativePath.split('/');
+        segments.pop(); // drop filename
+        const subPath = segments.slice(1).join('/');
+        if (subPath) folderPathSet.add(subPath);
+      });
+      const folderPaths = Array.from(folderPathSet);
+
+      // clone folder hierarchy on server
+      const { data: cloneRes } = await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/folder/upload/clone-hierarchy`,
+        { folderPaths, rootFolderId },
+        { withCredentials: true },
+      );
+      const folderPathToFolderId = new Map<string, string>(
+        Object.entries(cloneRes.folderPathToFolderId),
+      );
+
+      // delegate to parent handler to upload files under correct folder IDs
+      await onBatchUpload(files, folderPathToFolderId);
+
+      // cleanup and close
+      clearFiles();
+      onClose();
     } catch (err: any) {
-      if (axios.isCancel(err)) {
-        console.warn('Upload cancelled');
-        setUploadError('Upload cancelled');
-      } else {
-        console.error('Upload failed', err);
-        setUploadError('Upload failed');
-      }
+      console.error('Upload folder error:', err);
+      setErrorMessage(
+        err.response?.data?.message ||
+          'Failed to upload folder. Please try again.',
+      );
     }
   };
-
-  // const uploading = !!uploadId && !done && !uploadError;
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle>Upload Folder</DialogTitle>
       <DialogContent>
-        {uploadError && (
+        {errorMessage && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {uploadError}
+            {errorMessage}
           </Alert>
         )}
         <Button variant="contained" component="label" sx={{ my: 2 }}>
-          Select a Folder
+          Select Folder
           <input
             type="file"
             multiple
             hidden
             {...{ webkitdirectory: 'true', directory: '' }}
-            onChange={handleUpload}
+            onChange={handleFolderChange}
           />
         </Button>
+        {files.length > 0 && (
+          <>
+            <Typography variant="subtitle1" gutterBottom>
+              Files to upload:
+            </Typography>
+            <List>
+              {files.map(({ relativePath }, idx) => (
+                <ListItem
+                  key={idx}
+                  secondaryAction={
+                    <IconButton onClick={() => removeFileAtIndex(idx)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  }
+                >
+                  📄 {relativePath}
+                </ListItem>
+              ))}
+            </List>
+          </>
+        )}
       </DialogContent>
+      <DialogActions>
+        <Button
+          onClick={() => {
+            clearFiles();
+            onClose();
+          }}
+        >
+          Cancel
+        </Button>
+        <Button onClick={handleUpload} disabled={!files.length}>
+          Upload
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };

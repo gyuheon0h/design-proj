@@ -18,6 +18,12 @@ interface CreateButtonProps {
   refreshStorage: () => Promise<void>;
 }
 
+interface UploadInProgress {
+  file: File;
+  id: string;
+  parentFolder: string | null;
+}
+
 const CreateButton: React.FC<CreateButtonProps> = ({
   currentFolderId,
   refreshFiles,
@@ -69,30 +75,31 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   };
 
   const [uploadsInProgress, setUploadsInProgress] = useState<
-    { file: File; id: string }[]
+    UploadInProgress[]
   >([]);
 
   const handleBatchFileUpload = async (
     uploads: { file: File; relativePath: string }[],
+    folderPathToFolderId?: Map<string, string>,
   ) => {
-    const newUploads = uploads.map(({ file, relativePath }) => ({
-      file: new File([file], relativePath),
-      id: uuidv4(),
-    }));
+    const newUploads: UploadInProgress[] = uploads.map(
+      ({ file, relativePath }) => {
+        const id = uuidv4();
+
+        let parentFolder: string | null = currentFolderId;
+        if (folderPathToFolderId) {
+          const parts = relativePath.split('/');
+          const subPath = parts.slice(1, -1).join('/');
+          parentFolder = folderPathToFolderId.get(subPath) || currentFolderId;
+        }
+        const wrapped = new File([file], file.name, { type: file.type });
+        return { file: wrapped, id, parentFolder };
+      },
+    );
 
     setUploadsInProgress((prev) => [...prev, ...newUploads]);
     setUploadFileDialogOpen(false);
-  };
-
-  const handleFolderUpload = async (
-    uploads: { file: File; relativePath: string }[],
-  ) => {
-    // const newUploads = uploads.map(({ file, relativePath }) => ({
-    //   file: new File([file], relativePath),
-    //   id: uuidv4(),
-    // }));
-    // setUploadsInProgress((prev) => [...prev, ...newUploads]);
-    // setUploadFileDialogOpen(false);
+    setUploadFolderDialogOpen(false);
   };
 
   const handleCreateOwlNote = async (
@@ -196,17 +203,17 @@ const CreateButton: React.FC<CreateButtonProps> = ({
       <UploadFolderDialog
         open={uploadFolderDialogOpen}
         onClose={closeUploadFolderDialog}
-        // onBatchUpload={handleBatchFolderUpload}
+        onBatchUpload={handleBatchFileUpload}
         currentFolderId={currentFolderId}
       />
 
-      {uploadsInProgress.map(({ file, id }, index) => (
+      {uploadsInProgress.map(({ file, id, parentFolder }, index) => (
         <UploadProgressToast
           key={id}
           file={file}
           fileId={id}
+          parentFolder={parentFolder}
           userId={userId}
-          parentFolder={currentFolderId}
           onClose={() =>
             setUploadsInProgress((prev) => prev.filter((u) => u.id !== id))
           }

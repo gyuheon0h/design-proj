@@ -113,13 +113,13 @@ const UploadFileDialog: React.FC<UploadFileDialogProps> = ({
     event.target.value = '';
   };
 
-  const handleFolderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = Array.from(event.target.files || []);
-    if (selected.length > 0) {
-      addFiles(selected, (file) => file.webkitRelativePath || file.name);
-    }
-    event.target.value = '';
-  };
+  // const handleFolderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const selected = Array.from(event.target.files || []);
+  //   if (selected.length > 0) {
+  //     addFiles(selected, (file) => file.webkitRelativePath || file.name);
+  //   }
+  //   event.target.value = '';
+  // };
 
   const handleDrop = (event: React.DragEvent) => {
     event.preventDefault();
@@ -224,7 +224,7 @@ const UploadFileDialog: React.FC<UploadFileDialogProps> = ({
               style={{ display: 'none' }}
             />
           </Button>
-          <Button
+          {/* <Button
             fullWidth
             variant="contained"
             component="label"
@@ -234,11 +234,11 @@ const UploadFileDialog: React.FC<UploadFileDialogProps> = ({
             <input
               type="file"
               multiple
-              onChange={handleFolderChange}
+              // onChange={handleFolderChange}
               style={{ display: 'none' }}
               {...{ webkitdirectory: 'true', directory: '' }}
             />
-          </Button>
+          </Button> */}
         </Box>
 
         <Paper

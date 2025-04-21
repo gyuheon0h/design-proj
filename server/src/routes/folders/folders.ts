@@ -47,6 +47,100 @@ folderRouter.get(
   },
 );
 
+folderRouter.get(
+  '/upload/:folderName/unique',
+  authorizeUser,
+  async (req, res) => {
+    const rawParent = req.query.parentFolder;
+
+    const parentFolder: string | null =
+      typeof rawParent === 'string'
+        ? rawParent
+        : Array.isArray(rawParent) && typeof rawParent[0] === 'string'
+          ? rawParent[0]
+          : null;
+
+    const { folderName } = req.params;
+
+    if (!folderName) {
+      return res.status(400).json({ message: 'No file name provided' });
+    }
+
+    const userId = (req as any).user.userId;
+
+    // Check for duplicate file name in the folder
+    const isUnique = await isUniqueFoldername(userId, folderName, parentFolder);
+    if (!isUnique) {
+      return res
+        .status(400)
+        .json({ message: 'Folder name already exists in the directory' });
+    }
+    return res.status(200).json({
+      message: 'Folder name is unique',
+    });
+  },
+);
+
+folderRouter.post(
+  '/upload/clone-hierarchy',
+  authorizeUser,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { folderPaths, rootFolderId } = req.body as {
+        folderPaths: string[];
+        rootFolderId: string;
+      };
+
+      const owner = req.user?.userId;
+      if (!owner) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      // map from relative path (e.g. "sub1/sub2") to new folderId
+      const folderPathToFolderId: Record<string, string> = {};
+      folderPathToFolderId[''] = rootFolderId;
+
+      // for each requested path, create any missing segments
+      for (const fullPath of folderPaths) {
+        const segments = fullPath.split('/');
+        for (let i = 0; i < segments.length; i++) {
+          const currentPath = segments.slice(0, i + 1).join('/');
+          if (folderPathToFolderId[currentPath]) {
+            continue;
+          }
+
+          const parentPath = segments.slice(0, i).join('/');
+          const parentFolderId = folderPathToFolderId[parentPath];
+          const name = segments[i];
+
+          // create the folder record
+          const newFolder = await FolderModel.createFolder({
+            name,
+            owner,
+            createdAt: new Date(),
+            parentFolder: parentFolderId,
+            deletedAt: null,
+          });
+
+          // grant owner permission
+          await PermissionModel.createPermission({
+            fileId: newFolder.id,
+            userId: owner,
+            role: 'owner',
+          });
+
+          folderPathToFolderId[currentPath] = newFolder.id;
+        }
+      }
+
+      return res.status(200).json({ folderPathToFolderId });
+    } catch (error) {
+      console.error('Error cloning folder hierarchy:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
 /**
  * POST /api/folders/create
  * Protected route to create a new folder.
@@ -100,7 +194,7 @@ folderRouter.post(
 
 /**
  * POST /api/folders/upload
- * Protected route to upload a  folder.
+ * Protected route to upload a folder.
  */
 folderRouter.post(
   '/upload',
