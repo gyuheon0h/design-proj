@@ -5,7 +5,6 @@ import { useState } from 'react';
 import {
   Container,
   Grid,
-  Paper,
   Typography,
   TextField,
   Button,
@@ -63,10 +62,23 @@ const Login = () => {
   };
 
   return (
-    <Container maxWidth={false} disableGutters sx={{ height: '100vh', overflow: 'hidden' }}>
+    <Container
+      maxWidth={false}
+      disableGutters
+      sx={{ height: '100vh', overflow: 'hidden' }}
+    >
       <Grid container sx={{ height: '100%' }}>
         {/* Left Panel - Login Form */}
-        <Grid item xs={12} md={6} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Grid
+          item
+          xs={12}
+          md={6}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <Box sx={{ width: '100%', maxWidth: 450, p: 3 }}>
             <Box sx={{ textAlign: 'center', mb: 6 }}>
               <Box
@@ -75,7 +87,11 @@ const Login = () => {
                 alt="Owl Logo"
                 sx={{ width: 60, height: 60, mb: 2 }}
               />
-              <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, color: colors.textPrimary }}>
+              <Typography
+                variant="h4"
+                gutterBottom
+                sx={{ fontWeight: 600, color: colors.textPrimary }}
+              >
                 Welcome Back
               </Typography>
               <Typography variant="body1" color="textSecondary">
@@ -141,13 +157,17 @@ const Login = () => {
                         onClick={handleTogglePasswordVisibility}
                         edge="end"
                       >
-                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                        {showPassword ? (
+                          <VisibilityOffIcon />
+                        ) : (
+                          <VisibilityIcon />
+                        )}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
               />
-              
+
               <Button
                 type="submit"
                 fullWidth
@@ -169,11 +189,18 @@ const Login = () => {
               >
                 Sign In
               </Button>
-              
+
               <Box sx={{ textAlign: 'center', mt: 3 }}>
                 <Typography variant="body2" color="textSecondary">
                   Don't have an account?{' '}
-                  <Link to="/register" style={{ color: colors.accentBlue, textDecoration: 'none', fontWeight: 600 }}>
+                  <Link
+                    to="/register"
+                    style={{
+                      color: colors.accentBlue,
+                      textDecoration: 'none',
+                      fontWeight: 600,
+                    }}
+                  >
                     Sign Up
                   </Link>
                 </Typography>
@@ -183,10 +210,10 @@ const Login = () => {
         </Grid>
 
         {/* Right Panel - Branding/Illustration */}
-        <Grid 
-          item 
-          xs={false} 
-          md={6} 
+        <Grid
+          item
+          xs={false}
+          md={6}
           sx={{
             background: `linear-gradient(135deg, ${colors.accentBlue} 0%, #2541b2 100%)`,
             display: { xs: 'none', md: 'flex' },
@@ -195,10 +222,10 @@ const Login = () => {
             position: 'relative',
           }}
         >
-          <Box 
-            sx={{ 
-              p: 5, 
-              color: 'white', 
+          <Box
+            sx={{
+              p: 5,
+              color: 'white',
               textAlign: 'center',
               maxWidth: '80%',
               zIndex: 1,
@@ -210,11 +237,11 @@ const Login = () => {
             <Typography variant="h3" sx={{ mb: 6 }}>
               Store, share, and collaborate on files with ease
             </Typography>
-            
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
+
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
                 alignItems: 'center',
                 position: 'relative',
                 height: '300px',
@@ -232,21 +259,24 @@ const Login = () => {
               />
             </Box>
           </Box>
-          
+
           {/* Background pattern elements */}
-          <Box sx={{ 
-            position: 'absolute', 
-            top: 0, 
-            left: 0, 
-            width: '100%', 
-            height: '100%', 
-            opacity: 0.1,
-            background: 'radial-gradient(circle, transparent 20%, #1a237e 20%, #1a237e 80%, transparent 80%, transparent), radial-gradient(circle, transparent 20%, #1a237e 20%, #1a237e 80%, transparent 80%, transparent) 50px 50px, linear-gradient(#3949ab 4px, transparent 4px) 0 -2px, linear-gradient(90deg, #3949ab 4px, transparent 4px) -2px 0',
-            backgroundSize: '100px 100px, 100px 100px, 50px 50px, 50px 50px',
-          }} />
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              opacity: 0.1,
+              background:
+                'radial-gradient(circle, transparent 20%, #1a237e 20%, #1a237e 80%, transparent 80%, transparent), radial-gradient(circle, transparent 20%, #1a237e 20%, #1a237e 80%, transparent 80%, transparent) 50px 50px, linear-gradient(#3949ab 4px, transparent 4px) 0 -2px, linear-gradient(90deg, #3949ab 4px, transparent 4px) -2px 0',
+              backgroundSize: '100px 100px, 100px 100px, 50px 50px, 50px 50px',
+            }}
+          />
         </Grid>
       </Grid>
-      
+
       {error && (
         <ErrorAlert
           open={!!error}

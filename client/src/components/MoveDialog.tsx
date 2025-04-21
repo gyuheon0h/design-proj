@@ -54,14 +54,13 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   const [currentParentFolder, setCurrentParentFolder] = useState<Folder | null>(
     null,
   );
-  const [, setFolders] = useState<Folder[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
   const [folderHistory, setFolderHistory] = useState<Folder[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
   const [rootDirectory, setRootDirectory] = useState<Folder | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filteredFolders] = useState<Folder[]>([]);
   const [invalidMoveReason, setInvalidMoveReason] = useState<string | null>(
     null,
   );
@@ -277,7 +276,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
   };
 
   // Check if a folder is empty (for empty state display)
-  const isFolderEmpty = filteredFolders.length === 0 && !loading;
+  const isFolderEmpty = folders.length === 0 && !loading;
 
   return (
     <Dialog
@@ -399,7 +398,7 @@ const MoveDialog: React.FC<MoveDialogProps> = ({
         ) : (
           // Folder List
           <List disablePadding>
-            {filteredFolders.map((folder) => {
+            {folders.map((folder) => {
               // Check if this is the folder we're trying to move (to prevent navigation into itself)
               const isMovingFolder =
                 resourceType === 'folder' && folder.id === resourceId;

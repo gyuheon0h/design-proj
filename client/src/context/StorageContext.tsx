@@ -22,6 +22,7 @@ export const StorageProvider: React.FC<{ children: React.ReactNode }> = ({
         `${process.env.REACT_APP_API_BASE_URL}/api/user/${userId}/storage-used`,
         { withCredentials: true },
       );
+      console.log('RESPONSE:', response.data);
       const sizeBytes = Number(response.data.totalStorageUsed);
       setStorageUsed(sizeBytes);
     } catch (error) {

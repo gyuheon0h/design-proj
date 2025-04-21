@@ -217,6 +217,7 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
             onClick={onClose}
             sx={{
               borderRadius: '8px',
+
               textTransform: 'none',
               color: '#666',
             }}
@@ -276,7 +277,6 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
               <CloseIcon />
             </IconButton>
           </DialogTitle>
-
           <DialogContent sx={{ padding: '24px' }}>
             <TextField
               autoFocus
@@ -290,6 +290,12 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
                 setErrorMessage(''); // clear server error as they type
               }}
               error={!!errorMessage || !isFileNameValid}
+              helperText={!isFileNameValid ? 'File name is required.' : ''}
+              sx={{ 
+                '& .MuiOutlinedInput-root': { 
+                  borderRadius: '8px' 
+                } 
+               }}
             />
             {errorMessage && (
               <Typography color="error" variant="body2" sx={{ mt: 1 }}>

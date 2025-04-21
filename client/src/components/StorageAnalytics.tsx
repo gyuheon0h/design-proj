@@ -1,19 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { CircularProgress } from '@mui/material';
-import { useUser } from '../context/UserContext';
-import axios from 'axios';
+import { useEffect, useState } from 'react';
+import { Box, CircularProgress, Typography } from '@mui/material';
+import CloudIcon from '@mui/icons-material/Cloud';
+import { colors } from '../Styles';
 import { useStorage } from '../context/StorageContext';
-
-interface StorageData {
-  totalStorageUsed: number;
-}
 
 const STORAGE_LIMIT = 15 * 1024 * 1024 * 1024; // 15GB in bytes
 
-const StorageAnalytics = () => {
-  const userContext = useUser();
-  const userId = userContext.userId;
-
+export const StorageAnalytics = () => {
   const { storageUsed, fetchStorageUsed } = useStorage();
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -37,61 +30,55 @@ const StorageAnalytics = () => {
   const normalizedStorageUsed = Number(storageUsed); // make sure it's a clean number
   const percentageUsed = (normalizedStorageUsed / STORAGE_LIMIT) * 100;
   const storageUsedGB = (normalizedStorageUsed / 1024 / 1024 / 1024).toFixed(2);
-  console.log('normalizedStorageUsed', normalizedStorageUsed);
-  console.log('storageUsedGB', storageUsedGB);
-
-  console.log('storageUsed:', normalizedStorageUsed); // for debugging
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <span>☁️ My Storage</span>
-      </div>
-      <div style={styles.progressBarContainer}>
-        <div
-          style={{
-            ...styles.progressBar,
-            width: `${percentageUsed}%`,
-          }}
-        ></div>
-      </div>
-      <p style={styles.text}>You have used {storageUsedGB} GB out of 15 GB.</p>
-    </div>
-  );
-};
+    <Box sx={{ mt: 'auto', padding: '16px' }}>
+      <Box
+        sx={{
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          borderRadius: '10px',
+          padding: '16px',
+          marginBottom: '16px',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <CloudIcon sx={{ color: colors.sidebarText, mr: 1, fontSize: 20 }} />
+          <Typography
+            variant="body2"
+            sx={{ color: colors.sidebarText, fontWeight: 500 }}
+          >
+            My Storage
+          </Typography>
+        </Box>
 
-const styles = {
-  container: {
-    background: '#1e1e1e',
-    color: '#fff',
-    padding: '16px',
-    borderRadius: '8px',
-    width: '250px',
-    fontSize: '14px',
-    fontWeight: '500',
-    textAlign: 'center' as const,
-  },
-  header: {
-    fontSize: '16px',
-    fontWeight: 'bold',
-    marginBottom: '8px',
-  },
-  progressBarContainer: {
-    background: '#333',
-    borderRadius: '8px',
-    width: '100%',
-    height: '8px',
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: '100%',
-    background: '#6a5acd',
-    transition: 'width 0.5s ease-in-out',
-  },
-  text: {
-    marginTop: '8px',
-    fontSize: '12px',
-  },
+        <Box
+          sx={{
+            width: '100%',
+            bgcolor: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: 5,
+            height: 4,
+            mb: 1,
+          }}
+        >
+          <Box
+            sx={{
+              width: `${percentageUsed}%`,
+              bgcolor: '#3B82F6',
+              borderRadius: 5,
+              height: '100%',
+            }}
+          />
+        </Box>
+
+        <Typography
+          variant="caption"
+          sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+        >
+          You have used {storageUsedGB} GB out of {15} GB.
+        </Typography>
+      </Box>
+    </Box>
+  );
 };
 
 export default StorageAnalytics;

@@ -13,7 +13,7 @@ import { folderStyles } from '../Styles';
 import RenameDialog from './RenameDialog';
 import PermissionDialog from './PermissionsDialog';
 import MoveDialog from './MoveDialog';
-import { downloadFile, getIsFavoritedByFileId } from '../utils/helperRequests';
+import { getIsFavoritedByFileId } from '../utils/helperRequests';
 import ErrorAlert from '../components/ErrorAlert';
 import { Folder } from '../interfaces/Folder';
 import axios from 'axios';
@@ -114,7 +114,7 @@ const FolderComponent = (props: FolderProps) => {
     if (props.page !== 'favorites') {
       menuItems.push(
         <MenuItem key="move" onClick={handleMoveClick}>
-          <SendIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
+          <DriveFileMove sx={{ fontSize: '20px', marginRight: '9px' }} /> Move
         </MenuItem>,
       );
     }
