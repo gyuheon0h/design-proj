@@ -337,15 +337,22 @@ const FileComponent = (props: FileComponentProps) => {
     fetchPermission();
   }, [props.page, props.file.id]);
   const getMenuItems = () => {
+    const menuItems = [];
+
     if (props.page === 'trash') {
-      return (
+      menuItems.push(
         <MenuItem onClick={handleRestoreClick}>
           <RestoreIcon sx={{ fontSize: '20px', marginRight: '9px' }} /> Restore
-        </MenuItem>
+        </MenuItem>,
       );
+      menuItems.push(
+        <MenuItem key="edit" onClick={handleHardDeleteClick}>
+          <DeleteIcon sx={{ fontSize: '20px', marginRight: '9px' }} />
+          Hard Delete
+        </MenuItem>,
+      );
+      return menuItems;
     }
-
-    const menuItems = [];
 
     if (isEditSupported) {
       menuItems.push(
@@ -578,11 +585,15 @@ const FileComponent = (props: FileComponentProps) => {
     await handleRestoreFile(props.file.id, props.file.owner);
     setAnchorEl(null);
 
-    if (props.page === 'trash') {
-      props.refreshFiles(null);
-    } else {
-      props.refreshFiles(props.file.parentFolder);
-    }
+    props.refreshFiles(null);
+  };
+
+  const handleHardDeleteClick = async (event: React.MouseEvent) => {
+    event.stopPropagation();
+    await handleHardDeleteFile(props.file.id, props.file.owner);
+    setAnchorEl(null);
+
+    props.refreshFiles(null);
   };
 
   const handleRestoreFile = async (fileId: string, owner: string) => {
@@ -594,6 +605,17 @@ const FileComponent = (props: FileComponentProps) => {
       );
     } catch (error) {
       console.error('Error restoring file:', error);
+    }
+  };
+
+  const handleHardDeleteFile = async (fileId: string, owner: string) => {
+    try {
+      await axios.delete(
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/hard-delete`,
+        { withCredentials: true },
+      );
+    } catch (error) {
+      console.error('Error hard deleting file:', error);
     }
   };
 
