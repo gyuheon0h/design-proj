@@ -82,16 +82,16 @@ const getAvatarColor = (username: string): string => {
   if (!username || username === 'N/A' || username === 'Unknown') {
     return '#9E9E9E'; // Default gray for unknown/NA users
   }
-  
+
   // Get the first character of the username (case-insensitive)
   const firstChar = username.trim().charAt(0).toLowerCase();
-  
+
   // Convert character to a number (a=0, b=1, etc)
   const charCode = firstChar.charCodeAt(0);
-  
+
   // Use modulo to get an index within our color array
   const colorIndex = charCode % AVATAR_COLORS.length;
-  
+
   // Return the color at that index
   return AVATAR_COLORS[colorIndex];
 };
@@ -202,23 +202,23 @@ const getFileIcon = (fileType: string) => {
 const getFolderLocationIcon = (isHome: boolean) => {
   if (isHome) {
     return (
-      <HomeIcon 
-        sx={{ 
-          color: colors.fileGray, 
-          fontSize: 20, 
-          marginRight: 1 
-        }} 
+      <HomeIcon
+        sx={{
+          color: colors.fileGray,
+          fontSize: 20,
+          marginRight: 1,
+        }}
       />
     );
   }
-  
+
   return (
-    <FolderIcon 
-      sx={{ 
-        color: colors.fileGray, 
-        fontSize: 20, 
-        marginRight: 1 
-      }} 
+    <FolderIcon
+      sx={{
+        color: colors.fileGray,
+        fontSize: 20,
+        marginRight: 1,
+      }}
     />
   );
 };
@@ -228,13 +228,13 @@ const getFolderNameById = async (folderId: string): Promise<string> => {
   try {
     const response = await axios.get(
       `${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}`,
-      { withCredentials: true }
+      { withCredentials: true },
     );
-    
+
     if (response.data && response.data.name) {
       return response.data.name;
     }
-    
+
     return 'Unknown folder';
   } catch (error) {
     console.error('Error fetching folder name:', error);
@@ -255,7 +255,7 @@ const FileComponent = (props: FileComponentProps) => {
   const [isFavorited, setIsFavorited] = useState(false);
   const { fetchStorageUsed } = useStorage();
   const [isShared, setIsShared] = useState(false);
-  
+
   // State for the parent folder name (for location column)
   const [folderName, setFolderName] = useState<string>('Home');
   const [isLoadingFolderName, setIsLoadingFolderName] = useState(false);
@@ -273,13 +273,13 @@ const FileComponent = (props: FileComponentProps) => {
   // Fetch parent folder name if showing location
   useEffect(() => {
     if (!props.showLocation) return;
-    
+
     const fetchFolderName = async () => {
       if (!props.file.parentFolder) {
         setFolderName('Home');
         return;
       }
-      
+
       setIsLoadingFolderName(true);
       try {
         const name = await getFolderNameById(props.file.parentFolder);
@@ -301,14 +301,16 @@ const FileComponent = (props: FileComponentProps) => {
       try {
         const permissions = await axios.get(
           `${process.env.REACT_APP_API_BASE_URL}/api/file/${props.file.id}/permissions`,
-          { withCredentials: true }
+          { withCredentials: true },
         );
-        
+
         // If there are permissions for other users, the file is shared
-        const sharedWithOthers = Array.isArray(permissions.data) && permissions.data.some(
-          (perm) => perm.userId !== userId && !perm.deletedAt
-        );
-        
+        const sharedWithOthers =
+          Array.isArray(permissions.data) &&
+          permissions.data.some(
+            (perm) => perm.userId !== userId && !perm.deletedAt,
+          );
+
         setIsShared(sharedWithOthers);
       } catch (error) {
         console.error('Error checking if file is shared:', error);
@@ -432,7 +434,7 @@ const FileComponent = (props: FileComponentProps) => {
         setModifiedByName(ownerUserName);
         return;
       }
-      
+
       // Otherwise, proceed with normal logic
       if (!props.file.lastModifiedBy) {
         setModifiedByName('N/A');
@@ -450,7 +452,13 @@ const FileComponent = (props: FileComponentProps) => {
     };
 
     fetchModifiedByName();
-  }, [props.file.lastModifiedBy, userId, props.file.owner, ownerUserName, isShared]);
+  }, [
+    props.file.lastModifiedBy,
+    userId,
+    props.file.owner,
+    ownerUserName,
+    isShared,
+  ]);
 
   useEffect(() => {
     const fetchIsFavorited = async () => {
@@ -650,19 +658,19 @@ const FileComponent = (props: FileComponentProps) => {
   // Helper function to format time as HH:MM AM/PM
   const formatTimeStamp = (dateString: string | Date) => {
     const date = new Date(dateString);
-    
+
     if (isNaN(date.getTime())) {
       return '00:00';
     }
-    
+
     let hours = date.getHours();
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
-    
+
     // Convert to 12 hour format
     hours = hours % 12;
     hours = hours ? hours : 12; // the hour '0' should be '12'
-    
+
     return `${hours}:${minutes} ${ampm}`;
   };
 
@@ -673,16 +681,18 @@ const FileComponent = (props: FileComponentProps) => {
   const renderAvatar = (name: string) => {
     // Get avatar color dynamically based on name
     const avatarColor = getAvatarColor(name);
-    
+
     // For N/A case, show a different placeholder
     if (name === 'N/A') {
       return (
-        <Avatar sx={{ ...avatarStyles.small, bgcolor: '#9E9E9E', marginRight: 1 }}>
+        <Avatar
+          sx={{ ...avatarStyles.small, bgcolor: '#9E9E9E', marginRight: 1 }}
+        >
           -
         </Avatar>
       );
     }
-    
+
     return (
       <Avatar
         sx={{
@@ -784,7 +794,7 @@ const FileComponent = (props: FileComponentProps) => {
         {/* Combined Last Modified and Modified By - without avatar */}
         <TableCell sx={{ borderBottom: 'none' }}>
           <Typography variant="body2" color="text.secondary">
-            {lastModifiedDate === 'Today' 
+            {lastModifiedDate === 'Today'
               ? `Today at ${formatTimeStamp(props.file.lastModifiedAt)} by ${modifiedByName}`
               : `${lastModifiedDate} by ${modifiedByName}`}
           </Typography>
@@ -836,21 +846,25 @@ const FileComponent = (props: FileComponentProps) => {
         {getMenuItems()}
       </Menu>
 
-      <RenameDialog
-        open={isRenameDialogOpen}
-        resourceName={props.file.name}
-        resourceId={props.file.id}
-        resourceType="file"
-        onClose={() => setIsRenameDialogOpen(false)}
-        onSuccess={() => props.refreshFiles(props.file.parentFolder)}
-      />
+      {isRenameDialogOpen && (
+        <RenameDialog
+          open={isRenameDialogOpen}
+          resourceName={props.file.name}
+          resourceId={props.file.id}
+          resourceType="file"
+          onClose={() => setIsRenameDialogOpen(false)}
+          onSuccess={() => props.refreshFiles(props.file.parentFolder)}
+        />
+      )}
 
-      <PermissionDialog
-        open={isPermissionsDialogOpen}
-        onClose={() => setIsPermissionsDialogOpen(false)}
-        fileId={props.file.id}
-        folderId={null}
-      />
+      {isPermissionsDialogOpen && (
+        <PermissionDialog
+          open={isPermissionsDialogOpen}
+          onClose={() => setIsPermissionsDialogOpen(false)}
+          fileId={props.file.id}
+          folderId={null}
+        />
+      )}
 
       {isEditDialogOpen && (
         <>
@@ -898,16 +912,18 @@ const FileComponent = (props: FileComponentProps) => {
         </Fade>
       </Modal>
 
-      <MoveDialog
-        open={isMoveDialogOpen}
-        onClose={() => setIsMoveDialogOpen(false)}
-        page={props.page}
-        resourceName={props.file.name}
-        resourceId={props.file.id}
-        resourceType="file"
-        parentFolderId={props.file.parentFolder}
-        onSuccess={() => props.refreshFiles(props.file.parentFolder)}
-      />
+      {isMoveDialogOpen && (
+        <MoveDialog
+          open={isMoveDialogOpen}
+          onClose={() => setIsMoveDialogOpen(false)}
+          page={props.page}
+          resourceName={props.file.name}
+          resourceId={props.file.id}
+          resourceType="file"
+          parentFolderId={props.file.parentFolder}
+          onSuccess={() => props.refreshFiles(props.file.parentFolder)}
+        />
+      )}
     </>
   );
 };

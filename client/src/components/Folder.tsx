@@ -343,32 +343,38 @@ const FolderComponent = (props: FolderProps) => {
       </Menu>
 
       {/* Dialogs */}
-      <RenameDialog
-        open={isRenameDialogOpen}
-        resourceName={props.folder.name}
-        resourceId={props.folder.id}
-        resourceType="folder"
-        onClose={() => setIsRenameDialogOpen(false)}
-        onSuccess={() => props.refreshFolders(props.folder.parentFolder)}
-      />
+      {isRenameDialogOpen && (
+        <RenameDialog
+          open={isRenameDialogOpen}
+          resourceName={props.folder.name}
+          resourceId={props.folder.id}
+          resourceType="folder"
+          onClose={() => setIsRenameDialogOpen(false)}
+          onSuccess={() => props.refreshFolders(props.folder.parentFolder)}
+        />
+      )}
 
-      <PermissionDialog
-        open={isPermissionsDialogOpen}
-        onClose={() => setIsPermissionsDialogOpen(false)}
-        fileId={null}
-        folderId={props.folder.id}
-      />
+      {isPermissionsDialogOpen && (
+        <PermissionDialog
+          open={isPermissionsDialogOpen}
+          onClose={() => setIsPermissionsDialogOpen(false)}
+          fileId={null}
+          folderId={props.folder.id}
+        />
+      )}
 
-      <MoveDialog
-        open={isMoveDialogOpen}
-        onClose={() => setIsMoveDialogOpen(false)}
-        resourceName={props.folder.name}
-        page={props.page}
-        resourceId={props.folder.id}
-        resourceType="folder"
-        parentFolderId={props.folder.parentFolder}
-        onSuccess={() => props.refreshFolders(props.folder.parentFolder)}
-      />
+      {isMoveDialogOpen && (
+        <MoveDialog
+          open={isMoveDialogOpen}
+          onClose={() => setIsMoveDialogOpen(false)}
+          resourceName={props.folder.name}
+          page={props.page}
+          resourceId={props.folder.id}
+          resourceType="folder"
+          parentFolderId={props.folder.parentFolder}
+          onSuccess={() => props.refreshFolders(props.folder.parentFolder)}
+        />
+      )}
 
       {error && (
         <ErrorAlert

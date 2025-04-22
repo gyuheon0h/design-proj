@@ -37,7 +37,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
   const [uploadFileDialogOpen, setUploadFileDialogOpen] = useState(false);
   const [uploadFolderDialogOpen, setUploadFolderDialogOpen] = useState(false);
-  const [blockNoteOpen, setBlockNoteOpen] = useState(false);
+  const [owlNoteEditorDialogOpen, setOwlNoteEditorDialogOpen] = useState(false);
   // Drag detection
   const [didDrag, setDidDrag] = useState(false);
 
@@ -146,7 +146,6 @@ const CreateButton: React.FC<CreateButtonProps> = ({
           </Fab>
         </div>
       </Draggable>
-
       <Menu
         anchorEl={anchorEl}
         open={menuOpen && !didDrag}
@@ -179,34 +178,37 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         <MenuItem
           onClick={() => {
             handleMenuClose();
-            setBlockNoteOpen(true);
+            setOwlNoteEditorDialogOpen(true);
           }}
         >
           Create OwlNote File
         </MenuItem>
       </Menu>
-
-      <FolderDialog
-        open={folderDialogOpen}
-        onClose={closeFolderDialog}
-        currentFolderId={currentFolderId}
-        onFolderCreate={handleCreateFolder}
-      />
-
-      <UploadFileDialog
-        open={uploadFileDialogOpen}
-        onClose={closeUploadFileDialog}
-        onBatchUpload={handleBatchFileUpload}
-        currentFolderId={currentFolderId}
-      />
-
-      <UploadFolderDialog
-        open={uploadFolderDialogOpen}
-        onClose={closeUploadFolderDialog}
-        onBatchUpload={handleBatchFileUpload}
-        currentFolderId={currentFolderId}
-      />
-
+      {folderDialogOpen && (
+        <FolderDialog
+          open={folderDialogOpen}
+          onClose={closeFolderDialog}
+          currentFolderId={currentFolderId}
+          onFolderCreate={handleCreateFolder}
+        />
+      )}
+      {uploadFileDialogOpen && (
+        <UploadFileDialog
+          open={uploadFileDialogOpen}
+          onClose={closeUploadFileDialog}
+          onBatchUpload={handleBatchFileUpload}
+          currentFolderId={currentFolderId}
+        />
+      )}
+      {/* //TODO: good dialog design practice */}
+      {uploadFolderDialogOpen && (
+        <UploadFolderDialog
+          open={uploadFolderDialogOpen}
+          onClose={closeUploadFolderDialog}
+          onBatchUpload={handleBatchFileUpload}
+          currentFolderId={currentFolderId}
+        />
+      )}
       {uploadsInProgress.map(({ file, id, parentFolder }, index) => (
         <UploadProgressToast
           key={id}
@@ -222,15 +224,16 @@ const CreateButton: React.FC<CreateButtonProps> = ({
           offset={index}
         />
       ))}
-
-      <OwlNoteEditorDialog
-        // fileName="file1" //TODO: hardcode filename for now, fix later
-        parentFolder={currentFolderId}
-        open={blockNoteOpen}
-        onClose={() => setBlockNoteOpen(false)}
-        onOwlNoteCreate={handleCreateOwlNote}
-        fileName={null}
-      />
+      {owlNoteEditorDialogOpen && (
+        <OwlNoteEditorDialog
+          // fileName="file1" //TODO: hardcode filename for now, fix later
+          parentFolder={currentFolderId}
+          open={owlNoteEditorDialogOpen}
+          onClose={() => setOwlNoteEditorDialogOpen(false)}
+          onOwlNoteCreate={handleCreateOwlNote}
+          fileName={null}
+        />
+      )}
     </>
   );
 };
