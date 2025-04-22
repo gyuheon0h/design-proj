@@ -8,7 +8,6 @@ import {
   useFolderPath,
 } from '../utils/helperRequests';
 import { useNavigate } from 'react-router-dom';
-// import { useUser } from '../context/UserContext';
 import { File } from '../interfaces/File';
 import { Box, Divider, Typography } from '@mui/material';
 import { typography } from '../Styles';
@@ -17,6 +16,7 @@ import CreateButton from './CreateButton';
 import FileContainer from './FileContainer';
 import FolderContainer from './FolderContainer';
 import { useStorage } from '../context/StorageContext';
+import { uploadEventTarget } from './UploadProgress';
 
 interface PageComponentProps {
   page: 'home' | 'shared' | 'favorites' | 'trash';
@@ -67,6 +67,21 @@ const PageComponent: React.FC<PageComponentProps> = ({
       ),
     );
   }, [files, filters, setFilteredFiles]);
+
+  // for listening for uploads on the current folder to refresh files when needed
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const folderId = (e as CustomEvent).detail.folderId;
+      if (folderId === currentFolderId) {
+        fetchFileData(currentFolderId);
+      }
+    };
+
+    uploadEventTarget.addEventListener('upload-complete', handler);
+    return () => {
+      uploadEventTarget.removeEventListener('upload-complete', handler);
+    };
+  }, [currentFolderId]);
 
   useEffect(() => {
     const fetchNames = async () => {

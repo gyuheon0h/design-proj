@@ -16,10 +16,16 @@ interface UploadProgressToastProps {
   parentFolder: string | null;
   userId: string;
   onClose: () => void;
-  refreshFiles: (folderId: string | null) => void;
-  refreshStorage: () => Promise<void>;
   offset?: number;
 }
+
+export const uploadEventTarget = new EventTarget();
+
+export const emitUploadComplete = (folderId: string | null) => {
+  uploadEventTarget.dispatchEvent(
+    new CustomEvent('upload-complete', { detail: { folderId } }),
+  );
+};
 
 const UploadProgressToast: React.FC<UploadProgressToastProps> = ({
   file,
@@ -27,8 +33,6 @@ const UploadProgressToast: React.FC<UploadProgressToastProps> = ({
   userId,
   fileId,
   onClose,
-  refreshFiles,
-  refreshStorage,
   offset,
 }) => {
   const { progress, done, error } = useSSEUploadProgress(fileId, userId);
@@ -74,8 +78,9 @@ const UploadProgressToast: React.FC<UploadProgressToastProps> = ({
 
   useEffect(() => {
     if (done && !cancelled) {
-      refreshFiles(parentFolder);
-      refreshStorage();
+      // emit an event notifying upload complete
+      emitUploadComplete(parentFolder);
+
       setTimeout(onClose, 4000);
     }
   }, [cancelled, done]);

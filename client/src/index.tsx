@@ -9,6 +9,7 @@ import { StorageProvider } from './context/StorageContext';
 
 import './index.css';
 import './index.css';
+import { UploadProvider } from './context/UploadContext';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement,
@@ -22,7 +23,9 @@ root.render(
         <BrowserRouter>
           <UserProvider>
             <StorageProvider>
-              <App />
+              <UploadProvider>
+                <App />
+              </UploadProvider>
             </StorageProvider>
           </UserProvider>
         </BrowserRouter>
