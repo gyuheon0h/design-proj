@@ -4,17 +4,7 @@ interface UploadFileEntry {
   id: string;
   file: File;
   relativePath: string;
-  parentFolder: string | null; // new
 }
-
-// interface UploadContextType {
-//   uploadsInProgress: UploadFileEntry[];
-
-//   refreshFiles: (folderId: string | null) => void;
-//   refreshStorage: () => Promise<void>;
-//   currentFolderId: string | null;
-  
-// }
 
 interface UploadContextType {
   uploads: UploadFileEntry[];
