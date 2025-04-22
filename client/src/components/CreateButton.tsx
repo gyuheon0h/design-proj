@@ -230,6 +230,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
           onClose={closeUploadFolderDialog}
           onBatchUpload={handleBatchFileUpload}
           currentFolderId={currentFolderId}
+          refreshFolders={refreshFolders}
         />
       )}
       {owlNoteEditorDialogOpen && (

@@ -1,4 +1,3 @@
-// ==== UploadFolderDialog.tsx ====
 import React, { useState } from 'react';
 import axios from 'axios';
 import {
@@ -25,6 +24,7 @@ interface UploadFolderDialogProps {
     uploads: UploadFile[],
     folderPathToFolderId?: Map<string, string>,
   ) => Promise<void>;
+  refreshFolders: (folderId: string | null) => void;
 }
 
 export const UploadFolderDialog: React.FC<UploadFolderDialogProps> = ({
@@ -32,6 +32,7 @@ export const UploadFolderDialog: React.FC<UploadFolderDialogProps> = ({
   onClose,
   currentFolderId,
   onBatchUpload,
+  refreshFolders,
 }) => {
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -98,6 +99,7 @@ export const UploadFolderDialog: React.FC<UploadFolderDialogProps> = ({
 
       // cleanup and close
       clearFiles();
+      refreshFolders(currentFolderId);
       onClose();
     } catch (err: any) {
       console.error('Upload folder error:', err);
