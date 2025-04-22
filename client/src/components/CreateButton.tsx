@@ -5,10 +5,10 @@ import UploadDialog from './CreateFileDialog';
 import FolderDialog from './CreateFolderDialog';
 import AddIcon from '@mui/icons-material/Add';
 import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
-import UploadProgressToast from './UploadProgress';
 import { useUser } from '../context/UserContext';
 import OwlNoteEditorDialog from './OwlNoteEditorDialog';
 import { v4 as uuidv4 } from 'uuid';
+import { useUpload } from '../context/UploadContext';
 
 interface CreateButtonProps {
   currentFolderId: string | null;
@@ -26,6 +26,9 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   const nodeRef = useRef<HTMLDivElement>(null);
   const userContext = useUser();
   const userId = userContext.userId;
+
+  const uploadContext = useUpload();
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -75,10 +78,10 @@ const CreateButton: React.FC<CreateButtonProps> = ({
     const newUploads = uploads.map(({ file, relativePath }) => ({
       file: new File([file], relativePath),
       id: uuidv4(),
+      relativePath: relativePath,
     }));
 
-    // TODO: just call the new upload context and add the uploads to the uploadcontext uploadfileentry[] here
-    setUploadsInProgress((prev) => [...prev, ...newUploads]);
+    uploadContext.addUploads(newUploads); // adding uploads to global upload context variable
     setUploadDialogOpen(false);
   };
 
@@ -171,22 +174,6 @@ const CreateButton: React.FC<CreateButtonProps> = ({
         onBatchUpload={handleBatchFileUpload}
         currentFolderId={currentFolderId}
       />
-
-      {uploadsInProgress.map(({ file, id }, index) => (
-        <UploadProgressToast
-          key={id}
-          file={file}
-          fileId={id}
-          userId={userId}
-          parentFolder={currentFolderId}
-          onClose={() =>
-            setUploadsInProgress((prev) => prev.filter((u) => u.id !== id))
-          }
-          refreshFiles={refreshFiles}
-          refreshStorage={refreshStorage}
-          offset={index}
-        />
-      ))}
 
       <OwlNoteEditorDialog
         // fileName="file1" //TODO: hardcode filename for now, fix later
