@@ -28,10 +28,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
   const gap = 16;
   const slideWidth = folderWidth + gap;
 
-  // Fade zones
-  const fadeStart = 1; // percent where full opacity begins
-  const fadeEnd = 99; // percent where full opacity ends
-
   const containerRef = useRef<HTMLDivElement>(null);
   const transformRef = useRef<HTMLDivElement>(null);
 
@@ -188,6 +184,10 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
           onTouchEnd={shouldScroll ? handleDragEnd : undefined}
           sx={{
             flex: 1,
+            WebkitMaskImage:
+              'linear-gradient(to right, transparent 0%, black 1%, black 99%, transparent 100%)',
+            maskImage:
+              'linear-gradient(to right, transparent 0%, black 1%, black 99%, transparent 100%)',
             overflow: 'hidden',
             position: 'relative',
             cursor: shouldScroll
@@ -195,8 +195,6 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
                 ? 'grabbing'
                 : 'grab'
               : 'default',
-            WebkitMaskImage: `linear-gradient(to right, transparent 0%, black ${fadeStart}%, black ${fadeEnd}%, transparent 100%)`,
-            maskImage: `linear-gradient(to right, transparent 0%, black ${fadeStart}%, black ${fadeEnd}%, transparent 100%)`,
           }}
         >
           <Box
@@ -210,7 +208,18 @@ const FolderContainer: React.FC<FolderContainerProps> = ({
             }}
           >
             {filteredFolders.map((folder) => (
-              <Box key={folder.id} sx={{ width: folderWidth, flexShrink: 0 }}>
+              <Box
+                key={folder.id}
+                sx={{
+                  width: folderWidth,
+                  flexShrink: 0,
+                  transition: 'transform 0.2s ease',
+                  '&:hover': {
+                    transform: 'scale(1.1)',
+                    zIndex: 3,
+                  },
+                }}
+              >
                 <FolderComponent
                   page={page}
                   folder={folder}
