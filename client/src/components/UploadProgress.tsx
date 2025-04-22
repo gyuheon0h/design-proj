@@ -78,9 +78,19 @@ const UploadProgressToast: React.FC<UploadProgressToastProps> = ({
       refreshStorage();
       setTimeout(onClose, 4000);
     }
-  }, [cancelled, done, onClose, parentFolder, refreshFiles, refreshStorage]);
+  }, [cancelled, done]);
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
+    await axios
+      .post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/file/upload/cancel/${fileId}`,
+        {},
+        { withCredentials: true },
+      )
+      .catch(() => {
+        /* ignore 404 if already gone */
+      });
+
     abortController.current?.abort();
     setCancelled(true);
     setTimeout(onClose, 4000);

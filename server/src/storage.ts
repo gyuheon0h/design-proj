@@ -114,7 +114,7 @@ const StorageService = {
     });
 
     // Prevent MaxListenersExceededWarning
-    stream.setMaxListeners(30);
+    stream.setMaxListeners(50);
 
     // Handle aborts
     if (abortSignal) {
@@ -213,6 +213,11 @@ const StorageService = {
         throw error;
       }
     }
+  },
+
+  getWriteStream: (gcsKey: string, mimeType: string) => {
+    const file = bucket.file(gcsKey);
+    return file.createWriteStream({ metadata: { contentType: mimeType } });
   },
 };
 

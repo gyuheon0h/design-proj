@@ -3,16 +3,37 @@ import {
   AuthenticatedRequest,
   authorizeUser,
 } from '../../middleware/authorizeUser';
-import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import StorageService from '../../storage';
 import FileModel from '../../db_models/FileModel';
 import PermissionModel from '../../db_models/PermissionModel';
 import { inferMimeType, isUniqueFileName } from './fileHelpers';
 import { checkPermission } from '../../middleware/checkPermission';
+import contentDisposition from 'content-disposition';
+import { pipeline } from 'stream/promises';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import multer from 'multer';
+
+const AbortError = new Error('UPLOAD_ABORTED');
+
+const tempUploadDir = path.join(os.tmpdir(), 'owl-uploads');
+fs.mkdirSync(tempUploadDir, { recursive: true });
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_, __, cb) => cb(null, tempUploadDir),
+    filename: (_, file, cb) => {
+      const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      cb(null, unique + path.extname(file.originalname));
+    },
+  }),
+  limits: { fileSize: 1 * 1024 * 1024 * 1024 },
+});
 
 const fileRouter = Router();
-const upload = multer(); // Using memory storage to keep things minimal (TODO: implement streaming)
+// const upload = multer(); // Using memory storage to keep things minimal (TODO: implement streaming)
 
 const sseClients = new Map<string, Response>();
 /**
@@ -58,22 +79,25 @@ function sendSSE(userId: string, event: string, data: any) {
   }
 }
 
-// Cancel Route
-const activeUploadControllers = new Map();
+type UploadController = { abort: () => void };
+const controllers = new Map<string, UploadController>(); // key = fileId
 
-fileRouter.post('/upload/cancel/:userId', authorizeUser, (req, res) => {
-  const { userId } = req.params;
+fileRouter.post(
+  '/upload/cancel/:fileId',
+  authorizeUser,
+  (req: AuthenticatedRequest, res: Response) => {
+    const { fileId } = req.params;
+    const c = controllers.get(fileId);
 
-  const controller = activeUploadControllers.get(userId);
-  if (controller) {
-    controller.abort();
-    activeUploadControllers.delete(userId);
-    sendSSE(userId, 'error', { message: 'Upload cancelled by user' });
-    return res.status(200).json({ message: 'Upload cancelled' });
-  } else {
-    return res.status(404).json({ error: 'No active upload for this user' });
-  }
-});
+    if (!c) return res.status(404).json({ error: 'No active upload' });
+
+    c.abort(); // stop streams + clean tmp file
+    controllers.delete(fileId);
+
+    sendSSE(req.user!.userId, 'error', { fileId, message: 'Upload cancelled' });
+    return res.json({ message: 'Upload cancelled' });
+  },
+);
 
 fileRouter.get('/upload/:fileName/unique', authorizeUser, async (req, res) => {
   const rawParent = req.query.parentFolder;
@@ -112,63 +136,72 @@ fileRouter.get('/upload/:fileName/unique', authorizeUser, async (req, res) => {
 fileRouter.post(
   '/upload',
   authorizeUser,
-  upload.single('file'),
+  upload.single('file'), // ← uses disk storage now
   async (req, res) => {
     try {
+      if (!req.file)
+        return res.status(400).json({ message: 'No file uploaded' });
+
+      const { path: tempPath, originalname, mimetype, size } = req.file;
+      const { parentFolder = null, fileName } = req.body;
+      const userId = (req as any).user.userId;
       if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
       }
 
-      let { originalname, buffer, mimetype, size } = req.file;
-      const { parentFolder = null, fileName } = req.body;
-      const userId = (req as any).user.userId;
-
       const userFiles = await FileModel.getFilesByOwner(userId);
-      const totalStorageUsed = userFiles.reduce(
-        (sum, file) => sum + Number(file.fileSize),
+      const totalUsed = userFiles.reduce(
+        (sum, f) => sum + Number(f.fileSize),
         0,
       );
-
-      const STORAGE_LIMIT = 15 * 1024 * 1024 * 1024; // 15GB
-      if (totalStorageUsed + size > STORAGE_LIMIT) {
-        return res
-          .status(400)
-          .json({ error: 'Storage limit exceeded. Cannot upload file.' });
+      const STORAGE_LIMIT = 15 * 1024 * 1024 * 1024;
+      if (totalUsed + size > STORAGE_LIMIT) {
+        fs.unlink(tempPath, () => {});
+        return res.status(400).json({ error: 'Storage limit exceeded' });
       }
 
-      if (mimetype === 'application/octet-stream') {
-        mimetype = inferMimeType(originalname);
-      }
+      const fileId = req.body.fileId || uuidv4();
+      const gcsKey = `uploads/${userId}/${parentFolder || 'root'}/${fileId}-${originalname}`;
+      /* ---------- STREAM UPLOAD ---------- */
+      const readStream = fs.createReadStream(tempPath);
+      const writeStream = StorageService.getWriteStream(gcsKey, mimetype);
 
-      const fileId = req.body.fileId || uuidv4(); // Use frontend's fileId if provided
+      const controller: UploadController = {
+        abort() {
+          readStream.destroy(AbortError); // triggers both streams’ 'close'
+          writeStream.destroy(AbortError);
+          fs.unlink(tempPath, () => {}); // remove temp file
+        },
+      };
+      controllers.set(fileId, controller);
 
-      sendSSE(userId, 'status', { message: 'Starting upload', fileId });
-
-      const gcsFilePath = `uploads/${userId}/${parentFolder || 'root'}/${fileId}-${originalname}`;
-
-      // Notify client: starting upload
-      sendSSE(userId, 'status', {
-        message: 'Uploading file to cloud storage...',
+      let uploaded = 0,
+        lastPct = -1;
+      readStream.on('data', (chunk) => {
+        uploaded += chunk.length;
+        const pct = Math.floor((uploaded / size) * 100);
+        if (pct > lastPct) {
+          sendSSE(userId, 'progress', { fileId, percent: pct });
+          lastPct = pct;
+        }
       });
 
-      const controller = new AbortController();
-      activeUploadControllers.set(userId, controller);
+      try {
+        await pipeline(readStream, writeStream);
+      } catch (err: any) {
+        if (err === AbortError) {
+          // graceful cancel: just return after cleaning map
+          controllers.delete(fileId);
+          return; // do NOT continue to DB save
+        }
+        throw err; // genuine error → catch below
+      } finally {
+        controllers.delete(fileId); // ensure cleanup both paths
+        fs.unlink(tempPath, () => {}); // remove tmp even on success
+      }
+      /* ---------- END STREAM ---------- */
 
-      // Upload with progress
-      await StorageService.uploadFileWithProgress(
-        gcsFilePath,
-        buffer,
-        mimetype,
-        (percent) => {
-          sendSSE(userId, 'progress', { percent, fileId });
-        },
-        controller.signal, // pass signal to StorageService
-      );
-
-      // Notify client: starting DB save
-      sendSSE(userId, 'status', { message: 'Saving...', fileId });
-
-      const fileMetadata = await FileModel.create({
+      const fileMeta = await FileModel.create({
         id: fileId,
         name: fileName,
         owner: userId,
@@ -176,30 +209,22 @@ fileRouter.post(
         lastModifiedBy: null,
         lastModifiedAt: new Date(),
         parentFolder: parentFolder || null,
-        gcsKey: gcsFilePath,
+        gcsKey,
         fileType: mimetype,
         fileSize: size,
       });
-
       await PermissionModel.createPermission({
-        fileId: fileMetadata.id,
+        fileId: fileId,
         userId,
         role: 'owner',
       });
 
-      // Notify client: done
       sendSSE(userId, 'done', { fileId });
-
-      return res.status(201).json({
-        message: 'File uploaded successfully',
-        file: fileMetadata,
-      });
-    } catch (error) {
-      console.error('File upload error:', error);
-      const userId = (req as any).user?.userId;
-      if (userId) {
-        sendSSE(userId, 'error', { message: 'Upload failed' });
-      }
+      return res.status(201).json({ message: 'File uploaded', file: fileMeta });
+    } catch (err) {
+      console.error('Upload failed:', err);
+      const id = (req as any).user?.userId;
+      if (id) sendSSE(id, 'error', { message: 'Upload failed' });
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   },
@@ -215,12 +240,31 @@ fileRouter.get('/download/:fileId', authorizeUser, async (req, res) => {
     }
 
     const fileStream = await StorageService.getFileStream(file.gcsKey);
-    res.setHeader('Content-Disposition', `attachment; filename="${file.name}"`);
+    res.setHeader('Content-Type', file.fileType);
+    res.setHeader('Content-Disposition', contentDisposition(file.name));
     fileStream.pipe(res);
   } catch (error) {
     console.error('Error downloading file:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
+});
+/**
+ * Cancellation route by fileid
+ */
+fileRouter.post('/upload/cancel/:fileId', authorizeUser, (req, res) => {
+  const { fileId } = req.params;
+  const controller = controllers.get(fileId);
+
+  if (!controller) {
+    return res.status(404).json({ error: 'No active upload for this file' });
+  }
+
+  controller.abort();
+  controllers.delete(fileId);
+
+  const userId = (req as any).user.userId;
+  sendSSE(userId, 'error', { fileId, message: 'Upload cancelled by user' });
+  return res.json({ message: 'Upload cancelled' });
 });
 
 //TODO protect the two new owlnote endpoints with perms
@@ -305,10 +349,11 @@ fileRouter.get(
       }
 
       const fileStream = await StorageService.getFileStream(file.gcsKey);
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="${file.name}"`,
-      );
+      // res.setHeader(
+      //   'Content-Disposition',
+      //   `attachment; filename="${file.name}"`,
+      // );
+      res.setHeader('Content-Disposition', contentDisposition(file.name));
       fileStream.pipe(res);
     } catch (error) {
       console.error('Error downloading file:', error);
@@ -317,31 +362,31 @@ fileRouter.get(
   },
 );
 
-fileRouter.get(
-  '/:fileId/download',
-  authorizeUser,
-  checkPermission('download'),
-  async (req, res) => {
-    try {
-      const { fileId } = req.params;
-      const file = await FileModel.getById(fileId);
+// fileRouter.get(
+//   '/:fileId/download',
+//   authorizeUser,
+//   checkPermission('download'),
+//   async (req, res) => {
+//     try {
+//       const { fileId } = req.params;
+//       const file = await FileModel.getById(fileId);
 
-      if (!file) {
-        return res.status(404).json({ message: 'File not found' });
-      }
+//       if (!file) {
+//         return res.status(404).json({ message: 'File not found' });
+//       }
 
-      const fileStream = await StorageService.getFileStream(file.gcsKey);
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="${file.name}"`,
-      );
-      fileStream.pipe(res);
-    } catch (error) {
-      console.error('Error downloading file:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  },
-);
+//       const fileStream = await StorageService.getFileStream(file.gcsKey);
+//       res.setHeader(
+//         'Content-Disposition',
+//         `attachment; filename="${file.name}"`,
+//       );
+//       fileStream.pipe(res);
+//     } catch (error) {
+//       console.error('Error downloading file:', error);
+//       return res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//   },
+// );
 fileRouter.delete(
   '/:fileId/delete',
   authorizeUser,
