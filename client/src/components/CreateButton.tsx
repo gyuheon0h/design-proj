@@ -71,11 +71,13 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   const handleBatchFileUpload = async (
     uploads: { file: File; relativePath: string }[],
   ) => {
+
     const newUploads = uploads.map(({ file, relativePath }) => ({
       file: new File([file], relativePath),
       id: uuidv4(),
     }));
 
+    // TODO: just call the new upload context and add the uploads to the uploadcontext uploadfileentry[] here
     setUploadsInProgress((prev) => [...prev, ...newUploads]);
     setUploadDialogOpen(false);
   };

@@ -100,6 +100,7 @@ const PageComponent: React.FC<PageComponentProps> = ({
     setSearchQuery(query);
   };
 
+  // refresh files
   const fetchFileData = async (folderId: string | null) => {
     try {
       let filesRes;

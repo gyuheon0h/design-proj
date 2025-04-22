@@ -10,7 +10,6 @@ interface UploadFileEntry {
 // interface UploadContextType {
 //   uploadsInProgress: UploadFileEntry[];
 
-
 //   refreshFiles: (folderId: string | null) => void;
 //   refreshStorage: () => Promise<void>;
 //   currentFolderId: string | null;
@@ -49,3 +48,6 @@ export const useUpload = () => {
   if (!context) throw new Error('UploadContext not available');
   return context;
 };
+
+
+

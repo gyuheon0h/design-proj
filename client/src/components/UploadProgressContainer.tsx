@@ -10,8 +10,8 @@ interface UploadToastContainerProps {
   uploads: UploadFileEntry[];
   userId: string;
   parentFolder: string | null;
-  refreshFiles: (folderId: string | null) => void;
-  refreshStorage: () => Promise<void>;
+  refreshFiles: (folderId: string | null) => void; // low key need to move this out
+  refreshStorage: () => Promise<void>; // move this out
   removeUpload: (id: string) => void;
 }
 

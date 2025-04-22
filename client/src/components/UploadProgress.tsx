@@ -16,8 +16,8 @@ interface UploadProgressToastProps {
   parentFolder: string | null;
   userId: string;
   onClose: () => void;
-  refreshFiles: (folderId: string | null) => void;
-  refreshStorage: () => Promise<void>;
+  refreshFiles: (folderId: string | null) => void; // TODO: remove
+  refreshStorage: () => Promise<void>; // TODO: remove
   offset?: number;
 }
 
@@ -27,8 +27,8 @@ const UploadProgressToast: React.FC<UploadProgressToastProps> = ({
   userId,
   fileId,
   onClose,
-  refreshFiles,
-  refreshStorage,
+  refreshFiles, // TODO: move this out
+  refreshStorage, // move this out
   offset,
 }) => {
   const { progress, done, error } = useSSEUploadProgress(fileId, userId);
@@ -73,8 +73,9 @@ const UploadProgressToast: React.FC<UploadProgressToastProps> = ({
   }, [file, userId, parentFolder, fileId]);
 
   useEffect(() => {
-    if (done && !cancelled) {
-      refreshFiles(parentFolder);
+    if (done && !cancelled) { // calling refreshFiles
+      // maybe like if parent folder == current context folder, refresh? bc otherwise we're remounting unneccessarily
+      refreshFiles(parentFolder); // call foldercontext --> refreshFiles(foldercontext.currentfolder)
       refreshStorage();
       setTimeout(onClose, 4000);
     }
