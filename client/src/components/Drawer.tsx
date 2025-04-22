@@ -136,10 +136,12 @@ const AccountMenu = () => {
         </MenuItem>
       </Menu>
 
-      <SettingsDialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-      />
+      {settingsOpen && (
+        <SettingsDialog
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
 
       {isLoggingOut && <Navigate to="/home" />}
     </React.Fragment>

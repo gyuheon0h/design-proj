@@ -17,7 +17,7 @@ import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
 import axios from 'axios';
 
-interface UploadDialogProps {
+interface UploadFileDialogProps {
   open: boolean;
   onClose: () => void;
   currentFolderId: string | null;
@@ -31,7 +31,7 @@ type UploadFile = {
   relativePath: string;
 };
 
-const UploadDialog: React.FC<UploadDialogProps> = ({
+const UploadFileDialog: React.FC<UploadFileDialogProps> = ({
   open,
   onClose,
   onBatchUpload,
@@ -113,13 +113,13 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
     event.target.value = '';
   };
 
-  const handleFolderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = Array.from(event.target.files || []);
-    if (selected.length > 0) {
-      addFiles(selected, (file) => file.webkitRelativePath || file.name);
-    }
-    event.target.value = '';
-  };
+  // const handleFolderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const selected = Array.from(event.target.files || []);
+  //   if (selected.length > 0) {
+  //     addFiles(selected, (file) => file.webkitRelativePath || file.name);
+  //   }
+  //   event.target.value = '';
+  // };
 
   const handleDrop = (event: React.DragEvent) => {
     event.preventDefault();
@@ -224,7 +224,7 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
               style={{ display: 'none' }}
             />
           </Button>
-          <Button
+          {/* <Button
             fullWidth
             variant="contained"
             component="label"
@@ -234,11 +234,11 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
             <input
               type="file"
               multiple
-              onChange={handleFolderChange}
+              // onChange={handleFolderChange}
               style={{ display: 'none' }}
               {...{ webkitdirectory: 'true', directory: '' }}
             />
-          </Button>
+          </Button> */}
         </Box>
 
         <Paper
@@ -308,4 +308,4 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
   );
 };
 
-export default UploadDialog;
+export default UploadFileDialog;
