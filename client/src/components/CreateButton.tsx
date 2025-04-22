@@ -10,6 +10,7 @@ import { useUser } from '../context/UserContext';
 import OwlNoteEditorDialog from './OwlNoteEditorDialog';
 import { v4 as uuidv4 } from 'uuid';
 import { UploadFolderDialog } from './UploadFolderDialog';
+import { useUpload } from '../context/UploadContext';
 
 interface CreateButtonProps {
   currentFolderId: string | null;
@@ -18,9 +19,10 @@ interface CreateButtonProps {
   refreshStorage: () => Promise<void>;
 }
 
-interface UploadInProgress {
+interface UploadFileEntry {
   file: File;
   id: string;
+  relativePath: string;
   parentFolder: string | null;
 }
 
@@ -33,6 +35,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   const nodeRef = useRef<HTMLDivElement>(null);
   const userContext = useUser();
   const userId = userContext.userId;
+  const uploadContext = useUpload();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
   const [uploadFileDialogOpen, setUploadFileDialogOpen] = useState(false);
@@ -74,15 +77,18 @@ const CreateButton: React.FC<CreateButtonProps> = ({
     }
   };
 
-  const [uploadsInProgress, setUploadsInProgress] = useState<
-    UploadInProgress[]
-  >([]);
-
   const handleBatchFileUpload = async (
     uploads: { file: File; relativePath: string }[],
     folderPathToFolderId?: Map<string, string>,
   ) => {
-    const newUploads: UploadInProgress[] = uploads.map(
+    // const newUploads = uploads.map(({ file, relativePath }) => ({
+    //   file: new File([file], relativePath),
+    //   id: uuidv4(),
+    //   relativePath: relativePath,
+
+    // }));
+
+    const newUploads: UploadFileEntry[] = uploads.map(
       ({ file, relativePath }) => {
         const id = uuidv4();
 
@@ -93,11 +99,28 @@ const CreateButton: React.FC<CreateButtonProps> = ({
           parentFolder = folderPathToFolderId.get(subPath) || currentFolderId;
         }
         const wrapped = new File([file], file.name, { type: file.type });
-        return { file: wrapped, id, parentFolder };
+        return { id, file: wrapped, relativePath, parentFolder };
       },
     );
 
-    setUploadsInProgress((prev) => [...prev, ...newUploads]);
+    uploadContext.addUploads(newUploads);
+
+    // const newUploads: UploadInProgress[] = uploads.map(
+    //   ({ file, relativePath }) => {
+    //     const id = uuidv4();
+
+    //     let parentFolder: string | null = currentFolderId;
+    //     if (folderPathToFolderId) {
+    //       const parts = relativePath.split('/');
+    //       const subPath = parts.slice(1, -1).join('/');
+    //       parentFolder = folderPathToFolderId.get(subPath) || currentFolderId;
+    //     }
+    //     const wrapped = new File([file], file.name, { type: file.type });
+    //     return { file: wrapped, id, parentFolder };
+    //   },
+    // );
+
+    // setUploadsInProgress((prev) => [...prev, ...newUploads]);
     setUploadFileDialogOpen(false);
     setUploadFolderDialogOpen(false);
   };
@@ -207,23 +230,9 @@ const CreateButton: React.FC<CreateButtonProps> = ({
           onClose={closeUploadFolderDialog}
           onBatchUpload={handleBatchFileUpload}
           currentFolderId={currentFolderId}
+          refreshFolders={refreshFolders}
         />
       )}
-      {uploadsInProgress.map(({ file, id, parentFolder }, index) => (
-        <UploadProgressToast
-          key={id}
-          file={file}
-          fileId={id}
-          parentFolder={parentFolder}
-          userId={userId}
-          onClose={() =>
-            setUploadsInProgress((prev) => prev.filter((u) => u.id !== id))
-          }
-          refreshFiles={refreshFiles}
-          refreshStorage={refreshStorage}
-          offset={index}
-        />
-      ))}
       {owlNoteEditorDialogOpen && (
         <OwlNoteEditorDialog
           // fileName="file1" //TODO: hardcode filename for now, fix later
