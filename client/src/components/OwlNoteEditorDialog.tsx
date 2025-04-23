@@ -20,6 +20,9 @@ import '@blocknote/mantine/style.css';
 import axios from 'axios';
 import OwlNoteViewer from './OwlNoteViewer';
 import { Block } from '@blocknote/core';
+import { RoomProvider, ClientSideSuspense } from '@liveblocks/react';
+
+import { sanitizeBlocks } from '../utils/blockUtils';
 
 interface OwlNoteEditorDialogProps {
   open: boolean;
@@ -105,12 +108,31 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
     initialContent.length > 0 ? initialContent : defaultContent;
 
   // this function handles the save action for both create and update.
+  // const handleSave = async () => {
+  //   if (!editorRef) return;
+  //   const json = JSON.stringify(await editorRef.document);
+
+  //   if (fileId && onOwlNoteSave) {
+  //     onOwlNoteSave(fileId, json);
+  //     onClose();
+  //   } else if (onOwlNoteCreate) {
+  //     setContentToSave(json);
+  //     setIsFileNameDialogOpen(true);
+  //   }
+  // };
+
   const handleSave = async () => {
     if (!editorRef) return;
-    const json = JSON.stringify(await editorRef.document);
+    // Pull out and clean the blocks (drops any empty placeholders)
+    const blocks = editorRef.document;
+    const cleaned = sanitizeBlocks(blocks);
+    const json = JSON.stringify(cleaned);
 
     if (fileId && onOwlNoteSave) {
-      onOwlNoteSave(fileId, json);
+      // Wait for the server to confirm
+      await onOwlNoteSave(fileId, json);
+      // Update local state so effectiveContent now reflects our changes
+      setInitialContent(cleaned);
       onClose();
     } else if (onOwlNoteCreate) {
       setContentToSave(json);
@@ -195,13 +217,35 @@ const OwlNoteEditorDialog: React.FC<OwlNoteEditorDialogProps> = ({
               <CircularProgress sx={{ color: '#4286f5' }} />
             </Box>
           ) : (
-            <OwlNoteViewer
-              key={JSON.stringify(effectiveContent)}
-              content={effectiveContent}
-              editable={true}
-              onEditorCreated={setEditorRef}
-              fileName={fileName || newFileName}
-            />
+            <RoomProvider
+              id={`owlnote-${fileId || 'new'}`}
+              initialPresence={{}}
+            >
+              <ClientSideSuspense
+                fallback={
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      minHeight: '200px',
+                    }}
+                  >
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                {() => (
+                  <OwlNoteViewer
+                    // key={JSON.stringify(effectiveContent)}
+                    content={effectiveContent}
+                    editable={true}
+                    onEditorCreated={setEditorRef}
+                    fileName={fileName || newFileName}
+                  />
+                )}
+              </ClientSideSuspense>
+            </RoomProvider>
           )}
         </DialogContent>
 

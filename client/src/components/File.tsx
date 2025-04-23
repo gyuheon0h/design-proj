@@ -498,7 +498,10 @@ const FileComponent = (props: FileComponentProps) => {
           props.file.id,
         );
         const objectUrl = URL.createObjectURL(blob);
-        if (!isSupportedFileTypeText(props.file.fileType)) {
+        if (
+          !isSupportedFileTypeText(props.file.fileType) ||
+          !(props.file.fileType === 'text/owlnote')
+        ) {
           fileCache.current.set(props.file.gcsKey, objectUrl);
         }
         setFileSrc(objectUrl);

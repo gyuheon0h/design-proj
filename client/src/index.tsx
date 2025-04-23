@@ -9,6 +9,7 @@ import { StorageProvider } from './context/StorageContext';
 
 import './index.css';
 import './index.css';
+import { LiveblocksProvider } from '@liveblocks/react/suspense';
 import { UploadProvider } from './context/UploadContext';
 
 const root = ReactDOM.createRoot(
@@ -21,13 +22,17 @@ root.render(
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <BrowserRouter>
-          <UserProvider>
-            <StorageProvider>
-              <UploadProvider>
-                <App />
-              </UploadProvider>
-            </StorageProvider>
-          </UserProvider>
+          <LiveblocksProvider
+            publicApiKey={process.env.REACT_APP_LIVEBLOCKS_PUBLIC_KEY!}
+          >
+            <UserProvider>
+              <StorageProvider>
+                <UploadProvider>
+                  <App />
+                </UploadProvider>
+              </StorageProvider>
+            </UserProvider>
+          </LiveblocksProvider>
         </BrowserRouter>
       </ThemeProvider>
     </ThemeProvider>
