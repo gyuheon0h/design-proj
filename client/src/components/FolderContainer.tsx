@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Button, Grow, Slider } from '@mui/material';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Box, IconButton } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import { useSwipeable } from 'react-swipeable';
 import ErrorAlert from '../components/ErrorAlert';
-// import Folder, { FolderProps } from './Folder';
 import { Folder } from '../interfaces/Folder';
 import FolderComponent from './Folder';
 
@@ -13,177 +13,237 @@ interface FolderContainerProps {
   currentFolderId: string | null;
   refreshFolders: (folderId: string | null) => void;
   username: string;
-  searchQuery: string; // New prop for search input
+  searchQuery: string;
 }
 
 const FolderContainer: React.FC<FolderContainerProps> = ({
   page,
   folders,
   onFolderClick,
-  currentFolderId,
   refreshFolders,
-  username,
-  searchQuery, // Receive search query
+  searchQuery,
 }) => {
-  const itemsPerPage = 5;
+  const visibleItems = 6;
+  const folderWidth = 140;
+  const gap = 16;
+  const slideWidth = folderWidth + gap;
 
-  const [activeStartIndex, setActiveStartIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const transformRef = useRef<HTMLDivElement>(null);
+
   const [filteredFolders, setFilteredFolders] = useState<Folder[]>([]);
-  const [visibleFolders, setVisibleFolders] = useState<Folder[]>([]);
+  const [translateX, setTranslateX] = useState(0);
+  const [currentTranslateX, setCurrentTranslateX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [shouldScroll, setShouldScroll] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Calculate scroll bounds
+  const maxTranslateX = 0;
+  const minTranslateX = -Math.max(
+    (filteredFolders.length - visibleItems) * slideWidth,
+    0,
+  );
+
+  // Filter and reset scroll on change
   useEffect(() => {
-    // Filter folders based on search query
+    let foldersArray: Folder[] = Array.isArray(folders)
+      ? folders
+      : (folders as any).folders || [];
 
-    let foldersArray: Folder[] = [];
-
-    if (Array.isArray(folders)) {
-      foldersArray = folders;
-    } else {
-      foldersArray =
-        typeof folders === 'object' &&
-        folders !== null &&
-        'folders' in folders &&
-        'permissions' in folders
-          ? (folders as { folders: Folder[]; permissions: any }).folders
-          : [];
-    }
-
-    const updatedFilteredFolders = foldersArray.filter((folder) =>
-      folder.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    const updated = foldersArray.filter((f) =>
+      f.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
-    setFilteredFolders(updatedFilteredFolders);
-    setActiveStartIndex(0); // Reset pagination when search query changes
-  }, [folders, searchQuery]);
+    setFilteredFolders(updated);
+    setShouldScroll(updated.length > visibleItems);
 
-  useEffect(() => {
-    setVisibleFolders(
-      filteredFolders.slice(activeStartIndex, activeStartIndex + itemsPerPage),
+    // Reset positions
+    setTranslateX(0);
+    setCurrentTranslateX(0);
+    if (transformRef.current) {
+      transformRef.current.style.transition = 'none';
+      transformRef.current.style.transform = 'translate3d(0,0,0)';
+      void transformRef.current.offsetHeight;
+      transformRef.current.style.transition = 'transform 0.2s ease-out';
+    }
+  }, [folders, searchQuery, visibleItems, slideWidth]);
+
+  // Handle drag start
+  const handleDragStart = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if (!shouldScroll) return;
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      setIsDragging(true);
+      setDragStartX(clientX);
+      setCurrentTranslateX(translateX);
+    },
+    [shouldScroll, translateX],
+  );
+
+  // Handle drag move with bounds clamping
+  const handleDragMove = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if (!isDragging || !shouldScroll) return;
+      e.preventDefault();
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const diff = clientX - dragStartX;
+      const rawNext = currentTranslateX + diff;
+      const next = Math.min(maxTranslateX, Math.max(minTranslateX, rawNext));
+
+      if (transformRef.current) {
+        transformRef.current.style.transform = `translate3d(${next}px,0,0)`;
+      }
+      setTranslateX(next);
+    },
+    [
+      isDragging,
+      shouldScroll,
+      dragStartX,
+      currentTranslateX,
+      minTranslateX,
+      maxTranslateX,
+    ],
+  );
+
+  // Handle drag end: ensure final position is within bounds
+  const handleDragEnd = useCallback(() => {
+    if (!isDragging || !shouldScroll) return;
+    setIsDragging(false);
+    const clamped = Math.min(
+      maxTranslateX,
+      Math.max(minTranslateX, translateX),
     );
-  }, [filteredFolders, activeStartIndex, itemsPerPage]);
-
-  const sliderMax = Math.max(filteredFolders.length - itemsPerPage, 0);
-
-  const updateVisibleFolders = (newStartIndex: number) => {
-    setActiveStartIndex(newStartIndex);
-    setVisibleFolders(
-      filteredFolders.slice(newStartIndex, newStartIndex + itemsPerPage),
-    );
-  };
-
-  const handleNext = () => {
-    if (activeStartIndex + itemsPerPage < filteredFolders.length) {
-      updateVisibleFolders(activeStartIndex + 1);
+    setTranslateX(clamped);
+    setCurrentTranslateX(clamped);
+    if (transformRef.current) {
+      transformRef.current.style.transition = 'transform 0.2s ease-out';
+      transformRef.current.style.transform = `translate3d(${clamped}px,0,0)`;
     }
-  };
+  }, [isDragging, shouldScroll, translateX, minTranslateX, maxTranslateX]);
 
-  const handleBack = () => {
-    if (activeStartIndex > 0) {
-      updateVisibleFolders(activeStartIndex - 1);
-    }
+  // Arrow click scrolling
+  const scrollBy = (delta: number) => {
+    setTranslateX((prev) => {
+      const next = Math.min(
+        maxTranslateX,
+        Math.max(minTranslateX, prev + delta),
+      );
+      if (transformRef.current) {
+        transformRef.current.style.transition = 'transform 0.2s ease-out';
+        transformRef.current.style.transform = `translate3d(${next}px,0,0)`;
+      }
+      setCurrentTranslateX(next);
+      return next;
+    });
   };
+  const handlePrev = () => scrollBy(slideWidth);
+  const handleNext = () => scrollBy(-slideWidth);
 
-  const handleSliderChange = (event: Event, newValue: number | number[]) => {
-    if (typeof newValue === 'number') {
-      updateVisibleFolders(newValue);
-    }
-  };
+  // Swipe handlers
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: handleNext,
+    onSwipedRight: handlePrev,
+    trackMouse: true,
+    preventScrollOnSwipe: true,
+    delta: 10,
+  });
 
   return (
-    <Box className="folder-container" sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%', position: 'relative' }}>
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '15px',
+          mb: 2,
         }}
       >
         <h2>Folders</h2>
       </Box>
 
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%',
-          px: 2,
-          mb: 2,
-        }}
-      >
-        <Button
-          className="left-button"
-          onClick={handleBack}
-          disabled={activeStartIndex === 0}
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <IconButton
+          onClick={handlePrev}
+          disabled={!shouldScroll || translateX >= maxTranslateX}
+          sx={{ zIndex: 2 }}
         >
           <KeyboardArrowLeft />
-        </Button>
+        </IconButton>
 
         <Box
-          className="visible-folders"
+          {...(shouldScroll ? swipeHandlers : {})}
+          ref={containerRef}
+          onMouseDown={shouldScroll ? handleDragStart : undefined}
+          onMouseMove={shouldScroll ? handleDragMove : undefined}
+          onMouseUp={shouldScroll ? handleDragEnd : undefined}
+          onMouseLeave={shouldScroll && isDragging ? handleDragEnd : undefined}
+          onTouchStart={shouldScroll ? handleDragStart : undefined}
+          onTouchMove={shouldScroll ? handleDragMove : undefined}
+          onTouchEnd={shouldScroll ? handleDragEnd : undefined}
           sx={{
             flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 2,
-            alignItems: 'center',
-            mx: 4,
+            WebkitMaskImage:
+              'linear-gradient(to right, transparent 0%, black 1%, black 99%, transparent 100%)',
+            maskImage:
+              'linear-gradient(to right, transparent 0%, black 1%, black 99%, transparent 100%)',
+            overflow: 'hidden',
+            position: 'relative',
+            cursor: shouldScroll
+              ? isDragging
+                ? 'grabbing'
+                : 'grab'
+              : 'default',
           }}
         >
-          {visibleFolders.map((folder) => (
-            <Grow in={true} timeout={500} key={`${folder.id}-${searchQuery}`}>
-              <div>
+          <Box
+            ref={transformRef}
+            sx={{
+              display: 'flex',
+              gap: `${gap}px`,
+              transform: `translate3d(${translateX}px,0,0)`,
+              transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+              userSelect: 'none',
+            }}
+          >
+            {filteredFolders.map((folder) => (
+              <Box
+                key={folder.id}
+                sx={{
+                  width: folderWidth,
+                  flexShrink: 0,
+                  transition: 'transform 0.2s ease',
+                  '&:hover': {
+                    transform: 'scale(1.1)',
+                    zIndex: 3,
+                  },
+                }}
+              >
                 <FolderComponent
                   page={page}
                   folder={folder}
-                  onClick={() => onFolderClick(folder)}
+                  onClick={() => {
+                    if (!isDragging) onFolderClick(folder);
+                  }}
                   refreshFolders={refreshFolders}
                 />
-              </div>
-            </Grow>
-          ))}
+              </Box>
+            ))}
+          </Box>
         </Box>
 
-        <Button
-          className="right-button"
+        <IconButton
           onClick={handleNext}
-          disabled={activeStartIndex + itemsPerPage >= filteredFolders.length}
+          disabled={!shouldScroll || translateX <= minTranslateX}
+          sx={{ zIndex: 2 }}
         >
           <KeyboardArrowRight />
-        </Button>
+        </IconButton>
       </Box>
 
-      <Box sx={{ px: 2, display: 'flex', justifyContent: 'center' }}>
-        <Slider
-          value={activeStartIndex}
-          min={0}
-          max={sliderMax}
-          step={1}
-          onChange={handleSliderChange}
-          valueLabelDisplay="off"
-          sx={{
-            width: '200px',
-            '& .MuiSlider-thumb': {
-              width: 12,
-              height: 12,
-            },
-            '& .MuiSlider-track': {
-              height: 4,
-            },
-            '& .MuiSlider-rail': {
-              height: 4,
-            },
-          }}
-        />
-      </Box>
       {error && (
-        <ErrorAlert
-          open={!!error}
-          message={error}
-          onClose={() => setError(null)}
-        />
+        <ErrorAlert open message={error} onClose={() => setError(null)} />
       )}
     </Box>
   );

@@ -4,6 +4,13 @@ import { useState } from 'react';
 import { File } from '../interfaces/File';
 import { Permission } from '../interfaces/Permission';
 
+/**
+ * This is a function that fetches a file for previewing by its GCS key.
+ * @param gcsKey This is the key that was fetched.
+ * @param fileType This is the type of the file that is going to be fetched.
+ * @param fileId This is the id of the file that we are searching for.
+ * @returns Returns a Blob formatted object, or an empty new blob if DNE.
+ */
 export async function getBlobGcskey(
   gcsKey: string,
   fileType: string,
@@ -13,7 +20,7 @@ export async function getBlobGcskey(
     const response = await axios.post(
       `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/view`,
       { gcsKey, fileType },
-      { responseType: 'blob' },
+      { responseType: 'blob', withCredentials: true },
     );
     const imageBlob = response.data;
     return imageBlob;
@@ -35,6 +42,29 @@ export async function getUsernameById(id: string): Promise<string> {
   } catch (error) {
     console.error('Error fetching username:', error);
     return '';
+  }
+}
+
+/**
+ * Get folder name by folder ID
+ * @param folderId - ID of the folder
+ * @returns Promise with folder name or 'Unknown folder' if not found
+ */
+export async function getFolderNameById(folderId: string): Promise<string> {
+  try {
+    const response = await axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/api/folder/${folderId}`,
+      { withCredentials: true }
+    );
+    
+    if (response.data && response.data.name) {
+      return response.data.name;
+    }
+    
+    return 'Unknown folder';
+  } catch (error) {
+    console.error('Error fetching folder name:', error);
+    return 'Unknown folder';
   }
 }
 
@@ -74,7 +104,7 @@ export async function downloadFile(
 ): Promise<void> {
   try {
     const response = await axios.get(
-      `${process.env.REACT_APP_API_BASE_URL}/api/file/download/${fileId}`,
+      `${process.env.REACT_APP_API_BASE_URL}/api/file/${fileId}/download`,
       {
         responseType: 'blob',
         withCredentials: true,

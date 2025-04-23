@@ -10,6 +10,7 @@ import { StorageProvider } from './context/StorageContext';
 import './index.css';
 import './index.css';
 import { LiveblocksProvider } from '@liveblocks/react/suspense';
+import { UploadProvider } from './context/UploadContext';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement,
@@ -26,7 +27,9 @@ root.render(
           >
             <UserProvider>
               <StorageProvider>
-                <App />
+                <UploadProvider>
+                  <App />
+                </UploadProvider>
               </StorageProvider>
             </UserProvider>
           </LiveblocksProvider>

@@ -9,25 +9,52 @@ import Favorites from './pages/FavoritesPage';
 import Trash from './pages/TrashPage';
 import { Fade, Box } from '@mui/material';
 import { colors } from './Styles';
+import UploadProgressToast from './components/UploadProgress';
+import { useEffect, useState } from 'react';
+import { useUpload } from './context/UploadContext';
+import { useUser } from './context/UserContext';
 
 function App() {
   const location = useLocation();
   const shouldShowDrawer =
     location.pathname !== '/' && location.pathname !== '/register';
 
+  const userId = useUser().userId;
+  const { uploads, removeUpload } = useUpload();
+  const [uploadsInProgress, setUploadsInProgress] = useState(uploads);
+
+  useEffect(() => {
+    setUploadsInProgress(uploads);
+  }, [uploads]);
+
   return (
-    <Box 
-      sx={{ 
-        display: 'flex', 
+    <Box
+      sx={{
+        display: 'flex',
         height: '100vh',
         bgcolor: shouldShowDrawer ? colors.mainBackground : '#FFFFFF',
         overflow: 'hidden',
       }}
     >
       {shouldShowDrawer && <NavigationDrawer />}
-      <Box 
-        sx={{ 
-          flexGrow: 1, 
+
+      {uploadsInProgress.map(
+        ({ file, id, relativePath, parentFolder }, index) => (
+          <UploadProgressToast
+            key={id}
+            file={file}
+            fileId={id}
+            userId={userId}
+            parentFolder={parentFolder}
+            onClose={() => removeUpload(id)}
+            offset={index}
+          />
+        ),
+      )}
+
+      <Box
+        sx={{
+          flexGrow: 1,
           overflowY: 'auto',
           overflowX: 'hidden',
           display: 'flex',

@@ -31,7 +31,8 @@
     "react-scripts": "5.0.1",
     "uuid": "^11.1.0",
     "webpack-dev-server": "^4.15.2",
-    "yjs": "^13.6.24"
+    "yjs": "^13.6.24",
+    "react-swipeable": "^7.0.2"
   },
   "scripts": {
     "start": "react-scripts start",
