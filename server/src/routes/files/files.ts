@@ -143,6 +143,12 @@ fileRouter.post(
         return res.status(400).json({ message: 'No file uploaded' });
 
       const { path: tempPath, originalname, mimetype, size } = req.file;
+      let inferredMimeType = mimetype;
+
+      if (mimetype == 'application/octet-stream') {
+        inferredMimeType = inferMimeType(originalname);
+      }
+
       const { parentFolder = null, fileName } = req.body;
       const userId = (req as any).user.userId;
       if (!req.file) {
@@ -164,7 +170,10 @@ fileRouter.post(
       const gcsKey = `uploads/${userId}/${parentFolder || 'root'}/${fileId}-${originalname}`;
       /* ---------- STREAM UPLOAD ---------- */
       const readStream = fs.createReadStream(tempPath);
-      const writeStream = StorageService.getWriteStream(gcsKey, mimetype);
+      const writeStream = StorageService.getWriteStream(
+        gcsKey,
+        inferredMimeType,
+      );
 
       const controller: UploadController = {
         abort() {
@@ -210,7 +219,7 @@ fileRouter.post(
         lastModifiedAt: new Date(),
         parentFolder: parentFolder || null,
         gcsKey,
-        fileType: mimetype,
+        fileType: inferredMimeType,
         fileSize: size,
       });
       await PermissionModel.createPermission({
