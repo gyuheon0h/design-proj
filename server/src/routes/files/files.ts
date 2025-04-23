@@ -276,6 +276,38 @@ fileRouter.post('/upload/cancel/:fileId', authorizeUser, (req, res) => {
   return res.json({ message: 'Upload cancelled' });
 });
 
+fileRouter.put('/save/owlnote/:fileId', authorizeUser, async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const { content } = req.body;
+
+    const userId = (req as any).user.userId;
+
+    if (!content) {
+      return res.status(400).json({ error: 'Content is required' });
+    }
+    const fileMetadata = await FileModel.getById(fileId);
+
+    if (!fileMetadata) {
+      console.error('Cannot find owlnote file');
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    await FileModel.updateFileMetadata(fileId, {
+      lastModifiedBy: userId,
+      lastModifiedAt: new Date(),
+    });
+
+    await StorageService.saveToGCS(
+      fileMetadata.gcsKey,
+      content,
+      fileMetadata.fileType,
+    );
+  } catch (error) {
+    console.error('OwlNote file upload error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 //TODO protect the two new owlnote endpoints with perms
 fileRouter.post('/create/owlnote', authorizeUser, async (req, res) => {
   try {
