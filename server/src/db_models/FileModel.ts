@@ -58,6 +58,14 @@ export class FileModel extends BaseModel<File> {
     return await this.softDelete(id);
   }
 
+  async hardDeleteFile(id: string): Promise<boolean> {
+    await recursiveDeletePermissions(id, null);
+
+    const deletedCount = await this.hardDeleteOnCondition('id', id);
+
+    return deletedCount > 0;
+  }
+
   // Restore a file
   async restoreFile(id: string): Promise<boolean> {
     return await this.restore(id);

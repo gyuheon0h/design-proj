@@ -457,6 +457,35 @@ fileRouter.delete(
   },
 );
 
+fileRouter.delete(
+  '/:fileId/hard-delete',
+  authorizeUser,
+  checkPermission('delete'),
+  async (req, res) => {
+    try {
+      const { fileId } = req.params;
+      const file = await FileModel.getById(fileId);
+
+      if (!file) {
+        return res.status(404).json({ message: 'File not found' });
+      }
+
+      // Delete file from GCS
+      await StorageService.deleteFile(file.gcsKey);
+      // this is a little hazardous; this is a hard delete on the GCS;
+      // and should not occur
+
+      // Delete from database
+      await FileModel.hardDeleteFile(fileId);
+
+      return res.json({ message: 'File hard deleted successfully' });
+    } catch (error) {
+      console.error('Error hard deleting file:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
+);
+
 /**
  * PATCH /api/files/:fileId/favorite
  * Route to favorite/unfavorite a file
